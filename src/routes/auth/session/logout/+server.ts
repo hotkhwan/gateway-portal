@@ -1,7 +1,8 @@
 import type { RequestHandler } from './$types'
 import { json } from '@sveltejs/kit'
-import { env } from '$env/dynamic/private'
-import { PUBLIC_APP_BASE_URL } from '$env/static/public'
+// import { env } from '$env/dynamic/private'
+// import { PUBLIC_APP_BASE_URL } from '$env/static/public'
+const PUBLIC_APP_BASE_URL = process.env.PUBLIC_APP_BASE_URL || '';
 
 function normalizeBase(v?: string) {
   if (!v || v === '/') return ''
@@ -16,7 +17,7 @@ export const POST: RequestHandler = async ({ fetch, cookies }) => {
   console.log('[logout] token exists =', Boolean(accessToken))
 
   if (accessToken) {
-    const res = await fetch(`${env.API_BASE}/auth/signout`, {
+    const res = await fetch(`${process.env.API_BASE}/auth/signout`, {
       method: 'POST',
       headers: {
         authorization: `Bearer ${accessToken}`

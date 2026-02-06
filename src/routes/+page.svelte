@@ -32,7 +32,7 @@
     await import('lity')
     await import('lity/dist/lity.min.css')
 
-    setPageTitle('Landing')
+    setPageTitle(m.landing_page_title())
     $appOptions.appContentClass = 'p-0 pt-5 mt-4px'
     $appOptions.appSidebarHide = true
     $appOptions.appHeaderHide = true
@@ -58,6 +58,7 @@
       <span class="h-2px w-25px bg-gray-500 d-block mb-1"></span>
       <span class="h-2px w-25px bg-gray-500 d-block"></span>
     </button>
+
     <a
       class="navbar-brand d-flex align-items-center position-relative me-auto brand px-0 w-auto"
       aria-label="link"
@@ -65,52 +66,56 @@
     >
       <span class="brand-logo d-flex">
         <span class="brand-img">
-          <span class="brand-img-text text-theme">A</span>
+          <span class="brand-img-text text-theme">G</span>
         </span>
         <span class="brand-text">{m.landing_home()}</span>
       </span>
     </a>
+
     <div class="collapse navbar-collapse" id="navbarContent">
       <div
         class="navbar-nav ms-auto mb-2 mb-lg-0 text-uppercase small fw-semibold"
       >
         <div class="nav-item me-2">
-          <a href="#home" aria-label="link" class="nav-link link-body-emphasis"
-            >{m.nav_home()}</a
-          >
+          <a href="#home" aria-label="link" class="nav-link link-body-emphasis">
+            {m.nav_home()}
+          </a>
         </div>
         <div class="nav-item me-2">
-          <a href="#about" aria-label="link" class="nav-link link-body-emphasis"
-            >{m.nav_about()}</a
+          <a
+            href="#about"
+            aria-label="link"
+            class="nav-link link-body-emphasis"
           >
+            {m.nav_about()}
+          </a>
         </div>
         <div class="nav-item me-2">
           <a
             href="#features"
             aria-label="link"
-            class="nav-link link-body-emphasis">{m.nav_features()}</a
+            class="nav-link link-body-emphasis"
           >
+            {m.nav_features()}
+          </a>
         </div>
-        <!-- <div class="nav-item me-2">
-					<a href="#pricing" aria-label="link" class="nav-link link-body-emphasis">Pricing</a>
-				</div>
-				<div class="nav-item me-2">
-					<a href="#testimonials" aria-label="link" class="nav-link link-body-emphasis">Testimonials</a>
-				</div>
-				<div class="nav-item me-2">
-					<a href="#blog" aria-label="link" class="nav-link link-body-emphasis">Blog</a>
-				</div>
-				<div class="nav-item me-2">
-					<a href="#contact" aria-label="link" class="nav-link link-body-emphasis">Contact</a>
-				</div> -->
+        <div class="nav-item me-2">
+          <a
+            href="#contact"
+            aria-label="link"
+            class="nav-link link-body-emphasis"
+          >
+            {m.nav_contact()}
+          </a>
+        </div>
       </div>
     </div>
+
     <a
-      href="/dashboard"
+      href={`${base}/dashboard`}
       class="btn btn-outline-theme btn-sm fw-semibold text-uppercase px-2 py-1 fs-10px"
     >
       {m.landing_get_started()} <i class="fa fa-arrow-right ms-1"></i>
-      <!-- Get started <i class="fa fa-arrow-right ms-1"></i> -->
     </a>
   </div>
 </div>
@@ -131,68 +136,69 @@
         <!-- BEGIN col-8 -->
         <div class="col-lg-6">
           <!-- BEGIN hero-title-desc -->
-          <h1 class="display-6 fw-600 mb-2 mt-4">Built with HUD Template</h1>
+          <h1 class="display-6 fw-600 mb-2 mt-4">{m.hero_title()}</h1>
+
           <div class="fs-18px text-body text-opacity-75 mb-4">
-            Join thousands of users worldwide who rely on HUD Template <span
-              class="d-xl-inline d-none"><br /></span
-            >
-            to kickstart their startups, enhance company projects, hone creative
-            skills, <span class="d-xl-inline d-none"><br /></span>
-            or tackle freelance tasks.
+            {m.hero_description_line1()}
+            <span class="d-xl-inline d-none"><br /></span>
+            {m.hero_description_line2()}
+            <span class="d-xl-inline d-none"><br /></span>
+            {m.hero_description_line3()}
           </div>
           <!-- END hero-title-desc -->
 
           <div class="text-body text-opacity-35 text-center2 mb-4">
-            <i class="fab fa-bootstrap fa-2x fa-fw"></i>
-            <i class="fab fa-node-js fa-2x fa-fw"></i>
-            <i class="fab fa-vuejs fa-2x fa-fw"></i>
-            <i class="fab fa-angular fa-2x fa-fw"></i>
-            <i class="fab fa-react fa-2x fa-fw"></i>
-            <i class="fab fa-laravel fa-2x fa-fw"></i>
-            <i class="fab fa-npm fa-2x fa-fw"></i>
+            <i class="fab fa-bootstrap fa-2x fa-fw" aria-hidden="true"></i>
+            <i class="fab fa-node-js fa-2x fa-fw" aria-hidden="true"></i>
+            <i class="fab fa-vuejs fa-2x fa-fw" aria-hidden="true"></i>
+            <i class="fab fa-angular fa-2x fa-fw" aria-hidden="true"></i>
+            <i class="fab fa-react fa-2x fa-fw" aria-hidden="true"></i>
+            <i class="fab fa-laravel fa-2x fa-fw" aria-hidden="true"></i>
+            <i class="fab fa-npm fa-2x fa-fw" aria-hidden="true"></i>
           </div>
 
           <div class="mb-2">
-            <a href="/" class="btn btn-lg btn-outline-white px-3"
-              >Discover Our Template <i class="fa fa-arrow-right ms-2 opacity-5"
-              ></i></a
-            >
+            <a href="/" class="btn btn-lg btn-outline-white px-3">
+              {m.hero_primary_cta()}
+              <i class="fa fa-arrow-right ms-2 opacity-5"></i>
+            </a>
           </div>
 
           <hr class="my-4" />
 
           <!-- BEGIN row -->
           <div class="row text-body mt-4 mb-4">
-            <!-- BEGIN col-4 -->
             <div class="col-6 mb-3 mb-lg-0">
               <div class="d-flex align-items-center">
                 <div class="h1 text-body text-opacity-25 me-3">
                   <Icon icon="bi:download" />
                 </div>
                 <div>
-                  <div class="fw-500 mb-0 h3">1.8k+</div>
+                  <div class="fw-500 mb-0 h3">
+                    {m.hero_stat_download_value()}
+                  </div>
                   <div class="fw-500 text-body text-opacity-75">
-                    Downloads / Purchases
+                    {m.hero_stat_download_label()}
                   </div>
                 </div>
               </div>
             </div>
-            <!-- END col-4 -->
-            <!-- BEGIN col-4 -->
+
             <div class="col-6">
               <div class="d-flex align-items-center">
                 <div class="h1 text-body text-opacity-25 me-3">
                   <Icon icon="bi:bootstrap" />
                 </div>
                 <div>
-                  <div class="fw-500 mb-0 h3">5.3.7</div>
+                  <div class="fw-500 mb-0 h3">
+                    {m.hero_stat_version_value()}
+                  </div>
                   <div class="fw-500 text-body text-opacity-75">
-                    Bootstrap Version
+                    {m.hero_stat_version_label()}
                   </div>
                 </div>
               </div>
             </div>
-            <!-- END col-4 -->
           </div>
           <!-- END row -->
         </div>
@@ -207,12 +213,13 @@
     >
       <img
         class="w-100 d-block shadow-lg"
-        alt="HUD"
+        alt={m.hero_mock_image_alt()}
         src={asset('/img/landing/mockup-1.jpg')}
       />
     </div>
   </div>
   <!-- END container -->
+
   <div
     class="position-absolute bg-size-cover bg-position-center d-none2 bg-no-repeat top-0 start-0 w-100 h-100"
     style="background-image: url({asset('/img/landing/cover.jpg')});"
@@ -233,12 +240,12 @@
 <!-- BEGIN #about -->
 <div id="about" class="py-5 bg-component">
   <div class="container-xxl p-3 p-lg-5 text-center">
-    <h1 class="mb-3">About HUD</h1>
+    <h1 class="mb-3">{m.about_title()}</h1>
     <p class="fs-16px text-body text-opacity-50 mb-5">
-      HUD Template crafts high-performance web applications for <br
-      />developers, designers, and entrepreneurs, enabling effortless unleashing
-      of creativity.
+      {m.about_description_line1()} <br />
+      {m.about_description_line2()}
     </p>
+
     <div class="row text-start g-3 gx-lg-5 gy-lg-4">
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
@@ -247,13 +254,11 @@
           <Icon icon="solar:monitor-smartphone-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>Responsive Design</h4>
-          <p class="mb-0">
-            Optimized for all devices, ensuring a seamless and exceptional user
-            experience everywhere.
-          </p>
+          <h4>{m.about_item1_title()}</h4>
+          <p class="mb-0">{m.about_item1_desc()}</p>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
           class="w-50px h-50px bg-theme bg-opacity-15 text-theme fs-32px d-flex align-items-center justify-content-center"
@@ -261,13 +266,11 @@
           <Icon icon="solar:settings-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>Highly Customizable</h4>
-          <p class="mb-0">
-            Modify layouts, colors, and more with ease. HUD Template offers
-            unparalleled flexibility to adapt to your specific needs.
-          </p>
+          <h4>{m.about_item2_title()}</h4>
+          <p class="mb-0">{m.about_item2_desc()}</p>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
           class="w-50px h-50px bg-theme bg-opacity-15 text-theme fs-32px d-flex align-items-center justify-content-center"
@@ -275,13 +278,11 @@
           <Icon icon="solar:bolt-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>High Performance</h4>
-          <p class="mb-0">
-            Fast loading times and efficient coding practices ensure a smooth
-            user experience, even under heavy traffic.
-          </p>
+          <h4>{m.about_item3_title()}</h4>
+          <p class="mb-0">{m.about_item3_desc()}</p>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
           class="w-50px h-50px bg-theme bg-opacity-15 text-theme fs-32px d-flex align-items-center justify-content-center"
@@ -289,13 +290,11 @@
           <Icon icon="solar:lock-keyhole-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>Secure</h4>
-          <p class="mb-0">
-            Built with security in mind, protecting your data and ensuring your
-            complete peace of mind.
-          </p>
+          <h4>{m.about_item4_title()}</h4>
+          <p class="mb-0">{m.about_item4_desc()}</p>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
           class="w-50px h-50px bg-theme bg-opacity-15 text-theme fs-32px d-flex align-items-center justify-content-center"
@@ -303,13 +302,11 @@
           <Icon icon="solar:dialog-2-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>Community Support</h4>
-          <p class="mb-0">
-            Join our vibrant community of developers and designers, sharing
-            insights and support.
-          </p>
+          <h4>{m.about_item5_title()}</h4>
+          <p class="mb-0">{m.about_item5_desc()}</p>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
           class="w-50px h-50px bg-theme bg-opacity-15 text-theme fs-32px d-flex align-items-center justify-content-center"
@@ -317,13 +314,11 @@
           <Icon icon="solar:help-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>24/7 Support</h4>
-          <p class="mb-0">
-            Our dedicated support team is always here to assist you with any
-            questions or issues you encounter.
-          </p>
+          <h4>{m.about_item6_title()}</h4>
+          <p class="mb-0">{m.about_item6_desc()}</p>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
           class="w-50px h-50px bg-theme bg-opacity-15 text-theme fs-32px d-flex align-items-center justify-content-center"
@@ -331,13 +326,11 @@
           <Icon icon="solar:tuning-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>Scalable Infrastructure</h4>
-          <p class="mb-0">
-            Flexible and scalable infrastructure to meet diverse business needs,
-            ensuring reliability and performance.
-          </p>
+          <h4>{m.about_item7_title()}</h4>
+          <p class="mb-0">{m.about_item7_desc()}</p>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6 d-flex">
         <div
           class="w-50px h-50px bg-theme bg-opacity-15 text-theme fs-32px d-flex align-items-center justify-content-center"
@@ -345,11 +338,8 @@
           <Icon icon="solar:widget-5-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>Intuitive User Interface</h4>
-          <p class="mb-0">
-            Streamlined, intuitive interface designed for enhanced productivity
-            and creativity.
-          </p>
+          <h4>{m.about_item8_title()}</h4>
+          <p class="mb-0">{m.about_item8_desc()}</p>
         </div>
       </div>
     </div>
@@ -365,14 +355,14 @@
 <div id="features" class="py-5 position-relative">
   <div class="container-xxl p-3 p-lg-5 z-2 position-relative">
     <div class="text-center mb-5">
-      <h1 class="mb-3">Our Unique Features</h1>
+      <h1 class="mb-3">{m.features_title()}</h1>
       <p class="fs-16px text-body text-opacity-50 mb-5">
-        Explore HUD Admin Template's standout features. <br />
-        With advanced customization and seamless integration, create powerful and
-        stunning <br />
-        admin interfaces, enhancing productivity and user satisfaction.
+        {m.features_description_line1()} <br />
+        {m.features_description_line2()} <br />
+        {m.features_description_line3()}
       </p>
     </div>
+
     <div class="row g-3 g-lg-5">
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
@@ -381,14 +371,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-1-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Theme Dashboard</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item1_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-2.jpg')}
@@ -396,14 +390,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-2-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">POS System UI</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item2_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-3.jpg')}
@@ -411,14 +409,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-3-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Email Inbox</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item3_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-4.jpg')}
@@ -426,14 +428,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-4-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Pricing Page</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item4_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-5.jpg')}
@@ -441,14 +447,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-5-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">User Profile</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item5_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-6.jpg')}
@@ -456,14 +466,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-6-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Analytics Page</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item6_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-7.jpg')}
@@ -471,14 +485,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-7-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">HUD Widgets</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item7_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-8.jpg')}
@@ -486,14 +504,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-8-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Kitchen Order Page</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item8_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href="/img/landing/mockup-9.jpg"
@@ -501,14 +523,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-9-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Order Details Page</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item9_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-10.jpg')}
@@ -516,14 +542,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-10-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Messenger</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item10_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-11.jpg')}
@@ -531,14 +561,18 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-11-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
-        <div class="text-center my-3 text-body fw-bold">Table Control Page</div>
+          />
+        </a>
+        <div class="text-center my-3 text-body fw-bold">
+          {m.features_item11_label()}
+        </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <a
           href={asset('/img/landing/mockup-12.jpg')}
@@ -546,14 +580,15 @@
           data-lity
           data-sveltekit-reload
           class="shadow d-block"
-          ><img
+        >
+          <img
             src={asset('/img/landing/mockup-12-thumb.jpg')}
             alt=""
             class="mw-100"
-          /></a
-        >
+          />
+        </a>
         <div class="text-center my-3 text-body fw-bold">
-          Customer Order Page
+          {m.features_item12_label()}
         </div>
       </div>
     </div>
@@ -566,14 +601,13 @@
 <!-- END divider -->
 
 <!-- BEGIN #pricing -->
-<div id="pricing" class="py-5 text-body text-opacity-75">
+<!-- <div id="pricing" class="py-5 text-body text-opacity-75">
   <div class="container-xxl p-3 p-lg-5">
-    <h1 class="mb-3 text-center">Our Pricing Plans</h1>
+    <h1 class="mb-3 text-center">{m.pricing_title()}</h1>
     <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-      Choose the perfect plan that suits your needs. <br />Our pricing is
-      designed to be flexible and affordable, providing value for businesses of
-      all sizes. <br />Explore our plans to find the best fit for your
-      requirements.
+      {m.pricing_description_line1()} <br />
+      {m.pricing_description_line2()} <br />
+      {m.pricing_description_line3()}
     </p>
 
     <div class="row g-3 py-3 gx-lg-5 pt-lg-5">
@@ -582,11 +616,12 @@
           <div class="card-body p-4 d-flex flex-column">
             <div class="d-flex align-items-center">
               <div class="flex-1">
-                <div class="h6 font-monospace">Starter Plan</div>
+                <div class="h6 font-monospace">{m.pricing_plan1_name()}</div>
                 <div class="h1 fw-semibold mb-0">
-                  $5 <small class="h6 fw-semibold text-body text-opacity-50"
-                    >/month*</small
-                  >
+                  {m.pricing_plan1_price()}
+                  <small class="h6 fw-semibold text-body text-opacity-50">
+                    {m.pricing_per_month_suffix()}
+                  </small>
                 </div>
               </div>
               <div>
@@ -596,102 +631,92 @@
                 />
               </div>
             </div>
+
             <hr class="my-20px" />
+
             <div class="mb-5 text-body text-opacity-75 flex-1">
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Storage:</span>
-                  <b class="text-body">10 GB</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_storage_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan1_storage()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Bandwidth:</span>
-                  <b class="text-body">100 GB</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_bandwidth_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan1_bandwidth()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Domain Names:</span>
-                  <b class="text-body">1</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_gateway_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan1_gateway()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">SSL Certificate:</span>
-                  <b class="text-body"> Shared</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_ssl_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan1_ssl()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Email Accounts:</span>
-                  <b class="text-body"> 5</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_support_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan1_support()}</b>
                 </div>
               </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check fa-lg text-theme"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">24/7 Support:</span>
-                  <b class="text-body"> Yes</b>
-                </div>
-              </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Backup:</span>
-                  <b class="text-body"> Daily</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_sso_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan1_sso()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Uptime Guarantee:</span>
-                  <b class="text-body"> 99.9%</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">FTP Access:</span>
-                  <b class="text-body"> Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Control Panel:</span>
-                  <b class="text-body"> cPanel</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Free Domain:</span>
-                  <b class="text-body"> No</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Firewall:</span>
-                  <b class="text-body"> No</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_audit_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan1_audit()}</b>
                 </div>
               </div>
             </div>
+
             <div class="mx-n2">
               <a
                 href="#/"
                 aria-label="link"
                 class="btn btn-outline-default btn-lg w-100 font-monospace"
-                >Get Started <i class="fa fa-arrow-right"></i></a
               >
+                {m.pricing_cta_get_started()} <i class="fa fa-arrow-right"></i>
+              </a>
             </div>
           </div>
+
           <div class="card-arrow">
             <div class="card-arrow-top-left"></div>
             <div class="card-arrow-top-right"></div>
@@ -700,16 +725,18 @@
           </div>
         </div>
       </div>
+
       <div class="col-xl-3 col-md-6 py-3 py-xl-5">
         <div class="card h-100">
           <div class="card-body p-4 d-flex flex-column">
             <div class="d-flex align-items-center">
               <div class="flex-1">
-                <div class="h6 font-monospace">Booster Plan</div>
+                <div class="h6 font-monospace">{m.pricing_plan2_name()}</div>
                 <div class="h1 fw-semibold mb-0">
-                  $10 <small class="h6 fw-semibold text-body text-opacity-50"
-                    >/month*</small
-                  >
+                  {m.pricing_plan2_price()}
+                  <small class="h6 fw-semibold text-body text-opacity-50">
+                    {m.pricing_per_month_suffix()}
+                  </small>
                 </div>
               </div>
               <div>
@@ -719,105 +746,77 @@
                 />
               </div>
             </div>
+
             <hr class="my-20px" />
+
             <div class="mb-5 text-body text-opacity-75 flex-1">
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Storage:</span>
-                  <b class="text-body">20 GB</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_storage_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan2_storage()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Bandwidth:</span>
-                  <b class="text-body">200 GB</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_bandwidth_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan2_bandwidth()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Domain Names:</span>
-                  <b class="text-body">2</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_gateway_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan2_gateway()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">SSL Certificate:</span>
-                  <b class="text-body"> Free</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_ssl_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan2_ssl()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Email Accounts:</span>
-                  <b class="text-body"> 10</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_support_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan2_support()}</b>
                 </div>
               </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check fa-lg text-theme"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">24/7 Support:</span>
-                  <b class="text-body"> Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Backup:</span>
-                  <b class="text-body"> Daily</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Uptime Guarantee:</span>
-                  <b class="text-body"> 99.9%</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">FTP Access:</span>
-                  <b class="text-body"> Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Control Panel:</span>
-                  <b class="text-body"> cPanel</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Free Domain:</span>
-                  <b class="text-body"> No</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Firewall:</span>
-                  <b class="text-body"> No</b>
-                </div>
-              </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >45-Day Money-Back Guarantee</span
+                    >{m.pricing_audit_label()}</span
                   >
+                  <b class="text-body">{m.pricing_plan2_audit()}</b>
                 </div>
               </div>
             </div>
+
             <a href="/dashboard" class="btn btn-lg btn-outline-white px-3">
-              Get Started <i class="fa fa-arrow-right ms-2 opacity-5"></i>
+              {m.pricing_cta_get_started()}
+              <i class="fa fa-arrow-right ms-2 opacity-5"></i>
             </a>
           </div>
+
           <div class="card-arrow">
             <div class="card-arrow-top-left"></div>
             <div class="card-arrow-top-right"></div>
@@ -826,14 +825,19 @@
           </div>
         </div>
       </div>
+
       <div class="col-xl-3 col-md-6 py-3 py-xl-0">
         <div class="card border-theme h-100">
           <div class="card-body p-30px h-100 d-flex flex-column">
             <div class="d-flex align-items-center">
               <div class="flex-1">
-                <div class="h6 font-monospace text-theme">Premium Plan</div>
+                <div class="h6 font-monospace text-theme">
+                  {m.pricing_plan3_name()}
+                </div>
                 <div class="display-6 fw-bold mb-0 text-theme">
-                  $15 <small class="h6 text-body text-opacity-50">/month*</small
+                  {m.pricing_plan3_price()}
+                  <small class="h6 text-body text-opacity-50"
+                    >{m.pricing_per_month_suffix()}</small
                   >
                 </div>
               </div>
@@ -844,128 +848,90 @@
                 />
               </div>
             </div>
+
             <hr class="my-20px" />
+
             <div class="mb-5 text-body flex-1">
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >Storage:</span
-                  > <b class="text-body">50 GB</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Bandwidth:</span
-                  > <b class="text-body">500 GB</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Domain Names:</span
-                  > <b class="text-body">Unlimited</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >SSL Certificate:</span
-                  > <b class="text-body">Free</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Email Accounts:</span
-                  > <b class="text-body">Unlimited</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >24/7 Support:</span
-                  > <b class="text-body">Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Backup:</span
-                  > <b class="text-body">Daily</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Uptime Guarantee:</span
-                  > <b class="text-body">99.9%</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >FTP Access:</span
-                  > <b class="text-body">Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Control Panel:</span
-                  > <b class="text-body">cPanel</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Free Domain:</span
-                  > <b class="text-body">No</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >Firewall:</span
-                  > <b class="text-body">Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace text-body text-opacity-50 small"
-                    >E-commerce Support</span
+                    >{m.pricing_storage_label()}</span
                   >
+                  <b class="text-body">{m.pricing_plan3_storage()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >45-Day Money-Back Guarantee</span
+                    >{m.pricing_bandwidth_label()}</span
                   >
+                  <b class="text-body">{m.pricing_plan3_bandwidth()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check text-theme fa-lg"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace text-body text-opacity-50 small"
+                    >{m.pricing_gateway_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan3_gateway()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check text-theme fa-lg"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace text-body text-opacity-50 small"
+                    >{m.pricing_ssl_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan3_ssl()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check text-theme fa-lg"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace text-body text-opacity-50 small"
+                    >{m.pricing_support_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan3_support()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check text-theme fa-lg"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace text-body text-opacity-50 small"
+                    >{m.pricing_sso_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan3_sso()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check text-theme fa-lg"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace text-body text-opacity-50 small"
+                    >{m.pricing_audit_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan3_audit()}</b>
                 </div>
               </div>
             </div>
+
             <a
               href="/dashboard"
               aria-label="link"
               class="btn btn-theme btn-lg w-100 text-black font-monospace"
-              >Get Started <i class="fa fa-arrow-right"></i></a
             >
+              {m.pricing_cta_get_started()} <i class="fa fa-arrow-right"></i>
+            </a>
           </div>
+
           <div class="card-arrow">
             <div class="card-arrow-top-left"></div>
             <div class="card-arrow-top-right"></div>
@@ -974,14 +940,18 @@
           </div>
         </div>
       </div>
+
       <div class="col-xl-3 col-md-6 py-3 py-xl-5">
         <div class="card h-100">
           <div class="card-body p-30px d-flex flex-column">
             <div class="d-flex align-items-center">
               <div class="flex-1">
-                <div class="h6 font-monospace">Business Plan</div>
+                <div class="h6 font-monospace">{m.pricing_plan4_name()}</div>
                 <div class="display-6 fw-bold mb-0">
-                  $99<small class="h6 text-body text-opacity-50">/month*</small>
+                  {m.pricing_plan4_price()}
+                  <small class="h6 text-body text-opacity-50"
+                    >{m.pricing_per_month_suffix()}</small
+                  >
                 </div>
               </div>
               <div>
@@ -991,116 +961,82 @@
                 />
               </div>
             </div>
+
             <hr class="my-20px" />
+
             <div class="mb-5 text-body text-opacity-75 flex-1">
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Storage:</span>
-                  <b class="text-body">1 TB</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_storage_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan4_storage()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Bandwidth:</span>
-                  <b class="text-body">20 TB</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_bandwidth_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan4_bandwidth()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Domain Names:</span>
-                  <b class="text-body">Unlimited</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_gateway_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan4_gateway()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">SSL Certificate:</span>
-                  <b class="text-body">Free</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_ssl_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan4_ssl()}</b>
                 </div>
               </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Email Accounts:</span>
-                  <b class="text-body">Unlimited</b>
+                  <span class="font-monospace small"
+                    >{m.pricing_support_label()}</span
+                  >
+                  <b class="text-body">{m.pricing_plan4_support()}</b>
                 </div>
               </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check fa-lg text-theme"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">24/7 Support:</span>
-                  <b class="text-body">Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Backup:</span>
-                  <b class="text-body"> Daily</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Uptime Guarantee:</span>
-                  <b class="text-body">99.9%</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">FTP Access:</span>
-                  <b class="text-body">Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Control Panel:</span>
-                  <b class="text-body">cPanel</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Free Domain:</span>
-                  <b class="text-body">Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">Firewall:</span>
-                  <b class="text-body">Yes</b>
-                </div>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check text-theme fa-lg"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small">E-commerce Support</span>
-                </div>
-              </div>
+
               <div class="d-flex align-items-center mb-1">
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >45-Day Money-Back Guarantee</span
+                    >{m.pricing_audit_label()}</span
                   >
+                  <b class="text-body">{m.pricing_plan4_audit()}</b>
                 </div>
               </div>
             </div>
+
             <div class="mx-n2">
               <a
                 href="/dashboard"
                 aria-label="link"
                 class="btn btn-outline-default btn-lg w-100 font-monospace"
-                >Get Started <i class="fa fa-arrow-right"></i></a
               >
+                {m.pricing_cta_get_started()} <i class="fa fa-arrow-right"></i>
+              </a>
             </div>
           </div>
+
           <div class="card-arrow">
             <div class="card-arrow-top-left"></div>
             <div class="card-arrow-top-right"></div>
@@ -1111,7 +1047,7 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->
 <!-- END #pricing -->
 
 <!-- BEGIN divider -->
@@ -1119,17 +1055,17 @@
 <!-- END divider -->
 
 <!-- BEGIN #testimonials -->
-<div id="testimonials" class="py-5 text-body text-opacity-75">
+<!-- <div id="testimonials" class="py-5 text-body text-opacity-75">
   <div class="container-xxl p-3 p-lg-5">
     <div class="text-center mb-5">
-      <h1 class="mb-3 text-center">What Our Clients Say</h1>
+      <h1 class="mb-3 text-center">{m.testimonials_title()}</h1>
       <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-        Read testimonials from our satisfied customers. <br />
-        Discover how HUD Admin Template enhances productivity and exceeds expectations
-        <br />
-        with its ease of use, advanced features, and exceptional support.
+        {m.testimonials_description_line1()} <br />
+        {m.testimonials_description_line2()} <br />
+        {m.testimonials_description_line3()}
       </p>
     </div>
+
     <div class="row g-3 g-lg-4 mb-4">
       <div class="col-xl-4 col-md-6">
         <div class="card p-4 h-100">
@@ -1137,30 +1073,34 @@
             <img
               src={asset('/img/user/user.jpg')}
               class="rounded-circle me-3 w-50px"
-              alt="Client 1"
+              alt={m.testimonials_client1_alt()}
             />
             <div>
-              <h5 class="mb-0">John Doe</h5>
-              <small class="text-muted">CEO, Company</small>
+              <h5 class="mb-0">{m.testimonials_client1_name()}</h5>
+              <small class="text-muted">{m.testimonials_client1_role()}</small>
             </div>
           </div>
+
           <div class="d-flex">
             <i class="fa fa-quote-left fa-2x text-body text-opacity-15"></i>
             <div class="p-3">
-              <div class="text-warning d-flex mb-2">
+              <div
+                class="text-warning d-flex mb-2"
+                aria-label={m.testimonials_star_rating_label()}
+              >
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
               </div>
-              HUD Admin Template transformed our workflow. The customization options
-              are unparalleled, and the support team is incredibly responsive.
+              {m.testimonials_client1_quote()}
             </div>
             <div class="d-flex align-items-end">
               <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
             </div>
           </div>
+
           <div class="card-arrow">
             <div class="card-arrow-top-left"></div>
             <div class="card-arrow-top-right"></div>
@@ -1169,36 +1109,41 @@
           </div>
         </div>
       </div>
+
       <div class="col-xl-4 col-md-6">
         <div class="card p-4 h-100">
           <div class="d-flex align-items-center mb-3">
             <img
               src={asset('/img/user/user-7.jpg')}
               class="rounded-circle me-3 w-50px"
-              alt="Client 1"
+              alt={m.testimonials_client2_alt()}
             />
             <div>
-              <h5 class="mb-0">Michael Brown</h5>
-              <small class="text-muted">CTO, Innovate Corp</small>
+              <h5 class="mb-0">{m.testimonials_client2_name()}</h5>
+              <small class="text-muted">{m.testimonials_client2_role()}</small>
             </div>
           </div>
+
           <div class="d-flex">
             <i class="fa fa-quote-left fa-2x text-body text-opacity-15"></i>
             <div class="p-3">
-              <div class="text-warning d-flex mb-2">
+              <div
+                class="text-warning d-flex mb-2"
+                aria-label={m.testimonials_star_rating_label()}
+              >
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
               </div>
-              Our productivity has soared since adopting this template. The features
-              are top-notch, and the user experience is outstanding.
+              {m.testimonials_client2_quote()}
             </div>
             <div class="d-flex align-items-end">
               <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
             </div>
           </div>
+
           <div class="card-arrow">
             <div class="card-arrow-top-left"></div>
             <div class="card-arrow-top-right"></div>
@@ -1207,113 +1152,41 @@
           </div>
         </div>
       </div>
+
       <div class="col-xl-4 col-md-6">
         <div class="card p-4 h-100">
           <div class="d-flex align-items-center mb-3">
             <img
               src={asset('/img/user/user-10.jpg')}
               class="rounded-circle me-3 w-50px"
-              alt="Client 1"
+              alt={m.testimonials_client3_alt()}
             />
             <div>
-              <h5 class="mb-0">Emily Johnson</h5>
-              <small class="text-muted">Project Manager, Creative Agency</small>
+              <h5 class="mb-0">{m.testimonials_client3_name()}</h5>
+              <small class="text-muted">{m.testimonials_client3_role()}</small>
             </div>
           </div>
+
           <div class="d-flex">
             <i class="fa fa-quote-left fa-2x text-body text-opacity-15"></i>
             <div class="p-3">
-              <div class="text-warning d-flex mb-2">
+              <div
+                class="text-warning d-flex mb-2"
+                aria-label={m.testimonials_star_rating_label()}
+              >
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
               </div>
-              This template is a game-changer. It's intuitive, flexible, and the
-              seamless integration has made our projects run smoother than ever.
+              {m.testimonials_client3_quote()}
             </div>
             <div class="d-flex align-items-end">
               <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
             </div>
           </div>
-          <div class="card-arrow">
-            <div class="card-arrow-top-left"></div>
-            <div class="card-arrow-top-right"></div>
-            <div class="card-arrow-bottom-left"></div>
-            <div class="card-arrow-bottom-right"></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl-2 d-none d-xl-block"></div>
-      <div class="col-xl-4 col-md-6">
-        <div class="card p-4 h-100">
-          <div class="d-flex align-items-center mb-3">
-            <img
-              src={asset('/img/user/user-8.jpg')}
-              class="rounded-circle me-3 w-50px"
-              alt="Client 1"
-            />
-            <div>
-              <h5 class="mb-0">David Lee</h5>
-              <small class="text-muted">Founder, Startup Hub</small>
-            </div>
-          </div>
-          <div class="d-flex">
-            <i class="fa fa-quote-left fa-2x text-body text-opacity-15"></i>
-            <div class="p-3">
-              <div class="text-warning d-flex mb-2">
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-              </div>
-              HUD Admin Template has exceeded all our expectations. The advanced
-              features and excellent support make it a standout choice.
-            </div>
-            <div class="d-flex align-items-end">
-              <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
-            </div>
-          </div>
-          <div class="card-arrow">
-            <div class="card-arrow-top-left"></div>
-            <div class="card-arrow-top-right"></div>
-            <div class="card-arrow-bottom-left"></div>
-            <div class="card-arrow-bottom-right"></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl-4 col-md-6">
-        <div class="card p-4 h-100">
-          <div class="d-flex align-items-center mb-3">
-            <img
-              src={asset('/img/user/user.jpg')}
-              class="rounded-circle me-3 w-50px"
-              alt="Client 1"
-            />
-            <div>
-              <h5 class="mb-0">John Doe</h5>
-              <small class="text-muted">CEO, Company</small>
-            </div>
-          </div>
-          <div class="d-flex">
-            <i class="fa fa-quote-left fa-2x text-body text-opacity-15"></i>
-            <div class="p-3">
-              <div class="text-warning d-flex mb-2">
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-                <Icon icon="ic:baseline-star" class="fs-18px" />
-              </div>
-              HUD Admin Template transformed our workflow. The customization options
-              are unparalleled, and the support team is incredibly responsive.
-            </div>
-            <div class="d-flex align-items-end">
-              <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
-            </div>
-          </div>
+
           <div class="card-arrow">
             <div class="card-arrow-top-left"></div>
             <div class="card-arrow-top-right"></div>
@@ -1324,7 +1197,7 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->
 <!-- END #testimonials -->
 
 <!-- BEGIN divider -->
@@ -1332,24 +1205,24 @@
 <!-- END divider -->
 
 <!-- BEGIN #blog -->
-<div id="blog" class="py-5 bg-component">
+<!-- <div id="blog" class="py-5 bg-component">
   <div class="container-xxl p-3 p-lg-5">
     <div class="text-center mb-5">
-      <h1 class="mb-3 text-center">Our Latest Insights</h1>
+      <h1 class="mb-3 text-center">{m.blog_title()}</h1>
       <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-        Dive into our blog for the latest trends, tips, and updates <br />
-        on web development, design, and industry best practices. Stay informed and
-        inspired <br />
-        with expert insights and valuable resources.
+        {m.blog_description_line1()} <br />
+        {m.blog_description_line2()} <br />
+        {m.blog_description_line3()}
       </p>
     </div>
+
     <div class="row g-3 g-xl-4 mb-5">
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <div class="card d-flex flex-column h-100 mb-5 mb-lg-0">
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-1.jpg')}
-              alt=""
+              alt={m.blog_card1_alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1357,30 +1230,25 @@
             <div class="mb-2">
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
-                >Web Design</span
               >
+                {m.blog_card1_tag()}
+              </span>
             </div>
-            <h5>Mastering Responsive Design: A Guide for Beginners</h5>
-            <p>
-              Explore the fundamentals of responsive web design and learn
-              essential tips to create websites that look great on any device.
-            </p>
+            <h5>{m.blog_card1_title()}</h5>
+            <p>{m.blog_card1_desc()}</p>
           </div>
-          <div class="p-3 pt-0 text-body text-opacity-50">July 15, 2025</div>
-          <div class="card-arrow">
-            <div class="card-arrow-top-left"></div>
-            <div class="card-arrow-top-right"></div>
-            <div class="card-arrow-bottom-left"></div>
-            <div class="card-arrow-bottom-right"></div>
+          <div class="p-3 pt-0 text-body text-opacity-50">
+            {m.blog_card1_date()}
           </div>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <div class="card d-flex flex-column h-100 mb-5 mb-lg-0">
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-2.jpg')}
-              alt=""
+              alt={m.blog_card2_alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1388,30 +1256,25 @@
             <div class="mb-2">
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
-                >UXUI Design</span
               >
+                {m.blog_card2_tag()}
+              </span>
             </div>
-            <h5>The Future of UI/UX Trends in 2025</h5>
-            <p>
-              Discover the latest trends shaping user interface and experience
-              design in the digital landscape this year.
-            </p>
+            <h5>{m.blog_card2_title()}</h5>
+            <p>{m.blog_card2_desc()}</p>
           </div>
-          <div class="p-3 pt-0 text-body text-opacity-50">July 11, 2025</div>
-          <div class="card-arrow">
-            <div class="card-arrow-top-left"></div>
-            <div class="card-arrow-top-right"></div>
-            <div class="card-arrow-bottom-left"></div>
-            <div class="card-arrow-bottom-right"></div>
+          <div class="p-3 pt-0 text-body text-opacity-50">
+            {m.blog_card2_date()}
           </div>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <div class="card d-flex flex-column h-100 mb-5 mb-lg-0">
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-3.jpg')}
-              alt=""
+              alt={m.blog_card3_alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1419,30 +1282,25 @@
             <div class="mb-2">
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
-                >Search Engine</span
               >
+                {m.blog_card3_tag()}
+              </span>
             </div>
-            <h5>Effective SEO Strategies for 2025</h5>
-            <p>
-              Dive into actionable SEO strategies and tips to boost your
-              website’s visibility and drive organic traffic.
-            </p>
+            <h5>{m.blog_card3_title()}</h5>
+            <p>{m.blog_card3_desc()}</p>
           </div>
-          <div class="p-3 pt-0 text-body text-opacity-50">June 29, 2025</div>
-          <div class="card-arrow">
-            <div class="card-arrow-top-left"></div>
-            <div class="card-arrow-top-right"></div>
-            <div class="card-arrow-bottom-left"></div>
-            <div class="card-arrow-bottom-right"></div>
+          <div class="p-3 pt-0 text-body text-opacity-50">
+            {m.blog_card3_date()}
           </div>
         </div>
       </div>
+
       <div class="col-xl-3 col-lg-4 col-sm-6">
         <div class="card d-flex flex-column h-100 mb-5 mb-lg-0">
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-4.jpg')}
-              alt=""
+              alt={m.blog_card4_alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1450,37 +1308,31 @@
             <div class="mb-2">
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
-                >Cyber Security</span
               >
+                {m.blog_card4_tag()}
+              </span>
             </div>
-            <h5>
-              Security Essentials: Protecting Your Website from Cyber Threats
-            </h5>
-            <p>
-              Essential security measures and best practices to safeguard your
-              website and user data from cyber threats.
-            </p>
+            <h5>{m.blog_card4_title()}</h5>
+            <p>{m.blog_card4_desc()}</p>
           </div>
-          <div class="p-3 pt-0 text-body text-opacity-50">June 27, 2025</div>
-          <div class="card-arrow">
-            <div class="card-arrow-top-left"></div>
-            <div class="card-arrow-top-right"></div>
-            <div class="card-arrow-bottom-left"></div>
-            <div class="card-arrow-bottom-right"></div>
+          <div class="p-3 pt-0 text-body text-opacity-50">
+            {m.blog_card4_date()}
           </div>
         </div>
       </div>
     </div>
+
     <div class="text-center">
       <a
         href="#/"
         aria-label="link"
         class="text-decoration-none text-body text-opacity-50 h6"
-        >See More Company Stories <i class="fa fa-arrow-right ms-3"></i></a
       >
+        {m.blog_see_more()} <i class="fa fa-arrow-right ms-3"></i>
+      </a>
     </div>
   </div>
-</div>
+</div> -->
 <!-- END #blog -->
 
 <!-- BEGIN divider -->
@@ -1491,83 +1343,87 @@
 <div id="contact" class="py-5 text-body text-opacity-75">
   <div class="container-xl p-3 p-lg-5">
     <div class="text-center mb-5">
-      <h1 class="mb-3 text-center">Get in Touch</h1>
+      <h1 class="mb-3 text-center">{m.contact_title()}</h1>
       <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-        Contact us today to explore how our team can assist you. <br />
-        Whether you have inquiries, need support, or want to discuss a partnership,
-        <br />
-        we're here to help. Reach out to us and let's start a conversation!
+        {m.contact_description_line1()} <br />
+        {m.contact_description_line2()} <br />
+        {m.contact_description_line3()}
       </p>
     </div>
+
     <div class="row gx-3 gx-lg-5">
       <div class="col-lg-6">
-        <h4>Contact Us to Discuss Your Project</h4>
+        <h4>{m.contact_left_title()}</h4>
+        <p>{m.contact_left_paragraph1()}</p>
         <p>
-          Do you have a project in mind? We’re eager to discuss it with you.
-          Whether you’re looking for advice, have questions, or want to share
-          your ideas, feel free to reach out.
-        </p>
-        <p>
-          <span class="fw-bolder">SeanTheme HUD, Inc</span><br />
-          795 Folsom Ave, Suite 600<br />
-          San Francisco, CA 94107<br /><br />
+          <span class="fw-bolder">{m.contact_company_name()}</span><br />
+          {m.contact_address_line1()}<br />
+          {m.contact_address_line2()}<br /><br />
 
-          Monday - Friday: 9:00 AM - 6:00 PM<br />
-          Saturday - Sunday: Closed<br /> <br />
+          {m.contact_hours_line1()}<br />
+          {m.contact_hours_line2()}<br /><br />
 
-          Phone:
-          <a href="#/" aria-label="link" class="text-theme">(123) 456-7890</a
-          ><br />
-          International:
+          {m.contact_phone_label()}
           <a href="#/" aria-label="link" class="text-theme"
-            >+11 (0) 123 456 78</a
+            >{m.contact_phone_value()}</a
           ><br />
-          Email:
+          {m.contact_international_label()}
           <a href="#/" aria-label="link" class="text-theme"
-            >support@seantheme.com</a
+            >{m.contact_international_value()}</a
+          ><br />
+          {m.contact_email_label()}
+          <a href="#/" aria-label="link" class="text-theme"
+            >{m.contact_email_value()}</a
           >
         </p>
       </div>
+
       <div class="col-lg-6">
         <form action="/" method="GET" name="form_contact_us">
           <div class="row gy-3 mb-3">
             <div class="col-6">
-              <label class="form-label" for=""
-                >First Name <span class="text-theme">*</span></label
-              >
+              <label class="form-label" for="">
+                {m.contact_form_first_name()} <span class="text-theme">*</span>
+              </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
+
             <div class="col-6">
-              <label class="form-label" for=""
-                >Last Name <span class="text-theme">*</span></label
-              >
+              <label class="form-label" for="">
+                {m.contact_form_last_name()} <span class="text-theme">*</span>
+              </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
+
             <div class="col-6">
-              <label class="form-label" for=""
-                >Email <span class="text-theme">*</span></label
-              >
+              <label class="form-label" for="">
+                {m.contact_form_email()} <span class="text-theme">*</span>
+              </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
+
             <div class="col-6">
-              <label class="form-label" for=""
-                >Phone <span class="text-theme">*</span></label
-              >
+              <label class="form-label" for="">
+                {m.contact_form_phone()} <span class="text-theme">*</span>
+              </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
+
             <div class="col-12">
-              <label class="form-label" for=""
-                >Message <span class="text-theme">*</span></label
-              >
+              <label class="form-label" for="">
+                {m.contact_form_message()} <span class="text-theme">*</span>
+              </label>
               <textarea class="form-control form-control-lg fs-15px" rows="8"
               ></textarea>
             </div>
+
             <div class="col-12">
               <button
                 type="submit"
                 class="btn btn-outline-theme btn-lg btn-block px-4 fs-15px"
-                >Send Message</button
               >
+                {m.contact_form_send()}
+              </button>
             </div>
           </div>
         </form>
@@ -1587,267 +1443,305 @@
     <div class="row gx-lg-5 gx-3 gy-lg-4 gy-3">
       <div class="col-lg-3 col-md-6">
         <div class="mb-3">
-          <div class="h2">HUD</div>
+          <div class="h2">{m.footer_brand_title()}</div>
         </div>
-        <p class="mb-4">
-          HUD is your go-to solution for creating stunning, responsive, and
-          high-performance web applications. Designed for developers, designers,
-          and entrepreneurs, it provides the tools and flexibility needed to
-          bring your creative visions to life.
-        </p>
-        <h5>Follow Us</h5>
+
+        <p class="mb-4">{m.footer_brand_description()}</p>
+
+        <h5>{m.footer_follow_us()}</h5>
         <div class="d-flex">
-          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50"
-            ><i class="fab fa-lg fa-facebook fa-fw"></i></a
-          >
-          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50"
-            ><i class="fab fa-lg fa-instagram fa-fw"></i></a
-          >
-          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50"
-            ><i class="fab fa-lg fa-twitter fa-fw"></i></a
-          >
-          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50"
-            ><i class="fab fa-lg fa-youtube fa-fw"></i></a
-          >
-          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50"
-            ><i class="fab fa-lg fa-linkedin fa-fw"></i></a
-          >
+          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50">
+            <i class="fab fa-lg fa-facebook fa-fw" aria-hidden="true"></i>
+          </a>
+          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50">
+            <i class="fab fa-lg fa-instagram fa-fw" aria-hidden="true"></i>
+          </a>
+          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50">
+            <i class="fab fa-lg fa-twitter fa-fw" aria-hidden="true"></i>
+          </a>
+          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50">
+            <i class="fab fa-lg fa-youtube fa-fw" aria-hidden="true"></i>
+          </a>
+          <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50">
+            <i class="fab fa-lg fa-linkedin fa-fw" aria-hidden="true"></i>
+          </a>
         </div>
       </div>
+
       <div class="col-lg-3 col-md-6">
-        <h5>Quick Links</h5>
+        <h5>{m.footer_quick_links()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
-              class="text-decoration-none text-body text-opacity-75">Newsroom</a
+              class="text-decoration-none text-body text-opacity-75"
             >
+              {m.footer_link_newsroom()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Company Info</a
             >
-          </li>
-          <li class="mb-3px">
-            <a
-              href="#/"
-              aria-label="link"
-              class="text-decoration-none text-body text-opacity-75">Careers</a
-            >
+              {m.footer_link_company_info()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >For Investors</a
             >
+              {m.footer_link_careers()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Brand Resources</a
             >
+              {m.footer_link_investors()}
+            </a>
+          </li>
+          <li class="mb-3px">
+            <a
+              href="#/"
+              aria-label="link"
+              class="text-decoration-none text-body text-opacity-75"
+            >
+              {m.footer_link_brand_resources()}
+            </a>
           </li>
         </ul>
+
         <hr class="text-body text-opacity-50" />
-        <h5>Services</h5>
+
+        <h5>{m.footer_services()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Web Development</a
             >
+              {m.footer_service_api_gateway()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >App Development</a
             >
-          </li>
-          <li class="mb-3px">
-            <a
-              href="#/"
-              aria-label="link"
-              class="text-decoration-none text-body text-opacity-75">SEO</a
-            >
+              {m.footer_service_event_routing()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Marketing</a
             >
+              {m.footer_service_authn_authz()}
+            </a>
+          </li>
+          <li class="mb-3px">
+            <a
+              href="#/"
+              aria-label="link"
+              class="text-decoration-none text-body text-opacity-75"
+            >
+              {m.footer_service_observability()}
+            </a>
           </li>
         </ul>
       </div>
+
       <div class="col-lg-3 col-md-6">
-        <h5>Resources</h5>
+        <h5>{m.footer_resources()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Documentation</a
             >
-          </li>
-          <li class="mb-3px">
-            <a
-              href="#/"
-              aria-label="link"
-              class="text-decoration-none text-body text-opacity-75">Support</a
-            >
-          </li>
-          <li class="mb-3px">
-            <a
-              href="#/"
-              aria-label="link"
-              class="text-decoration-none text-body text-opacity-75">FAQs</a
-            >
+              {m.footer_resource_docs()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Community</a
             >
+              {m.footer_resource_support()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Tutorials</a
             >
+              {m.footer_resource_faqs()}
+            </a>
+          </li>
+          <li class="mb-3px">
+            <a
+              href="#/"
+              aria-label="link"
+              class="text-decoration-none text-body text-opacity-75"
+            >
+              {m.footer_resource_community()}
+            </a>
+          </li>
+          <li class="mb-3px">
+            <a
+              href="#/"
+              aria-label="link"
+              class="text-decoration-none text-body text-opacity-75"
+            >
+              {m.footer_resource_tutorials()}
+            </a>
           </li>
         </ul>
+
         <hr class="text-body text-opacity-50" />
-        <h5>Legal</h5>
+
+        <h5>{m.footer_legal()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Privacy Policy</a
             >
+              {m.footer_legal_privacy()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Terms of Service</a
             >
+              {m.footer_legal_terms()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Cookie Policy</a
             >
+              {m.footer_legal_cookies()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Compliance</a
             >
+              {m.footer_legal_compliance()}
+            </a>
           </li>
         </ul>
       </div>
+
       <div class="col-lg-3 col-md-6">
-        <h5>Help Center</h5>
+        <h5>{m.footer_help_center()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Contact Form</a
             >
+              {m.footer_help_contact_form()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Live Chat Support</a
             >
+              {m.footer_help_live_chat()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Portal Help Center</a
             >
+              {m.footer_help_portal()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Email Support</a
             >
+              {m.footer_help_email_support()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Technical Documentation</a
             >
+              {m.footer_help_technical_docs()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Service Updates</a
             >
+              {m.footer_help_service_updates()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Developer API</a
             >
+              {m.footer_help_developer_api()}
+            </a>
           </li>
           <li class="mb-3px">
             <a
               href="#/"
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
-              >Knowledge Base</a
             >
+              {m.footer_help_knowledge_base()}
+            </a>
           </li>
         </ul>
       </div>
     </div>
+
     <hr class="text-body text-opacity-50" />
+
     <div class="row">
       <div class="col-sm-6 mb-3 mb-lg-0">
         <div class="footer-copyright-text">
-          &copy; 2025 SeanTheme All Rights Reserved
+          {m.footer_copyright()}
         </div>
       </div>
+
       <div class="col-sm-6 text-sm-end">
         <div class="dropdown me-4 d-inline">
           <button
@@ -1856,9 +1750,7 @@
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
-            {currentLocale === 'th'
-              ? 'ไทย (ภาษาไทย)'
-              : 'United States (English)'}
+            {currentLocale === 'th' ? m.lang_th() : m.lang_en()}
           </button>
 
           <ul class="dropdown-menu dropdown-menu-end">
@@ -1868,7 +1760,7 @@
                 class="dropdown-item"
                 on:click={() => onChangeLanguage('en')}
               >
-                United States (English)
+                {m.lang_en()}
               </button>
             </li>
             <li>
@@ -1877,16 +1769,19 @@
                 class="dropdown-item"
                 on:click={() => onChangeLanguage('th')}
               >
-                ไทย (ภาษาไทย)
+                {m.lang_th()}
               </button>
             </li>
           </ul>
         </div>
+
         <a
           href="#/"
           aria-label="link"
-          class="text-decoration-none text-body text-opacity-50">Sitemap</a
+          class="text-decoration-none text-body text-opacity-50"
         >
+          {m.footer_sitemap()}
+        </a>
       </div>
     </div>
   </div>

@@ -1,42 +1,59 @@
 // src/hooks.server.ts
 import type { Handle } from '@sveltejs/kit'
 import { redirect } from '@sveltejs/kit'
-import { userFromToken } from '$lib/server/auth'
+// import { PUBLIC_APP_BASE_URL } from '$env/static/public'
 
-const publicPrefixes = [
-  '/',
-  '/auth',
-  '/api',
+import { userFromToken } from '$lib/server/auth'
+const PUBLIC_APP_BASE_URL = process.env.PUBLIC_APP_BASE_URL || '';
+function normalizeBase(v?: string) {
+  if (!v || v === '/') return ''
+  return '/' + v.replace(/^\/+|\/+$/g, '')
+}
+
+function stripBase(pathname: string, base: string) {
+  if (!base) return pathname
+  return pathname.startsWith(base) ? pathname.slice(base.length) || '/' : pathname
+}
+
+const publicExact = new Set([
+  '/',               // root
   '/landing',
   '/robots.txt',
-  '/favicon'
+  '/favicon.ico'
+])
+
+const publicPrefixes = [
+  '/auth',
+  '/api',
+  '/_app' // sveltekit assets
 ]
 
-function isPublic(pathname: string) {
-  return publicPrefixes.some(p => pathname.startsWith(p))
+function isPublicPath(pathnameNoBase: string) {
+  if (publicExact.has(pathnameNoBase)) return true
+  return publicPrefixes.some(p => pathnameNoBase.startsWith(p))
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-  const { cookies, url } = event
-  const pathname = url.pathname
+  const base = normalizeBase(PUBLIC_APP_BASE_URL)
+  const pathname = event.url.pathname
+  const pathnameNoBase = stripBase(pathname, base)
 
   event.locals.user = null
 
-  const token = cookies.get('sg.session')
+  const token = event.cookies.get('session_token') // ✅ match callback
   if (token) {
     try {
       const user = userFromToken(token)
       event.locals.user = { ...user, accessToken: token }
     } catch {
-      cookies.delete('sg.session', { path: '/' })
+      event.cookies.delete('session_token', { path: base || '/' })
+      event.cookies.delete('session_refresh', { path: base || '/' })
     }
   }
 
-  if (!event.locals.user && !isPublic(pathname)) {
-    throw redirect(
-      302,
-      `/auth/login?next=${encodeURIComponent(pathname)}`
-    )
+  if (!event.locals.user && !isPublicPath(pathnameNoBase)) {
+    const returnTo = `${pathname}${event.url.search || ''}`
+    throw redirect(302, `${base}/auth/session/start?returnTo=${encodeURIComponent(returnTo)}`)
   }
 
   return resolve(event)

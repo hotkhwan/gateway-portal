@@ -7,20 +7,30 @@
   "_comments_lang_th": "Language label for Thai",
   "lang_th": "Thai (ภาษาไทย)",
   "_comments_footer_sitemap": "Footer link label",
-  "footer_sitemap": "Sitemap",
+
+
+
+  "_comments_landing_meta": "Landing page meta/title",
+  "landing_page_title": "AISOM",
+  "auth_signin": "Sign In",
+
+  "_comments_nav": "Top navigation labels",
+  "landing_home": "AISOM",
+  "nav_home": "Home",
+  "nav_about": "About",
+  "nav_features": "Features",
+  "nav_pricing": "Pricing",
+  "nav_testimonials": "Testimonials",
+  "nav_blog": "Blog",
+  "nav_contact": "Contact",
+  "landing_get_started": "Get started",
 
   "_comments_app_get_started": "Used as a call-to-action button text to encourage users to begin using the application.",
   "app_get_started": "Get Started",
 
   "_comments_landing": "Landing page title",
-  "landing_home": "AISOM",
-  "landing_get_started": "Get Started",
 
-  "nav_home": "Home",
-  "nav_about": "About",
-  "nav_features": "Features",
 
-  "hero_title": "Built with HUD Template",
   "hero_description": "Join thousands of users worldwide who rely on HUD Template to kickstart their startups, enhance company projects, hone creative skills, or tackle freelance tasks.",
 
   "hero_discover": "Discover Our Template",
@@ -28,14 +38,308 @@
   "section_about_title": "About HUD",
   "section_about_desc": "HUD Template crafts high-performance web applications for developers, designers, and entrepreneurs, enabling effortless unleashing of creativity.",
 
-  "features_title": "Our Unique Features",
   "features_desc": "Explore HUD Admin Template's standout features.",
 
-  "pricing_title": "Our Pricing Plans",
   "pricing_desc": "Choose the perfect plan that suits your needs.",
 
-  "contact_title": "Get in Touch",
+
   "contact_desc": "Contact us today to explore how our team can assist you.",
 
-  "footer_about": "HUD is your go-to solution for creating stunning, responsive, and high-performance web applications."
+  "footer_about": "HUD is your go-to solution for creating stunning, responsive, and high-performance web applications.",
+
+  "_comments_hero": "Hero section",
+  "hero_title": "Gateway for Secure API & Event Delivery",
+  "hero_description_line1": "Unify ingress, routing, auth, and observability for your edge + cloud services.",
+  "hero_description_line2": "Designed for high throughput workloads with predictable latency and strong guardrails.",
+  "hero_description_line3": "Ship faster without sacrificing security, auditability, and operational clarity.",
+  "hero_primary_cta": "Discover Gateway Platform",
+  "hero_stat_download_value": "1.8k+",
+  "hero_stat_download_label": "Deployments / Environments",
+  "hero_stat_version_value": "v1.0",
+  "hero_stat_version_label": "Gateway Release",
+  "hero_mock_image_alt": "Gateway dashboard preview",
+
+  "_comments_about": "About section",
+  "about_title": "About Gateway",
+  "about_description_line1": "Gateway is the control plane for your APIs and event-driven services,",
+  "about_description_line2": "built to standardize security, routing, and operations across teams.",
+
+  "about_item1_title": "Multi-Channel Ingress",
+  "about_item1_desc": "HTTP, gRPC, WebSocket, and streaming ingress with consistent controls.",
+
+  "about_item2_title": "Highly Customizable",
+  "about_item2_desc": "Configurable policies, rate limits, routing rules, and transformation pipelines.",
+
+  "about_item3_title": "High Performance",
+  "about_item3_desc": "Low overhead request handling with efficient caching and backpressure control.",
+
+  "about_item4_title": "Secure by Default",
+  "about_item4_desc": "OIDC/OAuth2 integration, mTLS, least-privilege access, and secure defaults.",
+
+  "about_item5_title": "Team-Friendly Governance",
+  "about_item5_desc": "Standardize policies and review changes through code-based workflows.",
+
+  "about_item6_title": "24/7 Operational Support",
+  "about_item6_desc": "Health checks, alerts, runbooks, and incident-ready dashboards.",
+
+  "about_item7_title": "Scalable Infrastructure",
+  "about_item7_desc": "Scale horizontally with predictable behavior under burst traffic.",
+
+  "about_item8_title": "Intuitive Admin UX",
+  "about_item8_desc": "Manage routes, policies, and access with clear, auditable controls.",
+
+  "_comments_features": "Features section",
+  "features_title": "Our Unique Features",
+  "features_description_line1": "Explore Gateway’s standout features.",
+  "features_description_line2": "With strong policy controls and seamless integration,",
+  "features_description_line3": "build reliable ingress for APIs, microservices, and event pipelines.",
+
+  "features_item1_label": "Gateway Dashboard",
+  "features_item2_label": "Traffic Controls",
+  "features_item3_label": "Policy & AuthZ",
+  "features_item4_label": "Developer Portal",
+  "features_item5_label": "Tenant Console",
+  "features_item6_label": "Metrics & Tracing",
+  "features_item7_label": "Audit & Logs",
+  "features_item8_label": "SLO Monitoring",
+  "features_item9_label": "Delivery Details",
+  "features_item10_label": "Messaging",
+  "features_item11_label": "Operations Control",
+  "features_item12_label": "Customer View",
+
+  "_comments_pricing": "Pricing section",
+  "pricing_title": "Our Pricing Plans",
+  "pricing_description_line1": "Pick the plan that matches your scale and compliance needs.",
+  "pricing_description_line2": "Simple tiers for staging to enterprise production,",
+  "pricing_description_line3": "with a clear upgrade path as your traffic grows.",
+
+  "pricing_per_month_suffix": "/month*",
+  "pricing_cta_get_started": "Get Started",
+
+  "_comments_pricing_common_labels": "Pricing feature labels",
+  "pricing_storage_label": "Storage:",
+  "pricing_bandwidth_label": "Bandwidth:",
+  "pricing_gateway_label": "Gateways:",
+  "pricing_ssl_label": "TLS / SSL:",
+  "pricing_support_label": "24/7 Support:",
+  "pricing_sso_label": "SSO / OIDC:",
+  "pricing_audit_label": "Audit Logs:",
+
+  "_comments_pricing_plan1": "Plan 1",
+  "pricing_plan1_name": "Starter Plan",
+  "pricing_plan1_price": "$5",
+  "pricing_plan1_storage": "10 GB",
+  "pricing_plan1_bandwidth": "100 GB",
+  "pricing_plan1_gateway": "1",
+  "pricing_plan1_ssl": "Shared",
+  "pricing_plan1_support": "Yes",
+  "pricing_plan1_sso": "No",
+  "pricing_plan1_audit": "No",
+
+  "_comments_pricing_plan2": "Plan 2",
+  "pricing_plan2_name": "Booster Plan",
+  "pricing_plan2_price": "$10",
+  "pricing_plan2_storage": "20 GB",
+  "pricing_plan2_bandwidth": "200 GB",
+  "pricing_plan2_gateway": "2",
+  "pricing_plan2_ssl": "Free",
+  "pricing_plan2_support": "Yes",
+  "pricing_plan2_audit": "No",
+
+  "_comments_pricing_plan3": "Plan 3 (Featured)",
+  "pricing_plan3_name": "Premium Plan",
+  "pricing_plan3_price": "$15",
+  "pricing_plan3_storage": "50 GB",
+  "pricing_plan3_bandwidth": "500 GB",
+  "pricing_plan3_gateway": "Unlimited",
+  "pricing_plan3_ssl": "Free",
+  "pricing_plan3_support": "Yes",
+  "pricing_plan3_sso": "Yes",
+  "pricing_plan3_audit": "Yes",
+
+  "_comments_pricing_plan4": "Plan 4",
+  "pricing_plan4_name": "Business Plan",
+  "pricing_plan4_price": "$99",
+  "pricing_plan4_storage": "1 TB",
+  "pricing_plan4_bandwidth": "20 TB",
+  "pricing_plan4_gateway": "Unlimited",
+  "pricing_plan4_ssl": "Free",
+  "pricing_plan4_support": "Yes",
+  "pricing_plan4_audit": "Yes",
+
+  "_comments_testimonials": "Testimonials section",
+  "testimonials_title": "What Our Clients Say",
+  "testimonials_description_line1": "Feedback from teams running Gateway in production.",
+  "testimonials_description_line2": "Better governance, safer changes, and clearer operational insights",
+  "testimonials_description_line3": "without sacrificing throughput or developer velocity.",
+
+  "testimonials_star_rating_label": "5-star rating",
+
+  "testimonials_client1_alt": "Client 1",
+  "testimonials_client1_name": "John Doe",
+  "testimonials_client1_role": "CEO, Company",
+  "testimonials_client1_quote": "Gateway standardized our access controls and routing. Rollouts are safer and visibility is much better.",
+
+  "testimonials_client2_alt": "Client 2",
+  "testimonials_client2_name": "Michael Brown",
+  "testimonials_client2_role": "CTO, Innovate Corp",
+  "testimonials_client2_quote": "Latency stayed predictable under load. The policy workflow fits our DevSecOps model.",
+
+  "testimonials_client3_alt": "Client 3",
+  "testimonials_client3_name": "Emily Johnson",
+  "testimonials_client3_role": "Project Manager, Creative Agency",
+  "testimonials_client3_quote": "The admin UX is clean and auditable. Our team finally stopped arguing about “where the rules live”.",
+
+  "_comments_blog": "Blog section",
+  "blog_title": "Our Latest Insights",
+  "blog_description_line1": "Guides, patterns, and operational playbooks",
+  "blog_description_line2": "for API gateways, event routing, and platform security,",
+  "blog_description_line3": "so your teams can build faster with fewer incidents.",
+
+  "blog_card1_alt": "Blog 1",
+  "blog_card1_tag": "Gateway Design",
+  "blog_card1_title": "Designing a Gateway for Multi-Tenant Platforms",
+  "blog_card1_desc": "Learn the key patterns for tenancy isolation, routing, and safe configuration workflows.",
+  "blog_card1_date": "July 15, 2025",
+
+  "blog_card2_alt": "Blog 2",
+  "blog_card2_tag": "Observability",
+  "blog_card2_title": "Tracing & Metrics: Making Latency Actionable",
+  "blog_card2_desc": "How to instrument gateways to explain slowdowns before users complain.",
+  "blog_card2_date": "July 11, 2025",
+
+  "blog_card3_alt": "Blog 3",
+  "blog_card3_tag": "Event Routing",
+  "blog_card3_title": "Reliable Event Delivery: Retries, DLQ, and Idempotency",
+  "blog_card3_desc": "Practical strategies to prevent duplicates and reduce consumer failures.",
+  "blog_card3_date": "June 29, 2025",
+
+  "blog_card4_alt": "Blog 4",
+  "blog_card4_tag": "Security",
+  "blog_card4_title": "Security Essentials: Hardening Your Gateway",
+  "blog_card4_desc": "Baseline controls: WAF rules, rate limiting, token validation, and audit logging.",
+  "blog_card4_date": "June 27, 2025",
+
+  "blog_see_more": "See More Company Stories",
+
+  "_comments_contact": "Contact section",
+  "contact_title": "Get in Touch",
+  "contact_description_line1": "Want to discuss your gateway architecture?",
+  "contact_description_line2": "We can help with design reviews, rollout strategy, and security hardening,",
+  "contact_description_line3": "from staging to enterprise production.",
+
+  "contact_left_title": "Contact Us to Discuss Your Project",
+  "contact_left_paragraph1": "Have a roadmap in mind? Let’s align on requirements, constraints, and a rollout plan that won’t burn your team.",
+
+  "contact_company_name": "Gateway Platform, Inc",
+  "contact_address_line1": "795 Folsom Ave, Suite 600",
+  "contact_address_line2": "San Francisco, CA 94107",
+
+  "contact_hours_line1": "Monday - Friday: 9:00 AM - 6:00 PM",
+  "contact_hours_line2": "Saturday - Sunday: Closed",
+
+  "contact_phone_label": "Phone:",
+  "contact_phone_value": "(123) 456-7890",
+  "contact_international_label": "International:",
+  "contact_international_value": "+11 (0) 123 456 78",
+  "contact_email_label": "Email:",
+  "contact_email_value": "support@example.com",
+
+  "contact_form_first_name": "First Name",
+  "contact_form_last_name": "Last Name",
+  "contact_form_email": "Email",
+  "contact_form_phone": "Phone",
+  "contact_form_message": "Message",
+  "contact_form_send": "Send Message",
+
+  "_comments_footer": "Footer section",
+  "footer_brand_title": "Gateway",
+  "footer_brand_description": "Gateway helps teams ship secure APIs and reliable event delivery with unified routing, policy, and observability.",
+  "footer_follow_us": "Follow Us",
+
+  "footer_quick_links": "Quick Links",
+  "footer_link_newsroom": "Newsroom",
+  "footer_link_company_info": "Company Info",
+  "footer_link_careers": "Careers",
+  "footer_link_investors": "For Investors",
+  "footer_link_brand_resources": "Brand Resources",
+
+  "footer_services": "Services",
+  "footer_service_api_gateway": "API Gateway",
+  "footer_service_event_routing": "Event Routing",
+  "footer_service_authn_authz": "AuthN / AuthZ",
+  "footer_service_observability": "Observability",
+
+  "footer_resources": "Resources",
+  "footer_resource_docs": "Documentation",
+  "footer_resource_support": "Support",
+  "footer_resource_faqs": "FAQs",
+  "footer_resource_community": "Community",
+  "footer_resource_tutorials": "Tutorials",
+
+  "footer_legal": "Legal",
+  "footer_legal_privacy": "Privacy Policy",
+  "footer_legal_terms": "Terms of Service",
+  "footer_legal_cookies": "Cookie Policy",
+  "footer_legal_compliance": "Compliance",
+
+  "footer_help_center": "Help Center",
+  "footer_help_contact_form": "Contact Form",
+  "footer_help_live_chat": "Live Chat Support",
+  "footer_help_portal": "Portal Help Center",
+  "footer_help_email_support": "Email Support",
+  "footer_help_technical_docs": "Technical Documentation",
+  "footer_help_service_updates": "Service Updates",
+  "footer_help_developer_api": "Developer API",
+  "footer_help_knowledge_base": "Knowledge Base",
+
+  "footer_sitemap": "Sitemap",
+  "footer_copyright": "© 2026 Gateway Platform. All Rights Reserved",
+
+
+  "_comments_dashboard": "Dashboard page labels",
+  "dashboardTitle": "Dashboard",
+  "dashboardServerStats": "Server Stats",
+  "dashboardTrafficAnalytics": "Traffic Analytics",
+  "dashboardTopProducts": "Top Products",
+  "dashboardActivityLog": "Activity Log",
+
+  "_comments_dashboard_table": "Tables",
+  "dashboardTableCountry": "Country",
+  "dashboardTableVisits": "Visits",
+  "dashboardTablePct": "PCT%",
+  "commonNoRecords": "No records found",
+
+  "_comments_dashboard_stats": "Stat blocks",
+  "dashboardSiteVisitors": "Site Visitors",
+  "dashboardStoreSales": "Store Sales",
+  "dashboardNewMembers": "New Members",
+  "dashboardBandwidth": "Bandwidth",
+
+  "_comments_dashboard_series": "Chart series titles",
+  "dashboardSeriesVisitors": "Visitors",
+  "dashboardSeriesSales": "Sales",
+
+  "_comments_dashboard_server": "Server chart labels",
+  "dashboardMemoryUsage": "Memory Usage",
+  "dashboardCpuUsage": "CPU Usage",
+  "dashboardDiskUsage": "Disk Usage",
+  "dashboardLastUpdated": "Last updated {value} min ago",
+
+  "_comments_dashboard_info": "Info lines",
+  "dashboardMoreThanLastWeek": "{pct} more than last week",
+  "dashboardNewVisitors": "{pct} new visitors",
+  "dashboardBounceRate": "{pct} bounce rate",
+  "dashboardNewOrders": "{pct} new orders",
+  "dashboardConversionRate": "{pct} conversion rate",
+  "dashboardFromFacebook": "{pct} from facebook",
+  "dashboardFromYoutube": "{pct} from youtube",
+  "dashboardFromTotalUsage": "{pct} from total usage",
+  "dashboardPerVisit": "{size} per visit",
+
+  "_comments_dashboard_products": "Products table fields",
+  "dashboardQty": "QTY",
+  "dashboardRevenue": "Revenue",
+  "dashboardProfit": "Profit"
+
 }

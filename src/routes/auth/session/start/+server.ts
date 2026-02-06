@@ -1,12 +1,17 @@
 // src/routes/auth/session/start/+server.ts
 import type { RequestHandler } from './$types'
 import { redirect } from '@sveltejs/kit'
-import {
-  PUBLIC_KC_ISSUER_URI,
-  PUBLIC_KC_REALM,
-  PUBLIC_KC_CLIENT_FE_ID,
-  PUBLIC_APP_BASE_URL
-} from '$env/static/public'
+// import {
+//   PUBLIC_KC_ISSUER_URI,
+//   PUBLIC_KC_REALM,
+//   PUBLIC_KC_CLIENT_FE_ID,
+//   PUBLIC_APP_BASE_URL,ß
+// } from '$env/static/public'
+
+const PUBLIC_APP_BASE_URL = process.env.PUBLIC_APP_BASE_URL || '';
+const PUBLIC_KC_ISSUER_URI = process.env.PUBLIC_KC_ISSUER_URI || '';
+const PUBLIC_KC_REALM = process.env.PUBLIC_KC_REALM || '';
+const PUBLIC_KC_CLIENT_FE_ID = process.env.PUBLIC_KC_CLIENT_FE_ID || '';
 
 function must(v: string | undefined, name: string) {
   if (!v) throw new Error(`missing ${name}`)

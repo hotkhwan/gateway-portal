@@ -1,4 +1,7 @@
 // src/app.d.ts
+/// <reference types="@sveltejs/kit" />
+/// <reference types="vite/client" />
+
 declare global {
   namespace App {
     interface Locals {
@@ -13,9 +16,5 @@ declare global {
     }
   }
 }
-// declare module 'apexcharts'
-// declare module 'chart.js/auto'
-// declare module 'perfect-scrollbar'
-// declare module 'svelte-highlight'
 
 export { }

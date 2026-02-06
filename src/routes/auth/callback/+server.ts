@@ -1,11 +1,22 @@
+// src/routes/auth/callback/+server.ts
 import type { RequestHandler } from './$types'
 import { redirect } from '@sveltejs/kit'
-import { env } from '$env/dynamic/private'
 import { PUBLIC_APP_BASE_URL } from '$env/static/public'
 
 function normalizeBase(v?: string) {
   if (!v || v === '/') return ''
   return '/' + v.replace(/^\/+|\/+$/g, '')
+}
+
+function cookieSecurity(url: URL) {
+  const isHttps = url.protocol === 'https:'
+  // dev บน localhost -> secure false, sameSite lax
+  if (!isHttps) {
+    return { sameSite: 'lax' as const, secure: false }
+  }
+  // prod https -> ถ้า login/callback อยู่ same-site ใช้ lax ก็พอ
+  // ถ้า cross-site จริงค่อยเปลี่ยนเป็น none
+  return { sameSite: 'lax' as const, secure: true }
 }
 
 export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
@@ -30,11 +41,11 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
   if (!res.ok) throw redirect(302, '/')
 
   const data = await res.json()
+  const sec = cookieSecurity(url)
 
   cookies.set('session_token', data.accessToken, {
     httpOnly: true,
-    sameSite: 'none',      // 🔥 FIX
-    secure: true,          // 🔥 REQUIRED with sameSite=none
+    ...sec,
     path: cookiePath,
     maxAge: 3600
   })
@@ -42,8 +53,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
   if (data.refreshToken) {
     cookies.set('session_refresh', data.refreshToken, {
       httpOnly: true,
-      sameSite: 'none',    // 🔥 FIX
-      secure: true,
+      ...sec,
       path: cookiePath,
       maxAge: 86400
     })

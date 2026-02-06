@@ -11,6 +11,7 @@
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
         "chart.js": "^4.5.1",
+        "jsvectormap": "^1.7.0",
         "lity": "^2.4.1",
         "perfect-scrollbar": "^1.5.6",
         "sass": "1.71.1",
@@ -21,7 +22,7 @@
         "@eslint/compat": "^2.0.1",
         "@eslint/js": "^9.39.2",
         "@inlang/cli": "^3.0.0",
-        "@inlang/paraglide-js": "^2.9.1",
+        "@inlang/paraglide-js": "^2.10.0",
         "@sveltejs/adapter-auto": "^7.0.0",
         "@sveltejs/adapter-static": "^3.0.10",
         "@sveltejs/kit": "^2.50.1",
@@ -128,7 +129,7 @@
 
     "@inlang/cli": ["@inlang/cli@3.1.4", "", { "dependencies": { "@inlang/sdk": "2.6.2", "esbuild-wasm": "^0.19.2" }, "bin": { "inlang": "bin/run.js" } }, "sha512-nVW1fzJVoNNX1EdBcfrg7TO7kpzKgo+lxWBwSPBNUrU3Z9Yv4QXeJCpEYJ5spR69L2O7jujMMQkxbYaOVEldZA=="],
 
-    "@inlang/paraglide-js": ["@inlang/paraglide-js@2.9.1", "", { "dependencies": { "@inlang/recommend-sherlock": "^0.2.1", "@inlang/sdk": "2.6.2", "commander": "11.1.0", "consola": "3.4.0", "json5": "2.2.3", "unplugin": "^2.1.2", "urlpattern-polyfill": "^10.0.0" }, "bin": { "paraglide-js": "bin/run.js" } }, "sha512-hciFnOKGVA10BmLixmFFIOZwNFqlyhKwvC8V+mEh/XP1WaEUtwijBlcIn2odwN9obuGxI8Fu05KHOUuETrpj+g=="],
+    "@inlang/paraglide-js": ["@inlang/paraglide-js@2.10.0", "", { "dependencies": { "@inlang/recommend-sherlock": "^0.2.1", "@inlang/sdk": "2.6.2", "commander": "11.1.0", "consola": "3.4.0", "json5": "2.2.3", "unplugin": "^2.1.2", "urlpattern-polyfill": "^10.0.0" }, "bin": { "paraglide-js": "bin/run.js" } }, "sha512-3xQveEyZMV9IOLP7Vy9Ttye+Yzryqz6KM06tvVwvmbCPDTdzmFoc34KlREXGpHuBAlxRZGfAhcJKfnSXXQDmXw=="],
 
     "@inlang/recommend-sherlock": ["@inlang/recommend-sherlock@0.2.1", "", { "dependencies": { "comment-json": "^4.2.3" } }, "sha512-ckv8HvHy/iTqaVAEKrr+gnl+p3XFNwe5D2+6w6wJk2ORV2XkcRkKOJ/XsTUJbPSiyi4PI+p+T3bqbmNx/rDUlg=="],
 
@@ -479,6 +480,8 @@
     "json-stable-stringify-without-jsonify": ["json-stable-stringify-without-jsonify@1.0.1", "", {}, "sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw=="],
 
     "json5": ["json5@2.2.3", "", { "bin": { "json5": "lib/cli.js" } }, "sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg=="],
+
+    "jsvectormap": ["jsvectormap@1.7.0", "", {}, "sha512-8VmL3Uuen08Es9xb2N6Wdc32TrQDGPXYCIdTB126jAhTJsYd/4r4Mc63VQA3qHxG0p4zeCI8sFO5XRsdjljMJg=="],
 
     "keyv": ["keyv@4.5.4", "", { "dependencies": { "json-buffer": "3.0.1" } }, "sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw=="],
 
