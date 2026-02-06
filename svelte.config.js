@@ -9,6 +9,9 @@ const base = rawBase === '/' ? '' : rawBase.replace(/\/+$/, '')
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
+		alias: {
+			$paraglide: 'src/paraglide'
+		},
 		adapter: adapter({
 			fallback: 'index.html'
 		}),

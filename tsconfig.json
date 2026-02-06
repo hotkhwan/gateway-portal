@@ -16,5 +16,5 @@
 		"src/**/*.d.ts",
 		"src/**/*.ts",
 		"src/**/*.svelte"
-	]
+, "src/routes/+page.svelte.bak"	]
 }

@@ -3,14 +3,30 @@
   import { m } from '$lib/i18n/messages'
   import { onMount, onDestroy } from 'svelte'
   import Icon from '@iconify/svelte'
-  // @ts-ignore
   import { base } from '$app/paths'
   import { createAssetHelper } from '$lib/utils'
 
-  const asset = createAssetHelper(base)
-
   import { setPageTitle } from '$lib/utils/title'
   import { appOptions } from '$lib/stores/appOptions'
+
+  import {
+    currentLocaleStore,
+    initLocale,
+    changeLocale,
+    type AppLocale
+  } from '$lib/i18nClient/setLanguage'
+
+  const asset = createAssetHelper(base)
+
+  // ✅ สำคัญ: init ตั้งแต่ก่อน render
+  initLocale()
+
+  // ✅ ทำให้ข้อความใน template re-render เมื่อเปลี่ยนภาษา
+  $: currentLocale = $currentLocaleStore
+
+  function onChangeLanguage(locale: AppLocale) {
+    changeLocale(locale)
+  }
 
   onMount(async () => {
     await import('lity')
@@ -49,7 +65,7 @@
     >
       <span class="brand-logo d-flex">
         <span class="brand-img">
-          <span class="brand-img-text text-theme">H</span>
+          <span class="brand-img-text text-theme">A</span>
         </span>
         <span class="brand-text">{m.landing_home()}</span>
       </span>
@@ -1834,57 +1850,35 @@
       </div>
       <div class="col-sm-6 text-sm-end">
         <div class="dropdown me-4 d-inline">
-          <a
-            href="#/"
-            aria-label="link"
-            class="text-decoration-none dropdown-toggle text-body text-opacity-50"
-            data-bs-toggle="dropdown">United States (English)</a
+          <button
+            type="button"
+            class="btn btn-link p-0 text-decoration-none dropdown-toggle text-body text-opacity-50"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
           >
-          <ul class="dropdown-menu">
+            {currentLocale === 'th'
+              ? 'ไทย (ภาษาไทย)'
+              : 'United States (English)'}
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >United States (English)</a
+              <button
+                type="button"
+                class="dropdown-item"
+                on:click={() => onChangeLanguage('en')}
               >
+                United States (English)
+              </button>
             </li>
             <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >China (简体中文)</a
+              <button
+                type="button"
+                class="dropdown-item"
+                on:click={() => onChangeLanguage('th')}
               >
-            </li>
-            <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >Brazil (Português)</a
-              >
-            </li>
-            <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >Germany (Deutsch)</a
-              >
-            </li>
-            <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >France (Français)</a
-              >
-            </li>
-            <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >Japan (日本語)</a
-              >
-            </li>
-            <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >Korea (한국어)</a
-              >
-            </li>
-            <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >Latin America (Español)</a
-              >
-            </li>
-            <li>
-              <a href="#/" aria-label="link" class="dropdown-item"
-                >Spain (Español)</a
-              >
+                ไทย (ภาษาไทย)
+              </button>
             </li>
           </ul>
         </div>

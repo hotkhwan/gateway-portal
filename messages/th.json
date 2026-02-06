@@ -2,6 +2,13 @@
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "example_message": "สวัสดีชาวโลก {username}",
 
+  "_comments_lang_en": "Language label for English",
+  "lang_en": "United States (English)",
+  "_comments_lang_th": "Language label for Thai",
+  "lang_th": "ไทย (ภาษาไทย)",
+  "_comments_footer_sitemap": "Footer link label",
+  "footer_sitemap": "แผนผังเว็บไซต์",
+
   "_comments_app_get_started": "Used as a call-to-action button text to encourage users to begin using the application.",
   "app_get_started": "เริ่มต้นใช้งาน",
 

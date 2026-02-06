@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import { sveltekit } from '@sveltejs/kit/vite'
-import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import { paraglideVitePlugin } from '@inlang/paraglide-js'
 
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), '')
@@ -8,12 +8,12 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		plugins: [
+			sveltekit(),
 			paraglideVitePlugin({
 				project: './project.inlang',
 				outdir: './src/lib/i18n',
-				strategy: ['url', 'cookie', 'baseLocale'],
-			}),
-			sveltekit()
+				strategy: ['localStorage', 'cookie', 'baseLocale']
+			})
 		],
 		server: {
 			host: '0.0.0.0',
