@@ -1,7 +1,8 @@
 // src/routes/auth/callback/+server.ts
 import type { RequestHandler } from './$types'
 import { redirect } from '@sveltejs/kit'
-import { PUBLIC_APP_BASE_URL } from '$env/static/public'
+
+const PUBLIC_APP_BASE_URL = process.env.PUBLIC_APP_BASE_URL || '';
 
 function normalizeBase(v?: string) {
   if (!v || v === '/') return ''
