@@ -5,10 +5,6 @@
   import '@fortawesome/fontawesome-free/css/all.min.css'
   import 'perfect-scrollbar/css/perfect-scrollbar.css'
 
-  import AppHeader from '$lib/components/app/AppHeader.svelte'
-  import AppSidebar from '$lib/components/app/AppSidebar.svelte'
-  import AppTopNav from '$lib/components/app/AppTopNav.svelte'
-  import AppFooter from '$lib/components/app/AppFooter.svelte'
   import AppThemePanel from '$lib/components/app/AppThemePanel.svelte'
   import { appOptions } from '$lib/stores/appOptions.js'
 </script>
@@ -31,19 +27,6 @@
   class:app-with-top-nav={$appOptions.appTopNav}
   class:app-footer-fixed={$appOptions.appFooterFixed}
 >
-  {#if !$appOptions.appHeaderHide}<AppHeader />{/if}
-  {#if !$appOptions.appSidebarHide}<AppSidebar />{/if}
-  {#if $appOptions.appTopNav}<AppTopNav />{/if}
   <AppThemePanel />
-
-  <div
-    id="content"
-    class="app-content{$appOptions.appContentClass
-      ? ' ' + $appOptions.appContentClass
-      : ''}"
-  >
-    <slot />
-  </div>
-
-  {#if $appOptions.appFooter}<AppFooter />{/if}
+  <slot />
 </div>

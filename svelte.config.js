@@ -1,8 +1,7 @@
-// svelte.config.js
-import adapter from '@sveltejs/adapter-static'
+import adapter from '@sveltejs/adapter-node'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 
-const rawBase = process.env.PUBLIC_APP_BASE_URL || ''
+const rawBase = process.env.PUBLIC_APP_BASE_PATH || ''
 const base = rawBase === '/' ? '' : rawBase.replace(/\/+$/, '')
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -12,14 +11,9 @@ const config = {
 		alias: {
 			$paraglide: 'src/paraglide'
 		},
-		adapter: adapter({
-			fallback: 'index.html'
-		}),
+		adapter: adapter(),
 		paths: {
 			base
-		},
-		prerender: {
-			handleHttpError: 'warn'
 		}
 	}
 }

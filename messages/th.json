@@ -7,9 +7,11 @@
   "_comments_lang_th": "Language label for Thai",
   "lang_th": "ไทย (ภาษาไทย)",
 
-
   "_comments_landing_meta": "Landing page meta/title",
   "landing_page_title": "AISOM",
+  "test_page_title": "หน้าทดสอบสาธารณะ",
+  "test_page_desc": "หน้านี้ควรเข้าถึงได้โดยไม่ต้องล็อกอิน",
+  "test_page_cta": "ไปที่แดชบอร์ด (ต้องล็อกอิน)",
   "auth_signin": "เข้าสู่ระบบ",
 
   "_comments_nav": "Top navigation labels",
@@ -23,6 +25,57 @@
   "nav_contact": "ติดต่อ",
   "landing_get_started": "เริ่มใช้งาน",
 
+  "_comments_header": "App header / top nav labels",
+
+  "headerAriaDesktopToggler": "สลับเมนูเดสก์ท็อป",
+  "headerAriaMobileToggler": "สลับเมนูมือถือ",
+  "headerAriaBrandLink": "ไปหน้าแรก",
+  "headerAriaSearch": "เปิดค้นหา",
+  "headerAriaCloseSearch": "ปิดค้นหา",
+  "headerAriaAppLauncher": "เปิดเมนูแอป",
+  "headerAriaNotifications": "เปิดการแจ้งเตือน",
+  "headerAriaNotificationItem": "รายการแจ้งเตือน",
+  "headerAriaSeeAll": "ดูทั้งหมด",
+  "headerAriaUserMenu": "เปิดเมนูผู้ใช้",
+
+  "headerAriaProfile": "ไปหน้าโปรไฟล์",
+  "headerAriaInbox": "ไปกล่องข้อความ",
+  "headerAriaCalendar": "ไปปฏิทิน",
+  "headerAriaSettings": "ไปตั้งค่า",
+  "headerAriaWidgets": "ไปวิดเจ็ต",
+  "headerAriaHelper": "ไปผู้ช่วย",
+  "headerAriaPosSystem": "ไประบบ POS",
+  "headerAriaLogout": "ออกจากระบบ",
+
+  "headerBrandText": "HUD ADMIN",
+  "headerNotificationsTitle": "การแจ้งเตือน",
+  "headerSeeAll": "ดูทั้งหมด",
+  "headerNoRecordFound": "ไม่พบข้อมูล",
+
+  "headerProfileImageAlt": "โปรไฟล์",
+
+  "headerProfile": "โปรไฟล์",
+  "headerInbox": "กล่องข้อความ",
+  "headerCalendar": "ปฏิทิน",
+  "headerSettings": "ตั้งค่า",
+  "headerWidgets": "วิดเจ็ต",
+  "headerHelper": "ผู้ช่วย",
+  "headerPosSystem": "ระบบ POS",
+
+  "headerLogout": "ออกจากระบบ",
+  "headerLoggingOut": "กำลังออกจากระบบ...",
+
+  "headerLogoutFailed": "ออกจากระบบไม่สำเร็จ แต่จะพาออกต่อ",
+  "headerSearchPlaceholder": "ค้นหาเมนู...",
+
+  "_comments_header_notifications": "สตริงตัวอย่าง (ไว้เปลี่ยนเป็นข้อมูลจริงภายหลัง)",
+  "headerNotificationNewOrder": "มีออเดอร์ใหม่เข้ามา (฿1,299)",
+  "headerNotificationNewAccounts": "มีบัญชีใหม่ 3 รายการ",
+  "headerNotificationSetupCompleted": "ตั้งค่าเสร็จสิ้น",
+  "headerNotificationWidgetInstall": "ติดตั้งวิดเจ็ตสำเร็จ",
+  "headerNotificationPaymentEnabled": "เปิดใช้วิธีชำระเงินแล้ว",
+  "headerNotificationJustNow": "เมื่อสักครู่",
+  "headerNotificationMinutesAgo": "ไม่กี่นาทีที่แล้ว",
 
   "_comments_app_get_started": "Used as a call-to-action button text to encourage users to begin using the application.",
   "app_get_started": "เริ่มต้นใช้งาน",

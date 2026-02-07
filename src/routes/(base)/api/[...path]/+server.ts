@@ -1,7 +1,11 @@
-// src/routes/api/[...path]/+server.ts
+// src/routes/(base)/api/[...path]/+server.ts
 import type { RequestHandler } from './$types'
-import { env } from '$env/dynamic/private'
 import type { Cookies } from '@sveltejs/kit'
+
+const PUBLIC_APP_BASE_PATH = process.env.PUBLIC_APP_BASE_PATH || '';
+const API_BASE = process.env.API_BASE || '';
+const AUTH_REFRESH_SKEW_SEC = process.env.AUTH_REFRESH_SKEW_SEC || '45';
+const COOKIE_SECURE = process.env.COOKIE_SECURE || 'false';
 
 const hopByHopHeaders = new Set([
   'connection',
@@ -25,7 +29,7 @@ function filterHeaders(headers: Headers) {
 }
 
 function cookiePath() {
-  const raw = (env.PUBLIC_APP_BASE_URL || '').trim()
+  const raw = (PUBLIC_APP_BASE_PATH || '').trim()
   if (!raw || raw === '/') return '/'
   return '/' + raw.replace(/^\/+|\/+$/g, '')
 }
@@ -45,7 +49,7 @@ async function refreshSession(fetchFn: typeof fetch, cookies: Cookies) {
   const refreshToken = cookies.get('session_refresh')
   if (!refreshToken) return { ok: false as const }
 
-  const targetUrl = `${env.API_BASE}/auth/refreshToken`
+  const targetUrl = `${API_BASE}/auth/refreshToken`
 
   const res = await fetchFn(targetUrl, {
     method: 'POST',
@@ -67,7 +71,7 @@ async function refreshSession(fetchFn: typeof fetch, cookies: Cookies) {
   cookies.set('session_token', data.accessToken, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: env.COOKIE_SECURE === 'true',
+    secure: COOKIE_SECURE === 'true',
     path,
     maxAge: Math.max(60, data.expiresIn ?? 3600)
   })
@@ -76,7 +80,7 @@ async function refreshSession(fetchFn: typeof fetch, cookies: Cookies) {
     cookies.set('session_refresh', data.refreshToken, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: env.COOKIE_SECURE === 'true',
+      secure: COOKIE_SECURE === 'true',
       path,
       maxAge: Math.max(300, data.refreshExpiresIn ?? 86400)
     })
@@ -92,7 +96,7 @@ async function forwardOnce(
   fetchFn: typeof fetch,
   cookies: Cookies
 ) {
-  const targetUrl = new URL(env.API_BASE.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, ''))
+  const targetUrl = new URL(API_BASE.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, ''))
   url.searchParams.forEach((v, k) => targetUrl.searchParams.set(k, v))
 
   const headers = filterHeaders(request.headers)
@@ -124,7 +128,7 @@ async function proxy(
   const token = cookies.get('session_token')
   const exp = token ? decodeJwtExp(token) : null
   const now = Math.floor(Date.now() / 1000)
-  const skew = Number(env.AUTH_REFRESH_SKEW_SEC || 45)
+  const skew = Number(AUTH_REFRESH_SKEW_SEC || 45)
 
   if (exp && exp - now <= skew) {
     await refreshSession(fetchFn, cookies)

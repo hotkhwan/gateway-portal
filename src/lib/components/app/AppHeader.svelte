@@ -3,39 +3,45 @@
   import { appOptions } from '$lib/stores/appOptions'
   import { base } from '$app/paths'
   import { createAssetHelper } from '$lib/utils'
+  import { page } from '$app/stores'
+  import { goto } from '$app/navigation'
+  import { m } from '$lib/i18n/messages'
 
   const asset = createAssetHelper(base)
 
-  const userData = {
-    email: 'username@account.com',
-    img: asset('/img/user/profile.jpg')
-  }
+  // Prefer user from server load (layout/+layout.server.ts) -> page.data.user
+  $: userEmail =
+    $page?.data?.user?.email ?? $page?.data?.user?.name ?? 'user@local'
+  $: userImg = $page?.data?.user?.img ?? asset('/img/user/profile.jpg')
+
+  let isLoggingOut = false
+  let logoutError = ''
 
   let notificationData = [
     {
       icon: 'bi bi-bag text-theme',
-      title: 'NEW ORDER RECEIVED ($1,299)',
-      time: 'JUST NOW'
+      titleKey: 'headerNotificationNewOrder',
+      timeKey: 'headerNotificationJustNow'
     },
     {
       icon: 'bi bi-person-circle text-theme',
-      title: '3 NEW ACCOUNT CREATED',
-      time: '2 MINUTES AGO'
+      titleKey: 'headerNotificationNewAccounts',
+      timeKey: 'headerNotificationMinutesAgo'
     },
     {
       icon: 'bi bi-gear text-theme',
-      title: 'SETUP COMPLETED',
-      time: '3 MINUTES AGO'
+      titleKey: 'headerNotificationSetupCompleted',
+      timeKey: 'headerNotificationMinutesAgo'
     },
     {
       icon: 'bi bi-grid text-theme',
-      title: 'WIDGET INSTALLATION DONE',
-      time: '5 MINUTES AGO'
+      titleKey: 'headerNotificationWidgetInstall',
+      timeKey: 'headerNotificationMinutesAgo'
     },
     {
       icon: 'bi bi-credit-card text-theme',
-      title: 'PAYMENT METHOD ENABLED',
-      time: '10 MINUTES AGO'
+      titleKey: 'headerNotificationPaymentEnabled',
+      timeKey: 'headerNotificationMinutesAgo'
     }
   ]
 
@@ -53,6 +59,37 @@
   function searchHeaderSearchToggler() {
     $appOptions.appHeaderSearchToggled = !$appOptions.appHeaderSearchToggled
   }
+
+  async function handleLogout(event) {
+    event?.preventDefault?.()
+    if (isLoggingOut) return
+
+    isLoggingOut = true
+    logoutError = ''
+
+    try {
+      // BFF endpoint should clear HttpOnly cookies (session_token/session_refresh)
+      const res = await fetch(`${base}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ reason: 'user' })
+      })
+
+      // If server returns non-2xx, still hard-navigate away after best effort
+      if (!res.ok) {
+        logoutError = `${m.headerLogoutFailed()} (${res.status})`
+      }
+
+      // Redirect to public landing/login
+      await goto(`${base}/`, { replaceState: true })
+    } catch (err) {
+      logoutError = m.headerLogoutFailed()
+      await goto(`${base}/`, { replaceState: true })
+    } finally {
+      isLoggingOut = false
+    }
+  }
 </script>
 
 <!-- BEGIN #header -->
@@ -62,7 +99,7 @@
     <button
       type="button"
       class="menu-toggler"
-      aria-label="Desktop Toggler"
+      aria-label={m.headerAriaDesktopToggler()}
       onclick={desktopToggler}
     >
       <span class="bar"></span>
@@ -77,7 +114,7 @@
     <button
       type="button"
       class="menu-toggler"
-      aria-label="Mobile Toggler"
+      aria-label={m.headerAriaMobileToggler()}
       onclick={mobileToggler}
     >
       <span class="bar"></span>
@@ -89,11 +126,15 @@
 
   <!-- BEGIN brand -->
   <div class="brand">
-    <a href="/" aria-label="link" class="brand-logo">
+    <a
+      href={`${base}/`}
+      aria-label={m.headerAriaBrandLink()}
+      class="brand-logo"
+    >
       <span class="brand-img">
         <span class="brand-img-text text-theme">H</span>
       </span>
-      <span class="brand-text">HUD ADMIN</span>
+      <span class="brand-text">{m.headerBrandText()}</span>
     </a>
   </div>
   <!-- END brand -->
@@ -103,17 +144,18 @@
     <div class="menu-item dropdown">
       <a
         href="#/"
-        aria-label="link"
+        aria-label={m.headerAriaSearch()}
         class="menu-link"
         onclick={searchHeaderSearchToggler}
       >
         <div class="menu-icon"><i class="bi bi-search nav-icon"></i></div>
       </a>
     </div>
+
     <div class="menu-item dropdown dropdown-mobile-full">
       <a
         href="#/"
-        aria-label="link"
+        aria-label={m.headerAriaAppLauncher()}
         data-bs-toggle="dropdown"
         data-bs-display="static"
         class="menu-link"
@@ -126,8 +168,8 @@
         <div class="row row-grid gx-0">
           <div class="col-4">
             <a
-              href="/email/inbox"
-              aria-label="link"
+              href={`${base}/email/inbox`}
+              aria-label={m.headerAriaInbox()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
               <div class="position-relative">
@@ -136,51 +178,56 @@
                 ></i>
                 <i class="bi bi-envelope h2 opacity-5 d-block my-1"></i>
               </div>
-              <div class="fw-500 fs-10px text-inverse">INBOX</div>
+              <div class="fw-500 fs-10px text-inverse">{m.headerInbox()}</div>
             </a>
           </div>
           <div class="col-4">
             <a
-              href="/pos/customer-order"
-              aria-label="link"
+              href={`${base}/pos/customer-order`}
+              aria-label={m.headerAriaPosSystem()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
               <div>
                 <i class="bi bi-hdd-network h2 opacity-5 d-block my-1"></i>
               </div>
-              <div class="fw-500 fs-10px text-inverse">POS SYSTEM</div>
+              <div class="fw-500 fs-10px text-inverse">
+                {m.headerPosSystem()}
+              </div>
             </a>
           </div>
           <div class="col-4">
             <a
-              href="/calendar"
-              aria-label="link"
+              href={`${base}/calendar`}
+              aria-label={m.headerAriaCalendar()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
               <div>
                 <i class="bi bi-calendar4 h2 opacity-5 d-block my-1"></i>
               </div>
-              <div class="fw-500 fs-10px text-inverse">CALENDAR</div>
+              <div class="fw-500 fs-10px text-inverse">
+                {m.headerCalendar()}
+              </div>
             </a>
           </div>
         </div>
+
         <div class="row row-grid gx-0">
           <div class="col-4">
             <a
-              href="/helper"
-              aria-label="link"
+              href={`${base}/helper`}
+              aria-label={m.headerAriaHelper()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
               <div>
                 <i class="bi bi-terminal h2 opacity-5 d-block my-1"></i>
               </div>
-              <div class="fw-500 fs-10px text-inverse">HELPER</div>
+              <div class="fw-500 fs-10px text-inverse">{m.headerHelper()}</div>
             </a>
           </div>
           <div class="col-4">
             <a
-              href="/settings"
-              aria-label="link"
+              href={`${base}/settings`}
+              aria-label={m.headerAriaSettings()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
               <div class="position-relative">
@@ -189,28 +236,31 @@
                 ></i>
                 <i class="bi bi-sliders h2 opacity-5 d-block my-1"></i>
               </div>
-              <div class="fw-500 fs-10px text-inverse">SETTINGS</div>
+              <div class="fw-500 fs-10px text-inverse">
+                {m.headerSettings()}
+              </div>
             </a>
           </div>
           <div class="col-4">
             <a
-              href="/widgets"
-              aria-label="link"
+              href={`${base}/widgets`}
+              aria-label={m.headerAriaWidgets()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
               <div>
                 <i class="bi bi-collection-play h2 opacity-5 d-block my-1"></i>
               </div>
-              <div class="fw-500 fs-10px text-inverse">WIDGETS</div>
+              <div class="fw-500 fs-10px text-inverse">{m.headerWidgets()}</div>
             </a>
           </div>
         </div>
       </div>
     </div>
+
     <div class="menu-item dropdown dropdown-mobile-full">
       <a
         href="#/"
-        aria-label="link"
+        aria-label={m.headerAriaNotifications()}
         data-bs-toggle="dropdown"
         data-bs-display="static"
         class="menu-link"
@@ -218,24 +268,27 @@
         <div class="menu-icon"><i class="bi bi-bell nav-icon"></i></div>
         <div class="menu-badge bg-theme"></div>
       </a>
+
       <div class="dropdown-menu dropdown-menu-end mt-1 w-300px fs-11px pt-1">
-        <h6 class="dropdown-header fs-10px mb-1">NOTIFICATIONS</h6>
+        <h6 class="dropdown-header fs-10px mb-1">
+          {m.headerNotificationsTitle()}
+        </h6>
         <div class="dropdown-divider mt-1"></div>
 
         {#if notificationData && notificationData.length > 0}
-          {#each notificationData as notification}
+          {#each notificationData as n}
             <a
               href="#/"
-              aria-label="link"
+              aria-label={m.headerAriaNotificationItem()}
               class="d-flex align-items-center py-10px dropdown-item text-wrap fw-semibold"
             >
               <div class="fs-20px">
-                <i class={notification.icon}></i>
+                <i class={n.icon}></i>
               </div>
               <div class="flex-1 flex-wrap ps-3">
-                <div class="mb-1 text-inverse">{notification.title}</div>
+                <div class="mb-1 text-inverse">{m[n.titleKey]()}</div>
                 <div class="small text-inverse text-opacity-50">
-                  {notification.time}
+                  {m[n.timeKey]()}
                 </div>
               </div>
               <div class="ps-2 fs-16px">
@@ -244,27 +297,33 @@
             </a>
           {/each}
         {:else}
-          <div class="px-3 pb-3 pt-2">No record found</div>
+          <div class="px-3 pb-3 pt-2">{m.headerNoRecordFound()}</div>
         {/if}
+
         <hr class="my-0" />
         <div class="py-10px mb-n2 text-center">
-          <a href="#/" aria-label="link" class="text-decoration-none fw-bold"
-            >SEE ALL</a
+          <a
+            href="#/"
+            aria-label={m.headerAriaSeeAll()}
+            class="text-decoration-none fw-bold"
           >
+            {m.headerSeeAll()}
+          </a>
         </div>
       </div>
     </div>
+
     <div class="menu-item dropdown dropdown-mobile-full">
       <a
         href="#/"
-        aria-label="link"
+        aria-label={m.headerAriaUserMenu()}
         data-bs-toggle="dropdown"
         data-bs-display="static"
         class="menu-link"
       >
         <div class="menu-img online">
-          {#if userData && userData.img}
-            <img src={userData.img} alt="Profile" height="60" />
+          {#if userImg}
+            <img src={userImg} alt={m.headerProfileImageAlt()} height="60" />
           {:else}
             <div
               class="d-flex align-items-center justify-content-center w-100 h-100 bg-inverse bg-opacity-25 text-inverse text-opacity-50 rounded-circle overflow-hidden"
@@ -273,46 +332,65 @@
             </div>
           {/if}
         </div>
-        <div class="menu-text d-sm-block d-none w-170px">{userData.email}</div>
+        <div class="menu-text d-sm-block d-none w-170px">{userEmail}</div>
       </a>
+
       <div class="dropdown-menu dropdown-menu-end me-lg-3 fs-11px mt-1">
         <a
-          aria-label="link"
+          aria-label={m.headerAriaProfile()}
           class="dropdown-item d-flex align-items-center"
-          href="/profile"
-          >PROFILE <i
-            class="bi bi-person-circle ms-auto text-theme fs-16px my-n1"
-          ></i></a
+          href={`${base}/profile`}
         >
+          {m.headerProfile()}
+          <i class="bi bi-person-circle ms-auto text-theme fs-16px my-n1"></i>
+        </a>
+
         <a
-          aria-label="link"
+          aria-label={m.headerAriaInbox()}
           class="dropdown-item d-flex align-items-center"
-          href="/email/inbox"
-          >INBOX <i class="bi bi-envelope ms-auto text-theme fs-16px my-n1"
-          ></i></a
+          href={`${base}/email/inbox`}
         >
+          {m.headerInbox()}
+          <i class="bi bi-envelope ms-auto text-theme fs-16px my-n1"></i>
+        </a>
+
         <a
-          aria-label="link"
+          aria-label={m.headerAriaCalendar()}
           class="dropdown-item d-flex align-items-center"
-          href="/calendar"
-          >CALENDAR <i class="bi bi-calendar ms-auto text-theme fs-16px my-n1"
-          ></i></a
+          href={`${base}/calendar`}
         >
+          {m.headerCalendar()}
+          <i class="bi bi-calendar ms-auto text-theme fs-16px my-n1"></i>
+        </a>
+
         <a
-          aria-label="link"
+          aria-label={m.headerAriaSettings()}
           class="dropdown-item d-flex align-items-center"
-          href="/settings"
-          >SETTINGS <i class="bi bi-gear ms-auto text-theme fs-16px my-n1"
-          ></i></a
+          href={`${base}/settings`}
         >
+          {m.headerSettings()}
+          <i class="bi bi-gear ms-auto text-theme fs-16px my-n1"></i>
+        </a>
+
         <div class="dropdown-divider"></div>
+
         <a
-          aria-label="link"
+          aria-label={m.headerAriaLogout()}
           class="dropdown-item d-flex align-items-center"
-          href="/page/login"
-          >LOGOUT <i class="bi bi-toggle-off ms-auto text-theme fs-16px my-n1"
-          ></i></a
+          href={`${base}/`}
+          onclick={handleLogout}
         >
+          {#if isLoggingOut}
+            {m.headerLoggingOut()}
+          {:else}
+            {m.headerLogout()}
+          {/if}
+          <i class="bi bi-toggle-off ms-auto text-theme fs-16px my-n1"></i>
+        </a>
+
+        {#if logoutError}
+          <div class="px-3 pt-2 pb-1 text-danger small">{logoutError}</div>
+        {/if}
       </div>
     </div>
   </div>
@@ -326,13 +404,17 @@
         <input
           type="text"
           class="form-control form-control-lg"
-          placeholder="Search menu..."
+          placeholder={m.headerSearchPlaceholder()}
         />
       </div>
       <div class="menu-search-icon">
-        <a href="#/" aria-label="link" onclick={searchHeaderSearchToggler}
-          ><i class="bi bi-x-lg"></i></a
+        <a
+          href="#/"
+          aria-label={m.headerAriaCloseSearch()}
+          onclick={searchHeaderSearchToggler}
         >
+          <i class="bi bi-x-lg"></i>
+        </a>
       </div>
     </div>
   </form>

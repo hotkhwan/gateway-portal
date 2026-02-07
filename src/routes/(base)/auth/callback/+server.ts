@@ -2,7 +2,7 @@
 import type { RequestHandler } from './$types'
 import { redirect } from '@sveltejs/kit'
 
-const PUBLIC_APP_BASE_URL = process.env.PUBLIC_APP_BASE_URL || '';
+const publicAppBasePath = process.env.PUBLIC_APP_BASE_PATH || ''
 
 function normalizeBase(v?: string) {
   if (!v || v === '/') return ''
@@ -11,12 +11,7 @@ function normalizeBase(v?: string) {
 
 function cookieSecurity(url: URL) {
   const isHttps = url.protocol === 'https:'
-  // dev บน localhost -> secure false, sameSite lax
-  if (!isHttps) {
-    return { sameSite: 'lax' as const, secure: false }
-  }
-  // prod https -> ถ้า login/callback อยู่ same-site ใช้ lax ก็พอ
-  // ถ้า cross-site จริงค่อยเปลี่ยนเป็น none
+  if (!isHttps) return { sameSite: 'lax' as const, secure: false }
   return { sameSite: 'lax' as const, secure: true }
 }
 
@@ -25,38 +20,55 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
   const state = url.searchParams.get('state')
   if (!code || !state) throw redirect(302, '/')
 
-  const base = normalizeBase(PUBLIC_APP_BASE_URL)
+  const base = normalizeBase(publicAppBasePath)
   const cookiePath = base || '/'
 
   const savedState = cookies.get('kc_state')
-  if (savedState !== state) throw redirect(302, '/')
+  if (savedState !== state) {
+    console.error(`Auth state mismatch. Cookie: ${savedState}, Param: ${state}`)
+    throw redirect(302, `${base}/`)
+  }
 
   const redirectUri = `${url.origin}${base}/auth/callback`
 
-  const res = await fetch('/api/auth/token', {
+  // ✅ FIX: route ต้องตรงกับไฟล์ (base)/api/auth/oauth
+  const bffUrl = new URL(`${base}/api/auth/oauth`, url.origin)
+
+  console.log('Exchanging token with code:', code)
+  console.log('BFF endpoint:', bffUrl.toString())
+
+  const res = await fetch(bffUrl, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ code, redirectUri })
   })
 
-  if (!res.ok) throw redirect(302, '/')
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    console.error(`Failed to exchange token. Status: ${res.status}`)
+    console.error(`Response: ${text}`)
+    throw redirect(302, `${base}/`)
+  }
 
-  const data = await res.json()
+  // backend ส่ง format แบบ gmod.SendSuccess -> {status:true, detail:{...}}
+  const wrapped = await res.json() as any
+  const detail = wrapped?.detail ?? wrapped
+
   const sec = cookieSecurity(url)
 
-  cookies.set('session_token', data.accessToken, {
+  cookies.set('session_token', detail.access_token, {
     httpOnly: true,
     ...sec,
     path: cookiePath,
     maxAge: 3600
   })
 
-  if (data.refreshToken) {
-    cookies.set('session_refresh', data.refreshToken, {
+  if (detail.refresh_token) {
+    cookies.set('session_refresh', detail.refresh_token, {
       httpOnly: true,
       ...sec,
       path: cookiePath,
-      maxAge: 86400
+      maxAge: 3600 * 24 * 30
     })
   }
 
