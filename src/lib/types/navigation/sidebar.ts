@@ -1,9 +1,11 @@
 // src/lib/types/navigation.ts
-import type { MenuText } from './common'
+import type { m } from '$lib/i18n/messages'
+
+export type MenuTextKey = keyof typeof m
 
 export type SidebarChild = {
     id: string
-    text: MenuText
+    textKey: MenuTextKey
     url?: string
     children?: SidebarChild[]
 }
@@ -11,7 +13,7 @@ export type SidebarChild = {
 export type SidebarMenuHeader = {
     kind: 'header'
     id: string
-    text: MenuText
+    textKey: MenuTextKey
 }
 
 export type SidebarMenuDivider = {
@@ -22,7 +24,7 @@ export type SidebarMenuDivider = {
 export type SidebarMenuLink = {
     kind: 'link'
     id: string
-    text: MenuText
+    textKey: MenuTextKey
     icon?: string
     url?: string
     highlight?: boolean

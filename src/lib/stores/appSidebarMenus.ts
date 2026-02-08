@@ -1,27 +1,27 @@
+// src/lib/stores/appSidebarMenus.ts
 import { writable } from 'svelte/store'
 import type { SidebarMenu } from '$lib/types/navigation'
-import { m } from '$lib/i18n/messages'
 
 export const appSidebarMenus = writable<SidebarMenu[]>([
 	// ===== Navigation =====
 	{
 		kind: 'header',
 		id: 'nav',
-		text: () => m.navNavigation()
+		textKey: 'navNavigation'
 	},
 	{
 		kind: 'link',
 		id: 'dashboard',
 		url: '/dashboard',
 		icon: 'bi bi-cpu',
-		text: () => m.navDashboard()
+		textKey: 'navDashboard'
 	},
 	{
 		kind: 'link',
 		id: 'events',
 		url: '/events',
 		icon: 'bi bi-bar-chart',
-		text: () => m.navEvents()
+		textKey: 'navEvents'
 	},
 
 	// ===== Email =====
@@ -29,11 +29,11 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		kind: 'link',
 		id: 'email',
 		icon: 'bi bi-envelope',
-		text: () => m.navEmail(),
+		textKey: 'navEmail',
 		children: [
-			{ id: 'emailInbox', url: '/email/inbox', text: () => m.navEmailInbox() },
-			{ id: 'emailCompose', url: '/email/compose', text: () => m.navEmailCompose() },
-			{ id: 'emailDetail', url: '/email/detail', text: () => m.navEmailDetail() }
+			{ id: 'emailInbox', url: '/email/inbox', textKey: 'navEmailInbox' },
+			{ id: 'emailCompose', url: '/email/compose', textKey: 'navEmailCompose' },
+			{ id: 'emailDetail', url: '/email/detail', textKey: 'navEmailDetail' }
 		]
 	},
 
@@ -43,14 +43,14 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'header',
 		id: 'componentsHeader',
-		text: () => m.navComponents()
+		textKey: 'navComponents'
 	},
 	{
 		kind: 'link',
 		id: 'widgets',
 		url: '/widgets',
 		icon: 'bi bi-columns-gap',
-		text: () => m.navWidgets()
+		textKey: 'navWidgets'
 	},
 
 	// ===== AI =====
@@ -58,11 +58,11 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		kind: 'link',
 		id: 'ai',
 		icon: 'bi bi-stars',
-		text: () => m.navAiStudio(),
+		textKey: 'navAiStudio',
 		highlight: true,
 		children: [
-			{ id: 'aiChat', url: '/ai/chat', text: () => m.navAiChat() },
-			{ id: 'aiImage', url: '/ai/image-generator', text: () => m.navAiImage() }
+			{ id: 'aiChat', url: '/ai/chat', textKey: 'navAiChat' },
+			{ id: 'aiImage', url: '/ai/image-generator', textKey: 'navAiImage' }
 		]
 	},
 
@@ -71,13 +71,13 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		kind: 'link',
 		id: 'pos',
 		icon: 'bi bi-bag-check',
-		text: () => m.navPosSystem(),
+		textKey: 'navPosSystem',
 		children: [
-			{ id: 'posCustomer', url: '/pos/customer-order', text: () => m.navPosCustomer() },
-			{ id: 'posKitchen', url: '/pos/kitchen-order', text: () => m.navPosKitchen() },
-			{ id: 'posCounter', url: '/pos/counter-checkout', text: () => m.navPosCounter() },
-			{ id: 'posTable', url: '/pos/table-booking', text: () => m.navPosTable() },
-			{ id: 'posStock', url: '/pos/menu-stock', text: () => m.navPosStock() }
+			{ id: 'posCustomer', url: '/pos/customer-order', textKey: 'navPosCustomer' },
+			{ id: 'posKitchen', url: '/pos/kitchen-order', textKey: 'navPosKitchen' },
+			{ id: 'posCounter', url: '/pos/counter-checkout', textKey: 'navPosCounter' },
+			{ id: 'posTable', url: '/pos/table-booking', textKey: 'navPosTable' },
+			{ id: 'posStock', url: '/pos/menu-stock', textKey: 'navPosStock' }
 		]
 	},
 
@@ -87,34 +87,34 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'header',
 		id: 'usersHeader',
-		text: () => m.navUsers()
+		textKey: 'navUsers'
 	},
 	{
 		kind: 'link',
 		id: 'profile',
 		url: '/profile',
 		icon: 'bi bi-people',
-		text: () => m.navProfile()
+		textKey: 'navProfile'
 	},
 	{
 		kind: 'link',
 		id: 'calendar',
 		url: '/calendar',
 		icon: 'bi bi-calendar4',
-		text: () => m.navCalendar()
+		textKey: 'navCalendar'
 	},
 	{
 		kind: 'link',
 		id: 'settings',
 		url: '/settings',
 		icon: 'bi bi-gear',
-		text: () => m.navSettings()
+		textKey: 'navSettings'
 	},
 	{
 		kind: 'link',
 		id: 'helper',
 		url: '/helper',
 		icon: 'bi bi-gem',
-		text: () => m.navHelper()
+		textKey: 'navHelper'
 	}
 ])

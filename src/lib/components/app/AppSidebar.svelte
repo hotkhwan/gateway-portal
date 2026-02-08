@@ -1,3 +1,4 @@
+<!-- src/lib/components/app/AppSidebar.svelte -->
 <script lang="ts">
   import PerfectScrollbar from '$lib/components/plugins/PerfectScrollbar.svelte'
   import { m } from '$lib/i18n/messages'
@@ -16,17 +17,8 @@
 
   $: if ($navigating) hideMobileSidebar()
 
-  function renderText(text: string | (() => string)) {
-    return typeof text === 'function' ? text() : text
-  }
-
   function hasActiveChild(children?: SidebarChild[]) {
     return children?.some((c) => c.url === $page.url.pathname) ?? false
-  }
-
-  let openedMenuId: string | null = null
-  function toggleMenu(id: string) {
-    openedMenuId = openedMenuId === id ? null : id
   }
 
   function withBase(url?: string) {
@@ -34,16 +26,19 @@
     if (!url) return '#'
     return `${base}${url}`.replace(/\/+/g, '/')
   }
+
+  function t(key: keyof typeof m): string {
+    return (m[key] as () => string)()
+  }
 </script>
 
 <div id="sidebar" class="app-sidebar">
-  <!-- ✅ HUD expects this exact structure -->
   <PerfectScrollbar class="app-sidebar-content">
     <div class="menu">
       {#each $appSidebarMenus as menu (menu.id)}
         {#if menu.kind === 'header'}
           <div class="menu-header">
-            {renderText(menu.text)}
+            {t(menu.textKey)}
           </div>
         {:else if menu.kind === 'divider'}
           <div class="menu-divider"></div>
@@ -51,17 +46,10 @@
           <div
             class="menu-item"
             class:has-sub={!!menu.children}
-            class:expand={openedMenuId === menu.id}
             class:active={menu.url === $page.url.pathname ||
               hasActiveChild(menu.children)}
           >
-            <a
-              class="menu-link"
-              href={menu.children ? 'javascript:void(0)' : withBase(menu.url)}
-              on:click|preventDefault={() => {
-                if (menu.children) toggleMenu(menu.id)
-              }}
-            >
+            <a class="menu-link" href={menu.url ? withBase(menu.url) : '#'}>
               {#if menu.icon}
                 <span class="menu-icon">
                   <i class={menu.icon}></i>
@@ -72,7 +60,7 @@
               {/if}
 
               <span class="menu-text">
-                {renderText(menu.text)}
+                {t(menu.textKey)}
               </span>
 
               {#if menu.children}
@@ -93,7 +81,7 @@
                       on:click={hideMobileSidebar}
                     >
                       <span class="menu-text">
-                        {renderText(child.text)}
+                        {t(child.textKey)}
                       </span>
                     </a>
                   </div>
