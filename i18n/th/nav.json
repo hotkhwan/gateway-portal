@@ -1,9 +1,78 @@
 {
-  "navHome": "หน้าแรก",
+  "_comments_lang": "Language labels used in language switcher",
+  "langEn": "United States (English)",
+  "langTh": "Thai (ภาษาไทย)",
+
+  "_comments_nav": "ทอปเนวิเกชันป้ายกำกับ",
+  "landingHome": "AISOM",
+  "navNavigation": "การนำทาง",
+  "navHome": "หน้าหลัก",
   "navAbout": "เกี่ยวกับเรา",
   "navFeatures": "คุณสมบัติ",
-  "navPricing": "ราคา",
-  "navTestimonials": "เสียงจากลูกค้า",
-  "navBlog": "บล็อก",
-  "navContact": "ติดต่อเรา"
+  "navContact": "ติดต่อเรา",
+  "navDashboard": "แดชบอร์ด",
+  "navEvents": "กิจกรรม",
+  "navWidgets": "วิดเจ็ต",
+
+  "navEmail": "อีเมล",
+  "navEmailInbox": "กล่องขาเข้า",
+  "navEmailCompose": "เขียน",
+  "navEmailDetail": "รายละเอียด",
+
+  "navComponents": "คอมโพเนนต์",
+
+  "navAiStudio": "เอไอ สตูดิโอ",
+  "navAiChat": "เอไอ แชท",
+  "navAiImage": "เอไอ สร้างภาพ",
+
+  "navPosSystem": "ระบบ POS",
+  "navPosCustomer": "ระบบสั่งซื้อของลูกค้า",
+  "navPosKitchen": "ระบบครัว",
+  "navPosCounter": "เคาน์เตอร์ชำระเงิน",
+  "navPosTable": "ตารางจอง",
+  "navPosStock": "สต็อกเมนู",
+
+  "navUiKits": "UI Kits",
+  "navUiBootstrap": "บูตสแตรป",
+  "navUiButtons": "ปุ่ม",
+  "navUiCard": "การ์ด",
+  "navUiIcons": "ไอคอน",
+  "navUiModalNotifications": "โมดัล & การแจ้งเตือน",
+  "navUiTypography": "ตัวอักษร",
+  "navUiTabsAccordions": "แท็บ & แอคคอร์เดียน",
+
+  "navForms": "ฟอร์ม",
+  "navFormElements": "องค์ประกอบฟอร์ม",
+  "navFormPlugins": "ปลั๊กอินฟอร์ม",
+  "navFormWizards": "วิซาร์ด",
+
+  "navTables": "ตาราง",
+  "navTableElements": "องค์ประกอบตาราง",
+  "navTablePlugins": "ปลั๊กอินตาราง",
+
+  "navCharts": "ชาร์ต",
+  "navChartJs": "Chart.js",
+  "navChartApex": "ApexCharts",
+
+  "navMap": "แผนที่",
+  "navLandingPage": "หน้าหลัก",
+
+  "navUsers": "ผู้ใช้",
+  "navProfile": "โปรไฟล์",
+  "navCalendar": "ปฏิทิน",
+  "navSettings": "การตั้งค่า",
+  "navHelper": "ตัวช่วย",
+  "navLogout": "ออกจากระบบ",
+
+  "navDocumentation": "เอกสาร",
+
+  "landingGetStarted": "เริ่มใช้งาน",
+
+  "_comments_auth": "Auth buttons / labels",
+  "authSignin": "เข้าสู่ระบบ",
+
+  "_comments_public_test": "Public test page",
+  "testPageTitle": "หน้าทดสอบสาธารณะ",
+  "testPageDesc": "หน้านี้ควรเข้าถึงได้โดยไม่ต้องยืนยันตัวตน",
+  "testPageCta": "ไปที่แดชบอร์ด (ต้องล็อกอิน)"
 }

@@ -1,6 +1,5 @@
 <script>
   import { m } from '$lib/i18n/messages'
-  import { base } from '$app/paths'
   import {
     currentLocaleStore,
     initLocale,
@@ -23,12 +22,12 @@
     </button>
   </div>
 
-  <h1>{m.test_page_title()}</h1>
-  <p class="lead">{m.test_page_desc()}</p>
+  <h1>{m.documentationTitle()}</h1>
+  <p class="lead">{m.documentationOverview()}</p>
 
   <div class="mt-4">
-    <a href={`${base}/dashboard`} class="btn btn-primary btn-lg">
-      {m.test_page_cta()}
+    <a href="dashboard" class="btn btn-primary btn-lg">
+      {m.documentationPageDesc()}
     </a>
   </div>
 </div>

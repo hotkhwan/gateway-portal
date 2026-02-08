@@ -1,28 +1,34 @@
 {
+  "_comments_dashboard": "Dashboard page labels",
   "dashboardTitle": "Dashboard",
   "dashboardServerStats": "Server Stats",
   "dashboardTrafficAnalytics": "Traffic Analytics",
   "dashboardTopProducts": "Top Products",
   "dashboardActivityLog": "Activity Log",
 
+  "_comments_dashboard_table": "Tables",
   "dashboardTableCountry": "Country",
   "dashboardTableVisits": "Visits",
   "dashboardTablePct": "PCT%",
   "commonNoRecords": "No records found",
 
+  "_comments_dashboard_stats": "Stat blocks",
   "dashboardSiteVisitors": "Site Visitors",
   "dashboardStoreSales": "Store Sales",
   "dashboardNewMembers": "New Members",
   "dashboardBandwidth": "Bandwidth",
 
+  "_comments_dashboard_series": "Chart series titles",
   "dashboardSeriesVisitors": "Visitors",
   "dashboardSeriesSales": "Sales",
 
+  "_comments_dashboard_server": "Server chart labels",
   "dashboardMemoryUsage": "Memory Usage",
   "dashboardCpuUsage": "CPU Usage",
   "dashboardDiskUsage": "Disk Usage",
   "dashboardLastUpdated": "Last updated {value} min ago",
 
+  "_comments_dashboard_info": "Info lines",
   "dashboardMoreThanLastWeek": "{pct} more than last week",
   "dashboardNewVisitors": "{pct} new visitors",
   "dashboardBounceRate": "{pct} bounce rate",
@@ -33,6 +39,7 @@
   "dashboardFromTotalUsage": "{pct} from total usage",
   "dashboardPerVisit": "{size} per visit",
 
+  "_comments_dashboard_products": "Products table fields",
   "dashboardQty": "QTY",
   "dashboardRevenue": "Revenue",
   "dashboardProfit": "Profit"

@@ -29,7 +29,7 @@
     await import('lity')
     await import('lity/dist/lity.min.css')
 
-    setPageTitle(m.landing_page_title())
+    setPageTitle(m.landingPageTitle())
     $appOptions.appContentClass = 'p-0 pt-5 mt-4px'
     $appOptions.appSidebarHide = true
     $appOptions.appHeaderHide = true
@@ -65,7 +65,7 @@
         <span class="brand-img">
           <span class="brand-img-text text-theme">G</span>
         </span>
-        <span class="brand-text">{m.landing_home()}</span>
+        <span class="brand-text">{m.landingHome()}</span>
       </span>
     </a>
 
@@ -75,7 +75,7 @@
       >
         <div class="nav-item me-2">
           <a href="#home" aria-label="link" class="nav-link link-body-emphasis">
-            {m.nav_home()}
+            {m.navHome()}
           </a>
         </div>
         <div class="nav-item me-2">
@@ -84,7 +84,7 @@
             aria-label="link"
             class="nav-link link-body-emphasis"
           >
-            {m.nav_about()}
+            {m.navAbout()}
           </a>
         </div>
         <div class="nav-item me-2">
@@ -93,7 +93,7 @@
             aria-label="link"
             class="nav-link link-body-emphasis"
           >
-            {m.nav_features()}
+            {m.navFeatures()}
           </a>
         </div>
         <div class="nav-item me-2">
@@ -102,7 +102,7 @@
             aria-label="link"
             class="nav-link link-body-emphasis"
           >
-            {m.nav_contact()}
+            {m.navContact()}
           </a>
         </div>
       </div>
@@ -111,7 +111,7 @@
       href="dashboard"
       class="btn btn-outline-theme btn-sm fw-semibold text-uppercase px-2 py-1 fs-10px"
     >
-      {m.landing_get_started()}
+      {m.landingGetStarted()}
       <i class="fa fa-arrow-right ms-1"></i>
     </a>
   </div>
@@ -133,14 +133,14 @@
         <!-- BEGIN col-8 -->
         <div class="col-lg-6">
           <!-- BEGIN hero-title-desc -->
-          <h1 class="display-6 fw-600 mb-2 mt-4">{m.hero_title()}</h1>
+          <h1 class="display-6 fw-600 mb-2 mt-4">{m.heroTitle()}</h1>
 
           <div class="fs-18px text-body text-opacity-75 mb-4">
-            {m.hero_description_line1()}
+            {m.heroDescriptionLine1()}
             <span class="d-xl-inline d-none"><br /></span>
-            {m.hero_description_line2()}
+            {m.heroDescriptionLine2()}
             <span class="d-xl-inline d-none"><br /></span>
-            {m.hero_description_line3()}
+            {m.heroDescriptionLine3()}
           </div>
           <!-- END hero-title-desc -->
 
@@ -156,7 +156,7 @@
 
           <div class="mb-2">
             <a href="/" class="btn btn-lg btn-outline-white px-3">
-              {m.hero_primary_cta()}
+              {m.heroPrimaryCta()}
               <i class="fa fa-arrow-right ms-2 opacity-5"></i>
             </a>
           </div>
@@ -172,10 +172,10 @@
                 </div>
                 <div>
                   <div class="fw-500 mb-0 h3">
-                    {m.hero_stat_download_value()}
+                    {m.heroStatDownloadValue()}
                   </div>
                   <div class="fw-500 text-body text-opacity-75">
-                    {m.hero_stat_download_label()}
+                    {m.heroStatDownloadLabel()}
                   </div>
                 </div>
               </div>
@@ -188,10 +188,10 @@
                 </div>
                 <div>
                   <div class="fw-500 mb-0 h3">
-                    {m.hero_stat_version_value()}
+                    {m.heroStatVersionValue()}
                   </div>
                   <div class="fw-500 text-body text-opacity-75">
-                    {m.hero_stat_version_label()}
+                    {m.heroStatVersionLabel()}
                   </div>
                 </div>
               </div>
@@ -210,7 +210,7 @@
     >
       <img
         class="w-100 d-block shadow-lg"
-        alt={m.hero_mock_image_alt()}
+        alt={m.heroMockImageAlt()}
         src={asset('/img/landing/mockup-1.jpg')}
       />
     </div>
@@ -237,10 +237,10 @@
 <!-- BEGIN #about -->
 <div id="about" class="py-5 bg-component">
   <div class="container-xxl p-3 p-lg-5 text-center">
-    <h1 class="mb-3">{m.about_title()}</h1>
+    <h1 class="mb-3">{m.aboutTitle()}</h1>
     <p class="fs-16px text-body text-opacity-50 mb-5">
-      {m.about_description_line1()} <br />
-      {m.about_description_line2()}
+      {m.aboutDescriptionLine1()} <br />
+      {m.aboutDescriptionLine2()}
     </p>
 
     <div class="row text-start g-3 gx-lg-5 gy-lg-4">
@@ -251,8 +251,8 @@
           <Icon icon="solar:monitor-smartphone-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item1_title()}</h4>
-          <p class="mb-0">{m.about_item1_desc()}</p>
+          <h4>{m.aboutItem1Title()}</h4>
+          <p class="mb-0">{m.aboutItem1Desc()}</p>
         </div>
       </div>
 
@@ -263,8 +263,8 @@
           <Icon icon="solar:settings-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item2_title()}</h4>
-          <p class="mb-0">{m.about_item2_desc()}</p>
+          <h4>{m.aboutItem2Title()}</h4>
+          <p class="mb-0">{m.aboutItem2Desc()}</p>
         </div>
       </div>
 
@@ -275,8 +275,8 @@
           <Icon icon="solar:bolt-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item3_title()}</h4>
-          <p class="mb-0">{m.about_item3_desc()}</p>
+          <h4>{m.aboutItem3Title()}</h4>
+          <p class="mb-0">{m.aboutItem3Desc()}</p>
         </div>
       </div>
 
@@ -287,8 +287,8 @@
           <Icon icon="solar:lock-keyhole-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item4_title()}</h4>
-          <p class="mb-0">{m.about_item4_desc()}</p>
+          <h4>{m.aboutItem4Title()}</h4>
+          <p class="mb-0">{m.aboutItem4Desc()}</p>
         </div>
       </div>
 
@@ -299,8 +299,8 @@
           <Icon icon="solar:dialog-2-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item5_title()}</h4>
-          <p class="mb-0">{m.about_item5_desc()}</p>
+          <h4>{m.aboutItem5Title()}</h4>
+          <p class="mb-0">{m.aboutItem5Desc()}</p>
         </div>
       </div>
 
@@ -311,8 +311,8 @@
           <Icon icon="solar:help-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item6_title()}</h4>
-          <p class="mb-0">{m.about_item6_desc()}</p>
+          <h4>{m.aboutItem6Title()}</h4>
+          <p class="mb-0">{m.aboutItem6Desc()}</p>
         </div>
       </div>
 
@@ -323,8 +323,8 @@
           <Icon icon="solar:tuning-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item7_title()}</h4>
-          <p class="mb-0">{m.about_item7_desc()}</p>
+          <h4>{m.aboutItem7Title()}</h4>
+          <p class="mb-0">{m.aboutItem7Desc()}</p>
         </div>
       </div>
 
@@ -335,8 +335,8 @@
           <Icon icon="solar:widget-5-line-duotone" />
         </div>
         <div class="flex-1 ps-3">
-          <h4>{m.about_item8_title()}</h4>
-          <p class="mb-0">{m.about_item8_desc()}</p>
+          <h4>{m.aboutItem8Title()}</h4>
+          <p class="mb-0">{m.aboutItem8Desc()}</p>
         </div>
       </div>
     </div>
@@ -352,11 +352,11 @@
 <div id="features" class="py-5 position-relative">
   <div class="container-xxl p-3 p-lg-5 z-2 position-relative">
     <div class="text-center mb-5">
-      <h1 class="mb-3">{m.features_title()}</h1>
+      <h1 class="mb-3">{m.featuresTitle()}</h1>
       <p class="fs-16px text-body text-opacity-50 mb-5">
-        {m.features_description_line1()} <br />
-        {m.features_description_line2()} <br />
-        {m.features_description_line3()}
+        {m.featuresDescriptionLine1()} <br />
+        {m.featuresDescriptionLine2()} <br />
+        {m.featuresDescriptionLine3()}
       </p>
     </div>
 
@@ -376,7 +376,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item1_label()}
+          {m.featuresItem1Label()}
         </div>
       </div>
 
@@ -395,7 +395,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item2_label()}
+          {m.featuresItem2Label()}
         </div>
       </div>
 
@@ -414,7 +414,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item3_label()}
+          {m.featuresItem3Label()}
         </div>
       </div>
 
@@ -433,7 +433,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item4_label()}
+          {m.featuresItem4Label()}
         </div>
       </div>
 
@@ -452,7 +452,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item5_label()}
+          {m.featuresItem5Label()}
         </div>
       </div>
 
@@ -471,7 +471,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item6_label()}
+          {m.featuresItem6Label()}
         </div>
       </div>
 
@@ -490,7 +490,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item7_label()}
+          {m.featuresItem7Label()}
         </div>
       </div>
 
@@ -509,7 +509,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item8_label()}
+          {m.featuresItem8Label()}
         </div>
       </div>
 
@@ -528,7 +528,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item9_label()}
+          {m.featuresItem9Label()}
         </div>
       </div>
 
@@ -547,7 +547,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item10_label()}
+          {m.featuresItem10Label()}
         </div>
       </div>
 
@@ -566,7 +566,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item11_label()}
+          {m.featuresItem11Label()}
         </div>
       </div>
 
@@ -585,7 +585,7 @@
           />
         </a>
         <div class="text-center my-3 text-body fw-bold">
-          {m.features_item12_label()}
+          {m.featuresItem12Label()}
         </div>
       </div>
     </div>
@@ -600,11 +600,11 @@
 <!-- BEGIN #pricing -->
 <div id="pricing" class="py-5 text-body text-opacity-75">
   <div class="container-xxl p-3 p-lg-5">
-    <h1 class="mb-3 text-center">{m.pricing_title()}</h1>
+    <h1 class="mb-3 text-center">{m.pricingTitle()}</h1>
     <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-      {m.pricing_description_line1()} <br />
-      {m.pricing_description_line2()} <br />
-      {m.pricing_description_line3()}
+      {m.pricingDescriptionLine1()} <br />
+      {m.pricingDescriptionLine2()} <br />
+      {m.pricingDescriptionLine3()}
     </p>
 
     <div class="row g-3 py-3 gx-lg-5 pt-lg-5">
@@ -613,11 +613,11 @@
           <div class="card-body p-4 d-flex flex-column">
             <div class="d-flex align-items-center">
               <div class="flex-1">
-                <div class="h6 font-monospace">{m.pricing_plan1_name()}</div>
+                <div class="h6 font-monospace">{m.pricingPlan1Name()}</div>
                 <div class="h1 fw-semibold mb-0">
-                  {m.pricing_plan1_price()}
+                  {m.pricingPlan1Price()}
                   <small class="h6 fw-semibold text-body text-opacity-50">
-                    {m.pricing_per_month_suffix()}
+                    {m.pricingPerMonthSuffix()}
                   </small>
                 </div>
               </div>
@@ -636,9 +636,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_storage_label()}</span
+                    >{m.pricingStorageLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan1_storage()}</b>
+                  <b class="text-body">{m.pricingPlan1Storage()}</b>
                 </div>
               </div>
 
@@ -646,9 +646,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_bandwidth_label()}</span
+                    >{m.pricingBandwidthLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan1_bandwidth()}</b>
+                  <b class="text-body">{m.pricingPlan1Bandwidth()}</b>
                 </div>
               </div>
 
@@ -656,9 +656,18 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_gateway_label()}</span
+                    >{m.pricingGatewayLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan1_gateway()}</b>
+                  <b class="text-body">{m.pricingPlan1Gateway()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check fa-lg text-theme"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace small">{m.pricingSslLabel()}</span
+                  >
+                  <b class="text-body">{m.pricingPlan1Ssl()}</b>
                 </div>
               </div>
 
@@ -666,19 +675,18 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_ssl_label()}</span
+                    >{m.pricingSupportLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan1_ssl()}</b>
+                  <b class="text-body">{m.pricingPlan1Support()}</b>
                 </div>
               </div>
 
               <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check fa-lg text-theme"></i>
+                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
                 <div class="flex-1 ps-3">
-                  <span class="font-monospace small"
-                    >{m.pricing_support_label()}</span
+                  <span class="font-monospace small">{m.pricingSsoLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan1_support()}</b>
+                  <b class="text-body">{m.pricingPlan1Sso()}</b>
                 </div>
               </div>
 
@@ -686,19 +694,9 @@
                 <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_sso_label()}</span
+                    >{m.pricingAuditLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan1_sso()}</b>
-                </div>
-              </div>
-
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small"
-                    >{m.pricing_audit_label()}</span
-                  >
-                  <b class="text-body">{m.pricing_plan1_audit()}</b>
+                  <b class="text-body">{m.pricingPlan1Audit()}</b>
                 </div>
               </div>
             </div>
@@ -709,7 +707,7 @@
                 aria-label="link"
                 class="btn btn-outline-default btn-lg w-100 font-monospace"
               >
-                {m.pricing_cta_get_started()} <i class="fa fa-arrow-right"></i>
+                {m.pricingCtaGetStarted()} <i class="fa fa-arrow-right"></i>
               </a>
             </div>
           </div>
@@ -728,11 +726,11 @@
           <div class="card-body p-4 d-flex flex-column">
             <div class="d-flex align-items-center">
               <div class="flex-1">
-                <div class="h6 font-monospace">{m.pricing_plan2_name()}</div>
+                <div class="h6 font-monospace">{m.pricingPlan2Name()}</div>
                 <div class="h1 fw-semibold mb-0">
-                  {m.pricing_plan2_price()}
+                  {m.pricingPlan2Price()}
                   <small class="h6 fw-semibold text-body text-opacity-50">
-                    {m.pricing_per_month_suffix()}
+                    {m.pricingPerMonthSuffix()}
                   </small>
                 </div>
               </div>
@@ -751,9 +749,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_storage_label()}</span
+                    >{m.pricingStorageLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan2_storage()}</b>
+                  <b class="text-body">{m.pricingPlan2Storage()}</b>
                 </div>
               </div>
 
@@ -761,9 +759,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_bandwidth_label()}</span
+                    >{m.pricingBandwidthLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan2_bandwidth()}</b>
+                  <b class="text-body">{m.pricingPlan2Bandwidth()}</b>
                 </div>
               </div>
 
@@ -771,9 +769,18 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_gateway_label()}</span
+                    >{m.pricingGatewayLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan2_gateway()}</b>
+                  <b class="text-body">{m.pricingPlan2Gateway()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check fa-lg text-theme"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace small">{m.pricingSslLabel()}</span
+                  >
+                  <b class="text-body">{m.pricingPlan2Ssl()}</b>
                 </div>
               </div>
 
@@ -781,19 +788,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_ssl_label()}</span
+                    >{m.pricingSupportLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan2_ssl()}</b>
-                </div>
-              </div>
-
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check fa-lg text-theme"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small"
-                    >{m.pricing_support_label()}</span
-                  >
-                  <b class="text-body">{m.pricing_plan2_support()}</b>
+                  <b class="text-body">{m.pricingPlan2Support()}</b>
                 </div>
               </div>
 
@@ -801,15 +798,15 @@
                 <i class="fa fa-times fa-lg text-body text-opacity-25"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_audit_label()}</span
+                    >{m.pricingAuditLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan2_audit()}</b>
+                  <b class="text-body">{m.pricingPlan2Audit()}</b>
                 </div>
               </div>
             </div>
 
             <a href="/dashboard" class="btn btn-lg btn-outline-white px-3">
-              {m.pricing_cta_get_started()}
+              {m.pricingCtaGetStarted()}
               <i class="fa fa-arrow-right ms-2 opacity-5"></i>
             </a>
           </div>
@@ -829,12 +826,12 @@
             <div class="d-flex align-items-center">
               <div class="flex-1">
                 <div class="h6 font-monospace text-theme">
-                  {m.pricing_plan3_name()}
+                  {m.pricingPlan3Name()}
                 </div>
                 <div class="display-6 fw-bold mb-0 text-theme">
-                  {m.pricing_plan3_price()}
+                  {m.pricingPlan3Price()}
                   <small class="h6 text-body text-opacity-50"
-                    >{m.pricing_per_month_suffix()}</small
+                    >{m.pricingPerMonthSuffix()}</small
                   >
                 </div>
               </div>
@@ -853,9 +850,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >{m.pricing_storage_label()}</span
+                    >{m.pricingStorageLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan3_storage()}</b>
+                  <b class="text-body">{m.pricingPlan3Storage()}</b>
                 </div>
               </div>
 
@@ -863,9 +860,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >{m.pricing_bandwidth_label()}</span
+                    >{m.pricingBandwidthLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan3_bandwidth()}</b>
+                  <b class="text-body">{m.pricingPlan3Bandwidth()}</b>
                 </div>
               </div>
 
@@ -873,9 +870,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >{m.pricing_gateway_label()}</span
+                    >{m.pricingGatewayLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan3_gateway()}</b>
+                  <b class="text-body">{m.pricingPlan3Gateway()}</b>
                 </div>
               </div>
 
@@ -883,9 +880,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >{m.pricing_ssl_label()}</span
+                    >{m.pricingSslLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan3_ssl()}</b>
+                  <b class="text-body">{m.pricingPlan3Ssl()}</b>
                 </div>
               </div>
 
@@ -893,9 +890,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >{m.pricing_support_label()}</span
+                    >{m.pricingSupportLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan3_support()}</b>
+                  <b class="text-body">{m.pricingPlan3Support()}</b>
                 </div>
               </div>
 
@@ -903,9 +900,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >{m.pricing_sso_label()}</span
+                    >{m.pricingSsoLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan3_sso()}</b>
+                  <b class="text-body">{m.pricingPlan3Sso()}</b>
                 </div>
               </div>
 
@@ -913,9 +910,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace text-body text-opacity-50 small"
-                    >{m.pricing_audit_label()}</span
+                    >{m.pricingAuditLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan3_audit()}</b>
+                  <b class="text-body">{m.pricingPlan3Audit()}</b>
                 </div>
               </div>
             </div>
@@ -925,7 +922,7 @@
               aria-label="link"
               class="btn btn-theme btn-lg w-100 text-black font-monospace"
             >
-              {m.pricing_cta_get_started()} <i class="fa fa-arrow-right"></i>
+              {m.pricingCtaGetStarted()} <i class="fa fa-arrow-right"></i>
             </a>
           </div>
 
@@ -943,11 +940,11 @@
           <div class="card-body p-30px d-flex flex-column">
             <div class="d-flex align-items-center">
               <div class="flex-1">
-                <div class="h6 font-monospace">{m.pricing_plan4_name()}</div>
+                <div class="h6 font-monospace">{m.pricingPlan4Name()}</div>
                 <div class="display-6 fw-bold mb-0">
-                  {m.pricing_plan4_price()}
+                  {m.pricingPlan4Price()}
                   <small class="h6 text-body text-opacity-50"
-                    >{m.pricing_per_month_suffix()}</small
+                    >{m.pricingPerMonthSuffix()}</small
                   >
                 </div>
               </div>
@@ -966,9 +963,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_storage_label()}</span
+                    >{m.pricingStorageLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan4_storage()}</b>
+                  <b class="text-body">{m.pricingPlan4Storage()}</b>
                 </div>
               </div>
 
@@ -976,9 +973,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_bandwidth_label()}</span
+                    >{m.pricingBandwidthLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan4_bandwidth()}</b>
+                  <b class="text-body">{m.pricingPlan4Bandwidth()}</b>
                 </div>
               </div>
 
@@ -986,9 +983,18 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_gateway_label()}</span
+                    >{m.pricingGatewayLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan4_gateway()}</b>
+                  <b class="text-body">{m.pricingPlan4Gateway()}</b>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center mb-1">
+                <i class="fa fa-check fa-lg text-theme"></i>
+                <div class="flex-1 ps-3">
+                  <span class="font-monospace small">{m.pricingSslLabel()}</span
+                  >
+                  <b class="text-body">{m.pricingPlan4Ssl()}</b>
                 </div>
               </div>
 
@@ -996,19 +1002,9 @@
                 <i class="fa fa-check fa-lg text-theme"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_ssl_label()}</span
+                    >{m.pricingSupportLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan4_ssl()}</b>
-                </div>
-              </div>
-
-              <div class="d-flex align-items-center mb-1">
-                <i class="fa fa-check fa-lg text-theme"></i>
-                <div class="flex-1 ps-3">
-                  <span class="font-monospace small"
-                    >{m.pricing_support_label()}</span
-                  >
-                  <b class="text-body">{m.pricing_plan4_support()}</b>
+                  <b class="text-body">{m.pricingPlan4Support()}</b>
                 </div>
               </div>
 
@@ -1016,9 +1012,9 @@
                 <i class="fa fa-check text-theme fa-lg"></i>
                 <div class="flex-1 ps-3">
                   <span class="font-monospace small"
-                    >{m.pricing_audit_label()}</span
+                    >{m.pricingAuditLabel()}</span
                   >
-                  <b class="text-body">{m.pricing_plan4_audit()}</b>
+                  <b class="text-body">{m.pricingPlan4Audit()}</b>
                 </div>
               </div>
             </div>
@@ -1029,7 +1025,7 @@
                 aria-label="link"
                 class="btn btn-outline-default btn-lg w-100 font-monospace"
               >
-                {m.pricing_cta_get_started()} <i class="fa fa-arrow-right"></i>
+                {m.pricingCtaGetStarted()} <i class="fa fa-arrow-right"></i>
               </a>
             </div>
           </div>
@@ -1052,14 +1048,14 @@
 <!-- END divider -->
 
 <!-- BEGIN #testimonials -->
-<!-- <div id="testimonials" class="py-5 text-body text-opacity-75">
+<div id="testimonials" class="py-5 text-body text-opacity-75">
   <div class="container-xxl p-3 p-lg-5">
     <div class="text-center mb-5">
-      <h1 class="mb-3 text-center">{m.testimonials_title()}</h1>
+      <h1 class="mb-3 text-center">{m.testimonialsTitle()}</h1>
       <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-        {m.testimonials_description_line1()} <br />
-        {m.testimonials_description_line2()} <br />
-        {m.testimonials_description_line3()}
+        {m.testimonialsDescriptionLine1()} <br />
+        {m.testimonialsDescriptionLine2()} <br />
+        {m.testimonialsDescriptionLine3()}
       </p>
     </div>
 
@@ -1070,11 +1066,11 @@
             <img
               src={asset('/img/user/user.jpg')}
               class="rounded-circle me-3 w-50px"
-              alt={m.testimonials_client1_alt()}
+              alt={m.testimonialsClient1Alt()}
             />
             <div>
-              <h5 class="mb-0">{m.testimonials_client1_name()}</h5>
-              <small class="text-muted">{m.testimonials_client1_role()}</small>
+              <h5 class="mb-0">{m.testimonialsClient1Name()}</h5>
+              <small class="text-muted">{m.testimonialsClient1Role()}</small>
             </div>
           </div>
 
@@ -1083,7 +1079,7 @@
             <div class="p-3">
               <div
                 class="text-warning d-flex mb-2"
-                aria-label={m.testimonials_star_rating_label()}
+                aria-label={m.testimonialsStarRatingLabel()}
               >
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
@@ -1091,7 +1087,7 @@
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
               </div>
-              {m.testimonials_client1_quote()}
+              {m.testimonialsClient1Quote()}
             </div>
             <div class="d-flex align-items-end">
               <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
@@ -1113,11 +1109,11 @@
             <img
               src={asset('/img/user/user-7.jpg')}
               class="rounded-circle me-3 w-50px"
-              alt={m.testimonials_client2_alt()}
+              alt={m.testimonialsClient2Alt()}
             />
             <div>
-              <h5 class="mb-0">{m.testimonials_client2_name()}</h5>
-              <small class="text-muted">{m.testimonials_client2_role()}</small>
+              <h5 class="mb-0">{m.testimonialsClient2Name()}</h5>
+              <small class="text-muted">{m.testimonialsClient2Role()}</small>
             </div>
           </div>
 
@@ -1126,7 +1122,7 @@
             <div class="p-3">
               <div
                 class="text-warning d-flex mb-2"
-                aria-label={m.testimonials_star_rating_label()}
+                aria-label={m.testimonialsStarRatingLabel()}
               >
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
@@ -1134,7 +1130,7 @@
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
               </div>
-              {m.testimonials_client2_quote()}
+              {m.testimonialsClient2Quote()}
             </div>
             <div class="d-flex align-items-end">
               <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
@@ -1156,11 +1152,11 @@
             <img
               src={asset('/img/user/user-10.jpg')}
               class="rounded-circle me-3 w-50px"
-              alt={m.testimonials_client3_alt()}
+              alt={m.testimonialsClient3Alt()}
             />
             <div>
-              <h5 class="mb-0">{m.testimonials_client3_name()}</h5>
-              <small class="text-muted">{m.testimonials_client3_role()}</small>
+              <h5 class="mb-0">{m.testimonialsClient3Name()}</h5>
+              <small class="text-muted">{m.testimonialsClient3Role()}</small>
             </div>
           </div>
 
@@ -1169,7 +1165,7 @@
             <div class="p-3">
               <div
                 class="text-warning d-flex mb-2"
-                aria-label={m.testimonials_star_rating_label()}
+                aria-label={m.testimonialsStarRatingLabel()}
               >
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
@@ -1177,7 +1173,7 @@
                 <Icon icon="ic:baseline-star" class="fs-18px" />
                 <Icon icon="ic:baseline-star" class="fs-18px" />
               </div>
-              {m.testimonials_client3_quote()}
+              {m.testimonialsClient3Quote()}
             </div>
             <div class="d-flex align-items-end">
               <i class="fa fa-quote-right fa-2x text-body text-opacity-15"></i>
@@ -1194,7 +1190,7 @@
       </div>
     </div>
   </div>
-</div> -->
+</div>
 <!-- END #testimonials -->
 
 <!-- BEGIN divider -->
@@ -1202,14 +1198,14 @@
 <!-- END divider -->
 
 <!-- BEGIN #blog -->
-<!-- <div id="blog" class="py-5 bg-component">
+<div id="blog" class="py-5 bg-component">
   <div class="container-xxl p-3 p-lg-5">
     <div class="text-center mb-5">
-      <h1 class="mb-3 text-center">{m.blog_title()}</h1>
+      <h1 class="mb-3 text-center">{m.blogTitle()}</h1>
       <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-        {m.blog_description_line1()} <br />
-        {m.blog_description_line2()} <br />
-        {m.blog_description_line3()}
+        {m.blogDescriptionLine1()} <br />
+        {m.blogDescriptionLine2()} <br />
+        {m.blogDescriptionLine3()}
       </p>
     </div>
 
@@ -1219,7 +1215,7 @@
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-1.jpg')}
-              alt={m.blog_card1_alt()}
+              alt={m.blogCard1Alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1228,14 +1224,14 @@
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
               >
-                {m.blog_card1_tag()}
+                {m.blogCard1Tag()}
               </span>
             </div>
-            <h5>{m.blog_card1_title()}</h5>
-            <p>{m.blog_card1_desc()}</p>
+            <h5>{m.blogCard1Title()}</h5>
+            <p>{m.blogCard1Desc()}</p>
           </div>
           <div class="p-3 pt-0 text-body text-opacity-50">
-            {m.blog_card1_date()}
+            {m.blogCard1Date()}
           </div>
         </div>
       </div>
@@ -1245,7 +1241,7 @@
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-2.jpg')}
-              alt={m.blog_card2_alt()}
+              alt={m.blogCard2Alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1254,14 +1250,14 @@
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
               >
-                {m.blog_card2_tag()}
+                {m.blogCard2Tag()}
               </span>
             </div>
-            <h5>{m.blog_card2_title()}</h5>
-            <p>{m.blog_card2_desc()}</p>
+            <h5>{m.blogCard2Title()}</h5>
+            <p>{m.blogCard2Desc()}</p>
           </div>
           <div class="p-3 pt-0 text-body text-opacity-50">
-            {m.blog_card2_date()}
+            {m.blogCard2Date()}
           </div>
         </div>
       </div>
@@ -1271,7 +1267,7 @@
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-3.jpg')}
-              alt={m.blog_card3_alt()}
+              alt={m.blogCard3Alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1280,14 +1276,14 @@
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
               >
-                {m.blog_card3_tag()}
+                {m.blogCard3Tag()}
               </span>
             </div>
-            <h5>{m.blog_card3_title()}</h5>
-            <p>{m.blog_card3_desc()}</p>
+            <h5>{m.blogCard3Title()}</h5>
+            <p>{m.blogCard3Desc()}</p>
           </div>
           <div class="p-3 pt-0 text-body text-opacity-50">
-            {m.blog_card3_date()}
+            {m.blogCard3Date()}
           </div>
         </div>
       </div>
@@ -1297,7 +1293,7 @@
           <div class="card-body">
             <img
               src={asset('/img/landing/blog-4.jpg')}
-              alt={m.blog_card4_alt()}
+              alt={m.blogCard4Alt()}
               class="object-fit-cover h-200px w-100 d-block"
             />
           </div>
@@ -1306,14 +1302,14 @@
               <span
                 class="bg-theme bg-opacity-15 text-theme px-2 py-1 rounded small fw-bold"
               >
-                {m.blog_card4_tag()}
+                {m.blogCard4Tag()}
               </span>
             </div>
-            <h5>{m.blog_card4_title()}</h5>
-            <p>{m.blog_card4_desc()}</p>
+            <h5>{m.blogCard4Title()}</h5>
+            <p>{m.blogCard4Desc()}</p>
           </div>
           <div class="p-3 pt-0 text-body text-opacity-50">
-            {m.blog_card4_date()}
+            {m.blogCard4Date()}
           </div>
         </div>
       </div>
@@ -1325,11 +1321,11 @@
         aria-label="link"
         class="text-decoration-none text-body text-opacity-50 h6"
       >
-        {m.blog_see_more()} <i class="fa fa-arrow-right ms-3"></i>
+        {m.blogSeeMore()} <i class="fa fa-arrow-right ms-3"></i>
       </a>
     </div>
   </div>
-</div> -->
+</div>
 <!-- END #blog -->
 
 <!-- BEGIN divider -->
@@ -1340,37 +1336,37 @@
 <div id="contact" class="py-5 text-body text-opacity-75">
   <div class="container-xl p-3 p-lg-5">
     <div class="text-center mb-5">
-      <h1 class="mb-3 text-center">{m.contact_title()}</h1>
+      <h1 class="mb-3 text-center">{m.contactTitle()}</h1>
       <p class="fs-16px text-body text-opacity-50 text-center mb-0">
-        {m.contact_description_line1()} <br />
-        {m.contact_description_line2()} <br />
-        {m.contact_description_line3()}
+        {m.contactDescriptionLine1()} <br />
+        {m.contactDescriptionLine2()} <br />
+        {m.contactDescriptionLine3()}
       </p>
     </div>
 
     <div class="row gx-3 gx-lg-5">
       <div class="col-lg-6">
-        <h4>{m.contact_left_title()}</h4>
-        <p>{m.contact_left_paragraph1()}</p>
+        <h4>{m.contactLeftTitle()}</h4>
+        <p>{m.contactLeftParagraph1()}</p>
         <p>
-          <span class="fw-bolder">{m.contact_company_name()}</span><br />
-          {m.contact_address_line1()}<br />
-          {m.contact_address_line2()}<br /><br />
+          <span class="fw-bolder">{m.contactCompanyName()}</span><br />
+          {m.contactAddressLine1()}<br />
+          {m.contactAddressLine2()}<br /><br />
 
-          {m.contact_hours_line1()}<br />
-          {m.contact_hours_line2()}<br /><br />
+          {m.contactHoursLine1()}<br />
+          {m.contactHoursLine2()}<br /><br />
 
-          {m.contact_phone_label()}
+          {m.contactPhoneLabel()}
           <a href="#/" aria-label="link" class="text-theme"
-            >{m.contact_phone_value()}</a
+            >{m.contactPhoneValue()}</a
           ><br />
-          {m.contact_international_label()}
+          {m.contactInternationalLabel()}
           <a href="#/" aria-label="link" class="text-theme"
-            >{m.contact_international_value()}</a
+            >{m.contactInternationalValue()}</a
           ><br />
-          {m.contact_email_label()}
+          {m.contactEmailLabel()}
           <a href="#/" aria-label="link" class="text-theme"
-            >{m.contact_email_value()}</a
+            >{m.contactEmailValue()}</a
           >
         </p>
       </div>
@@ -1380,35 +1376,35 @@
           <div class="row gy-3 mb-3">
             <div class="col-6">
               <label class="form-label" for="">
-                {m.contact_form_first_name()} <span class="text-theme">*</span>
+                {m.contactFormFirstName()} <span class="text-theme">*</span>
               </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
 
             <div class="col-6">
               <label class="form-label" for="">
-                {m.contact_form_last_name()} <span class="text-theme">*</span>
+                {m.contactFormLastName()} <span class="text-theme">*</span>
               </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
 
             <div class="col-6">
               <label class="form-label" for="">
-                {m.contact_form_email()} <span class="text-theme">*</span>
+                {m.contactFormEmail()} <span class="text-theme">*</span>
               </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
 
             <div class="col-6">
               <label class="form-label" for="">
-                {m.contact_form_phone()} <span class="text-theme">*</span>
+                {m.contactFormPhone()} <span class="text-theme">*</span>
               </label>
               <input type="text" class="form-control form-control-lg fs-15px" />
             </div>
 
             <div class="col-12">
               <label class="form-label" for="">
-                {m.contact_form_message()} <span class="text-theme">*</span>
+                {m.contactFormMessage()} <span class="text-theme">*</span>
               </label>
               <textarea class="form-control form-control-lg fs-15px" rows="8"
               ></textarea>
@@ -1419,7 +1415,7 @@
                 type="submit"
                 class="btn btn-outline-theme btn-lg btn-block px-4 fs-15px"
               >
-                {m.contact_form_send()}
+                {m.contactFormSend()}
               </button>
             </div>
           </div>
@@ -1440,12 +1436,12 @@
     <div class="row gx-lg-5 gx-3 gy-lg-4 gy-3">
       <div class="col-lg-3 col-md-6">
         <div class="mb-3">
-          <div class="h2">{m.footer_brand_title()}</div>
+          <div class="h2">{m.footerBrandTitle()}</div>
         </div>
 
-        <p class="mb-4">{m.footer_brand_description()}</p>
+        <p class="mb-4">{m.footerBrandDescription()}</p>
 
-        <h5>{m.footer_follow_us()}</h5>
+        <h5>{m.footerFollowUs()}</h5>
         <div class="d-flex">
           <a href="#/" aria-label="link" class="me-2 text-body text-opacity-50">
             <i class="fab fa-lg fa-facebook fa-fw" aria-hidden="true"></i>
@@ -1466,7 +1462,7 @@
       </div>
 
       <div class="col-lg-3 col-md-6">
-        <h5>{m.footer_quick_links()}</h5>
+        <h5>{m.footerQuickLinks()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
@@ -1474,7 +1470,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_link_newsroom()}
+              {m.footerLinkNewsroom()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1483,7 +1479,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_link_company_info()}
+              {m.footerLinkCompanyInfo()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1492,7 +1488,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_link_careers()}
+              {m.footerLinkCareers()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1501,7 +1497,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_link_investors()}
+              {m.footerLinkInvestors()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1510,14 +1506,14 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_link_brand_resources()}
+              {m.footerLinkBrandResources()}
             </a>
           </li>
         </ul>
 
         <hr class="text-body text-opacity-50" />
 
-        <h5>{m.footer_services()}</h5>
+        <h5>{m.footerServices()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
@@ -1525,7 +1521,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_service_api_gateway()}
+              {m.footerServiceApiGateway()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1534,7 +1530,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_service_event_routing()}
+              {m.footerServiceEventRouting()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1543,7 +1539,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_service_authn_authz()}
+              {m.footerServiceAuthnAuthz()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1552,14 +1548,14 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_service_observability()}
+              {m.footerServiceObservability()}
             </a>
           </li>
         </ul>
       </div>
 
       <div class="col-lg-3 col-md-6">
-        <h5>{m.footer_resources()}</h5>
+        <h5>{m.footerResources()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
@@ -1567,7 +1563,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_resource_docs()}
+              {m.footerResourceDocs()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1576,7 +1572,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_resource_support()}
+              {m.footerResourceSupport()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1585,7 +1581,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_resource_faqs()}
+              {m.footerResourceFaqs()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1594,7 +1590,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_resource_community()}
+              {m.footerResourceCommunity()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1603,14 +1599,14 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_resource_tutorials()}
+              {m.footerResourceTutorials()}
             </a>
           </li>
         </ul>
 
         <hr class="text-body text-opacity-50" />
 
-        <h5>{m.footer_legal()}</h5>
+        <h5>{m.footerLegal()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
@@ -1618,7 +1614,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_legal_privacy()}
+              {m.footerLegalPrivacy()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1627,7 +1623,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_legal_terms()}
+              {m.footerLegalTerms()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1636,7 +1632,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_legal_cookies()}
+              {m.footerLegalCookies()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1645,14 +1641,14 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_legal_compliance()}
+              {m.footerLegalCompliance()}
             </a>
           </li>
         </ul>
       </div>
 
       <div class="col-lg-3 col-md-6">
-        <h5>{m.footer_help_center()}</h5>
+        <h5>{m.footerHelpCenter()}</h5>
         <ul class="list-unstyled">
           <li class="mb-3px">
             <a
@@ -1660,7 +1656,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_contact_form()}
+              {m.footerHelpContactForm()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1669,7 +1665,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_live_chat()}
+              {m.footerHelpLiveChat()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1678,7 +1674,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_portal()}
+              {m.footerHelpPortal()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1687,7 +1683,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_email_support()}
+              {m.footerHelpEmailSupport()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1696,7 +1692,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_technical_docs()}
+              {m.footerHelpTechnicalDocs()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1705,7 +1701,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_service_updates()}
+              {m.footerHelpServiceUpdates()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1714,7 +1710,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_developer_api()}
+              {m.footerHelpDeveloperApi()}
             </a>
           </li>
           <li class="mb-3px">
@@ -1723,7 +1719,7 @@
               aria-label="link"
               class="text-decoration-none text-body text-opacity-75"
             >
-              {m.footer_help_knowledge_base()}
+              {m.footerHelpKnowledgeBase()}
             </a>
           </li>
         </ul>
@@ -1735,7 +1731,7 @@
     <div class="row">
       <div class="col-sm-6 mb-3 mb-lg-0">
         <div class="footer-copyright-text">
-          {m.footer_copyright()}
+          {m.footerCopyright()}
         </div>
       </div>
 
@@ -1747,7 +1743,7 @@
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
-            {currentLocale === 'th' ? m.lang_th() : m.lang_en()}
+            {currentLocale === 'th' ? m.langTh() : m.langEn()}
           </button>
 
           <ul class="dropdown-menu dropdown-menu-end">
@@ -1757,7 +1753,7 @@
                 class="dropdown-item"
                 on:click={() => onChangeLanguage('en')}
               >
-                {m.lang_en()}
+                {m.langEn()}
               </button>
             </li>
             <li>
@@ -1766,7 +1762,7 @@
                 class="dropdown-item"
                 on:click={() => onChangeLanguage('th')}
               >
-                {m.lang_th()}
+                {m.langTh()}
               </button>
             </li>
           </ul>
@@ -1777,7 +1773,7 @@
           aria-label="link"
           class="text-decoration-none text-body text-opacity-50"
         >
-          {m.footer_sitemap()}
+          {m.footerSitemap()}
         </a>
       </div>
     </div>

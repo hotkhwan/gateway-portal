@@ -1,9 +1,78 @@
 {
+  "_comments_lang": "Language labels used in language switcher",
+  "langEn": "United States (English)",
+  "langTh": "Thai (ภาษาไทย)",
+
+  "_comments_nav": "Top navigation labels",
+  "landingHome": "AISOM",
+  "navNavigation": "Navigation",
   "navHome": "Home",
   "navAbout": "About",
   "navFeatures": "Features",
-  "navPricing": "Pricing",
-  "navTestimonials": "Testimonials",
-  "navBlog": "Blog",
-  "navContact": "Contact"
+  "navContact": "Contact",
+  "navDashboard": "Dashboard",
+  "navEvents": "Events",
+  "navWidgets": "Widgets",
+
+  "navEmail": "Email",
+  "navEmailInbox": "Inbox",
+  "navEmailCompose": "Compose",
+  "navEmailDetail": "Detail",
+
+  "navComponents": "Components",
+
+  "navAiStudio": "AI Studio",
+  "navAiChat": "AI Chat",
+  "navAiImage": "AI Image Generator",
+
+  "navPosSystem": "POS System",
+  "navPosCustomer": "Customer Order",
+  "navPosKitchen": "Kitchen Order",
+  "navPosCounter": "Counter Checkout",
+  "navPosTable": "Table Booking",
+  "navPosStock": "Menu Stock",
+
+  "navUiKits": "UI Kits",
+  "navUiBootstrap": "Bootstrap",
+  "navUiButtons": "Buttons",
+  "navUiCard": "Card",
+  "navUiIcons": "Icons",
+  "navUiModalNotifications": "Modal & Notifications",
+  "navUiTypography": "Typography",
+  "navUiTabsAccordions": "Tabs & Accordions",
+
+  "navForms": "Forms",
+  "navFormElements": "Form Elements",
+  "navFormPlugins": "Form Plugins",
+  "navFormWizards": "Wizards",
+
+  "navTables": "Tables",
+  "navTableElements": "Table Elements",
+  "navTablePlugins": "Table Plugins",
+
+  "navCharts": "Charts",
+  "navChartJs": "Chart.js",
+  "navChartApex": "ApexCharts",
+
+  "navMap": "Map",
+  "navLandingPage": "Landing Page",
+
+  "navUsers": "Users",
+  "navProfile": "Profile",
+  "navCalendar": "Calendar",
+  "navSettings": "Settings",
+  "navHelper": "Helper",
+  "navLogout": "Logout",
+
+  "navDocumentation": "Documentation",
+
+  "landingGetStarted": "Get started",
+
+  "_comments_auth": "Auth buttons / labels",
+  "authSignin": "Sign In",
+
+  "_comments_public_test": "Public test page",
+  "testPageTitle": "Public Test Page",
+  "testPageDesc": "This page should be accessible without authentication.",
+  "testPageCta": "Go to Dashboard (Protected)"
 }

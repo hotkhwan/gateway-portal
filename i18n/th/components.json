@@ -1,0 +1,39 @@
+{
+  "_comments_dcomponents": "ป้ายกำกับส่วนประกอบ",
+  "appFooterCopyright": "© {year} AISOM สงวนลิขสิทธิ์",
+
+  "themePanelToggleAriaLabel": "สลับแผงธีม",
+
+  "themePanelDisplayMode": "โหมดการแสดงผล",
+  "themePanelModeDark": "มืด",
+  "themePanelModeLight": "สว่าง",
+
+  "themePanelDirectionMode": "ทิศทางการแสดงผล",
+  "themePanelDirectionLtr": "ซ้ายไปขวา (LTR)",
+  "themePanelDirectionRtl": "ขวาไปซ้าย (RTL)",
+
+  "themePanelThemeColor": "สีธีม",
+  "themeColorPink": "ชมพู",
+  "themeColorRed": "แดง",
+  "themeColorOrange": "ส้ม",
+  "themeColorYellow": "เหลือง",
+  "themeColorLime": "เขียวมะนาว",
+  "themeColorGreen": "เขียว",
+  "themeColorDefault": "ค่าเริ่มต้น",
+  "themeColorCyan": "ฟ้าอมเขียว",
+  "themeColorBlue": "น้ำเงิน",
+  "themeColorPurple": "ม่วง",
+  "themeColorIndigo": "คราม",
+  "themeColorGray": "เทา",
+
+  "themePanelThemeCover": "พื้นหลังธีม",
+  "themeCoverDefault": "ค่าเริ่มต้น",
+  "themeCover2": "พื้นหลัง 2",
+  "themeCover3": "พื้นหลัง 3",
+  "themeCover4": "พื้นหลัง 4",
+  "themeCover5": "พื้นหลัง 5",
+  "themeCover6": "พื้นหลัง 6",
+  "themeCover7": "พื้นหลัง 7",
+  "themeCover8": "พื้นหลัง 8",
+  "themeCover9": "พื้นหลัง 9"
+}

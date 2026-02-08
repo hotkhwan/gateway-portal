@@ -1,15 +1,17 @@
+// src/lib/types/navigation.ts
+import type { MenuText } from './common'
+
 export type SidebarChild = {
     id: string
-    text: string
+    text: MenuText
     url?: string
-    action?: string
     children?: SidebarChild[]
 }
 
 export type SidebarMenuHeader = {
     kind: 'header'
     id: string
-    text: string
+    text: MenuText
 }
 
 export type SidebarMenuDivider = {
@@ -20,11 +22,15 @@ export type SidebarMenuDivider = {
 export type SidebarMenuLink = {
     kind: 'link'
     id: string
-    text: string
+    text: MenuText
     icon?: string
     url?: string
     highlight?: boolean
     children?: SidebarChild[]
 }
 
-export type SidebarMenu = SidebarMenuHeader | SidebarMenuDivider | SidebarMenuLink
+export type SidebarMenu =
+    | SidebarMenuHeader
+    | SidebarMenuDivider
+    | SidebarMenuLink
+

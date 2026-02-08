@@ -2,27 +2,7 @@
   import { onMount } from 'svelte'
   import { page } from '$app/stores'
   import { appTopNavMenus } from '$lib/stores/appTopNavMenus'
-
-  /* ======================================================
-   * Types (normalize store union)
-   * ====================================================== */
-  type TopNavBase = {
-    text: string
-    url?: string
-    icon?: string
-    highlight?: boolean
-  }
-
-  type TopNavChild = {
-    text: string
-    url: string
-    action?: string
-    children?: TopNavChild[]
-  }
-
-  type TopNavMenu = TopNavBase & {
-    children?: TopNavChild[]
-  }
+  import type { TopNavChild, TopNavMenu } from '$lib/types/navigation'
 
   /* ======================================================
    * Type guards

@@ -4,9 +4,11 @@ import path from 'path'
 const i18nRoot = path.resolve('i18n')
 const outDir = path.resolve('messages')
 
-const baseTemplate = {
-    $schema: 'https://inlang.com/schema/inlang-message-format'
-}
+
+const baseTemplate = {}
+// const baseTemplate = {
+//     $schema: 'https://inlang.com/schema/inlang-message-format'
+// }
 
 function readJson(filePath) {
     try {

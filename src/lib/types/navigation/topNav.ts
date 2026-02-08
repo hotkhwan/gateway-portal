@@ -1,9 +1,16 @@
 // src/lib/types/navigation/topNav.ts
-export interface TopNavMenu {
+import type { MenuText } from './common'
+
+export type TopNavChild = {
     url?: string
-    text: string
+    text: MenuText
+    children?: TopNavChild[]
+}
+
+export type TopNavMenu = {
+    url?: string
     icon?: string
-    action?: string
     highlight?: boolean
-    children?: TopNavMenu[]
+    text: MenuText
+    children?: TopNavChild[]
 }
