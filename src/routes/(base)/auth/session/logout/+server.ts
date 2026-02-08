@@ -4,14 +4,14 @@ import { json } from '@sveltejs/kit'
 // import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 const PUBLIC_APP_BASE_PATH = process.env.PUBLIC_APP_BASE_PATH || '';
 
-function normalizeBase(v?: string) {
-  if (!v || v === '/') return ''
-  return '/' + v.replace(/^\/+|\/+$/g, '')
-}
+// function normalizeBase(v?: string) {
+//   if (!v || v === '/') return ''
+//   return '/' + v.replace(/^\/+|\/+$/g, '')
+// }
 
 export const POST: RequestHandler = async ({ fetch, cookies }) => {
-  const base = normalizeBase(PUBLIC_APP_BASE_PATH)
-  const path = base || '/'
+  // const base = normalizeBase(PUBLIC_APP_BASE_PATH)
+  const path = '/'
 
   const accessToken = cookies.get('session_token')
   console.log('[logout] token exists =', Boolean(accessToken))

@@ -1,4 +1,4 @@
-// src/routes/auth/session/start/+server.ts
+// src/routes/(base)/auth/session/start/+server.ts
 import type { RequestHandler } from './$types'
 import { redirect } from '@sveltejs/kit'
 
@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
   cookies.set('return_to', returnTo, {
     httpOnly: true,
     sameSite: 'lax',
-    path: BASE_PATH || '/'
+    path: '/'
   })
 
   const issuer = must(PUBLIC_KC_ISSUER_URI, 'PUBLIC_KC_ISSUER_URI').replace(/\/+$/, '')
@@ -34,7 +34,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
   const clientId = must(PUBLIC_KC_CLIENT_FE_ID, 'PUBLIC_KC_CLIENT_FE_ID')
 
   const base = normalizeBase(PUBLIC_APP_BASE_PATH)
-  const cookiePath = base || '/'
+  const cookiePath = '/'
 
   const redirectUri = `${url.origin}${base}/auth/callback`
   const state = crypto.randomUUID()

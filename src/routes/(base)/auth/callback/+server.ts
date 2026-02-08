@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
   if (!code || !state) throw redirect(302, '/')
 
   const base = normalizeBase(publicAppBasePath)
-  const cookiePath = base || '/'
+  const cookiePath = '/'
 
   const savedState = cookies.get('kc_state')
   if (savedState !== state) {
