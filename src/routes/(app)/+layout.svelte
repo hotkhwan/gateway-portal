@@ -1,12 +1,22 @@
 <!-- src/routes/(app)/+layout.svelte -->
 <script lang="ts">
+  import { onMount } from 'svelte'
+  import { appOptions } from '$lib/stores/appOptions'
+
   import AppHeader from '$lib/components/app/AppHeader.svelte'
   import AppSidebar from '$lib/components/app/AppSidebar.svelte'
   import AppTopNav from '$lib/components/app/AppTopNav.svelte'
   import AppFooter from '$lib/components/app/AppFooter.svelte'
-  import { appOptions } from '$lib/stores/appOptions.js'
 
   let { children } = $props()
+
+  onMount(() => {
+    $appOptions.appHeaderHide = false
+    $appOptions.appSidebarHide = false
+    $appOptions.appTopNav = false
+    $appOptions.appFooter = true
+    $appOptions.appContentClass = ''
+  })
 </script>
 
 {#if !$appOptions.appHeaderHide}<AppHeader />{/if}

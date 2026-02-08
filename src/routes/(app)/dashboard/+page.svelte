@@ -1,6 +1,6 @@
 <!-- src/routes/(app)/dashboard/+page.svelte -->
 <script lang="ts">
-  import { base } from '$app/paths'
+  import { asset } from '$lib/utils/asset'
   import { onMount, onDestroy } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { appVariables } from '$lib/stores/appVariables.js'
@@ -548,7 +548,7 @@
 
     productData = [
       {
-        img: `${base}/img/dashboard/product-1.jpeg`,
+        img: asset('/img/dashboard/product-1.jpeg'),
         no: '1',
         sku: 'SKU90400',
         title: 'Huawei Smart Watch',
@@ -558,7 +558,7 @@
         profit: '$15,441'
       },
       {
-        img: `${base}/img/dashboard/product-2.jpeg`,
+        img: asset('/img/dashboard/product-2.jpeg'),
         no: '2',
         sku: 'SKU85999',
         title: 'Nike Shoes Black Version',
@@ -568,7 +568,7 @@
         profit: '$5,346'
       },
       {
-        img: `${base}/img/dashboard/product-3.jpeg`,
+        img: asset('/img/dashboard/product-3.jpeg'),
         no: '3',
         sku: 'SKU20400',
         title: 'White Sony PS4',
@@ -578,7 +578,7 @@
         profit: '$4,312'
       },
       {
-        img: `${base}/img/dashboard/product-4.jpeg`,
+        img: asset('/img/dashboard/product-4.jpeg'),
         no: '4',
         sku: 'SKU19299',
         title: 'Apple Watch Series 5',
@@ -588,7 +588,7 @@
         profit: '$2,912'
       },
       {
-        img: `${base}/img/dashboard/product-5.jpeg`,
+        img: asset('/img/dashboard/product-5.jpeg'),
         no: '5',
         sku: 'SKU19299',
         title: 'Black Nikon DSLR',

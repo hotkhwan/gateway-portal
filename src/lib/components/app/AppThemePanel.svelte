@@ -6,10 +6,7 @@
 
   import { appVariables, generateVariables } from '$lib/stores/appVariables'
   import { appOptions } from '$lib/stores/appOptions'
-  import { base } from '$app/paths'
-  import { createAssetHelper } from '$lib/utils'
-
-  const asset = createAssetHelper(base)
+  import { asset } from '$lib/utils/asset'
 
   type ThemeMode = 'dark' | 'light'
   type DirectionMode = 'ltr' | 'rtl'

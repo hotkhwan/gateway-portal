@@ -7,7 +7,7 @@
 		"dev": "set -a && source .env && set +a && bun run vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"start": "PORT=${PUBLIC_APP_BASE_PORT:-3000} bun build/index.js",
+		"start": "set -a && source .env && set +a && echo \"\n🚀 Server is ready at: http://localhost:${PUBLIC_APP_BASE_PORT:-3001}/aisom\n\" && PORT=${PUBLIC_APP_BASE_PORT:-3001} node build/index.js",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

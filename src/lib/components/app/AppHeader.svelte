@@ -2,12 +2,10 @@
 <script>
   import { appOptions } from '$lib/stores/appOptions'
   import { base } from '$app/paths'
-  import { createAssetHelper } from '$lib/utils'
+  import { asset } from '$lib/utils/asset'
   import { page } from '$app/stores'
   import { goto } from '$app/navigation'
   import { m } from '$lib/i18n/messages'
-
-  const asset = createAssetHelper(base)
 
   // Prefer user from server load (layout/+layout.server.ts) -> page.data.user
   $: userEmail =

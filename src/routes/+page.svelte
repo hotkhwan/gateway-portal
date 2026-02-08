@@ -3,8 +3,7 @@
   import { m } from '$lib/i18n/messages'
   import { onMount, onDestroy } from 'svelte'
   import Icon from '@iconify/svelte'
-  import { base } from '$app/paths'
-  import { createAssetHelper } from '$lib/utils'
+  import { asset } from '$lib/utils/asset'
 
   import { setPageTitle } from '$lib/utils/title'
   import { appOptions } from '$lib/stores/appOptions'
@@ -15,8 +14,6 @@
     changeLocale,
     type AppLocale
   } from '$lib/i18nClient/setLanguage'
-
-  const asset = createAssetHelper(base)
 
   // ✅ สำคัญ: init ตั้งแต่ก่อน render
   initLocale()
@@ -38,11 +35,11 @@
     $appOptions.appHeaderHide = true
   })
 
-  onDestroy(() => {
-    $appOptions.appContentClass = ''
-    $appOptions.appSidebarHide = true
-    $appOptions.appHeaderHide = true
-  })
+  // onDestroy(() => {
+  //   $appOptions.appContentClass = ''
+  //   $appOptions.appSidebarHide = true
+  //   $appOptions.appHeaderHide = true
+  // })
 </script>
 
 <!-- BEGIN #header -->
@@ -110,12 +107,12 @@
         </div>
       </div>
     </div>
-
     <a
-      href={`${base}/dashboard`}
+      href="dashboard"
       class="btn btn-outline-theme btn-sm fw-semibold text-uppercase px-2 py-1 fs-10px"
     >
-      {m.landing_get_started()} <i class="fa fa-arrow-right ms-1"></i>
+      {m.landing_get_started()}
+      <i class="fa fa-arrow-right ms-1"></i>
     </a>
   </div>
 </div>

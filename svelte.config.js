@@ -2,18 +2,21 @@ import adapter from '@sveltejs/adapter-node'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 
 const rawBase = process.env.PUBLIC_APP_BASE_PATH || ''
-const base = rawBase === '/' ? '' : rawBase.replace(/\/+$/, '')
+const basePath = rawBase === '/' ? '' : rawBase.replace(/\/+$/, '')
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	preprocess: vitePreprocess(),
+
 	kit: {
 		alias: {
 			$paraglide: 'src/paraglide'
 		},
+
 		adapter: adapter(),
+
 		paths: {
-			base
+			base: basePath
 		}
 	}
 }

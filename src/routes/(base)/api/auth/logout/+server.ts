@@ -1,14 +1,13 @@
-import { base } from '$app/paths'
-import { env } from '$env/dynamic/private'
-
+// src/routes/(base)/api/auth/logout/+server.ts
 export const POST = async ({ cookies, fetch }) => {
-  const cookiePath = base && base !== '' ? base : '/'
+  const cookiePath = '/'
 
   // read token BEFORE deleting cookies
   const sessionToken = cookies.get('session_token') || ''
 
-  const apiBase = (env.API_BASE || '').trim()
-  const backendLogoutPath = (env.AUTH_LOGOUT_PATH || '/auth/signout').trim()
+  // const apiBase = (env.API_BASE || '').trim()
+  const apiBase = process.env.API_BASE || ''
+  const backendLogoutPath = (process.env.AUTH_LOGOUT_PATH || '/auth/signout').trim()
 
   let backendResponse
   let backendBody: unknown = null
