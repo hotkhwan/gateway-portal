@@ -1,0 +1,40 @@
+{
+  "headerAriaDesktopToggler": "ปุ่มสลับเมนูเดสก์ท็อป",
+  "headerAriaMobileToggler": "ปุ่มสลับเมนูมือถือ",
+  "headerAriaBrandLink": "ไปยังหน้าแรก",
+  "headerAriaSearch": "เปิดการค้นหา",
+  "headerAriaCloseSearch": "ปิดการค้นหา",
+  "headerAriaAppLauncher": "เปิดตัวเรียกแอป",
+  "headerAriaNotifications": "เปิดการแจ้งเตือน",
+  "headerAriaNotificationItem": "รายการแจ้งเตือน",
+  "headerAriaSeeAll": "ดูการแจ้งเตือนทั้งหมด",
+  "headerAriaUserMenu": "เปิดเมนูผู้ใช้",
+
+  "headerAriaProfile": "ไปที่โปรไฟล์",
+  "headerAriaInbox": "ไปที่กล่องข้อความ",
+  "headerAriaCalendar": "ไปที่ปฏิทิน",
+  "headerAriaSettings": "ไปที่การตั้งค่า",
+  "headerAriaWidgets": "ไปที่วิดเจ็ต",
+  "headerAriaHelper": "ไปที่ผู้ช่วย",
+  "headerAriaPosSystem": "ไปที่ระบบ POS",
+  "headerAriaLogout": "ออกจากระบบ",
+
+  "headerBrandText": "HUD ADMIN",
+  "headerNotificationsTitle": "การแจ้งเตือน",
+  "headerSeeAll": "ดูทั้งหมด",
+  "headerNoRecordFound": "ไม่พบข้อมูล",
+  "headerProfileImageAlt": "รูปโปรไฟล์",
+
+  "headerProfile": "โปรไฟล์",
+  "headerInbox": "กล่องข้อความ",
+  "headerCalendar": "ปฏิทิน",
+  "headerSettings": "การตั้งค่า",
+  "headerWidgets": "วิดเจ็ต",
+  "headerHelper": "ผู้ช่วย",
+  "headerPosSystem": "ระบบ POS",
+
+  "headerLogout": "ออกจากระบบ",
+  "headerLoggingOut": "กำลังออกจากระบบ...",
+  "headerLogoutFailed": "ออกจากระบบไม่สำเร็จ แต่จะดำเนินการต่อ",
+  "headerSearchPlaceholder": "ค้นหาเมนู..."
+}

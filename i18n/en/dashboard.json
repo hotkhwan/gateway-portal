@@ -1,0 +1,39 @@
+{
+  "dashboardTitle": "Dashboard",
+  "dashboardServerStats": "Server Stats",
+  "dashboardTrafficAnalytics": "Traffic Analytics",
+  "dashboardTopProducts": "Top Products",
+  "dashboardActivityLog": "Activity Log",
+
+  "dashboardTableCountry": "Country",
+  "dashboardTableVisits": "Visits",
+  "dashboardTablePct": "PCT%",
+  "commonNoRecords": "No records found",
+
+  "dashboardSiteVisitors": "Site Visitors",
+  "dashboardStoreSales": "Store Sales",
+  "dashboardNewMembers": "New Members",
+  "dashboardBandwidth": "Bandwidth",
+
+  "dashboardSeriesVisitors": "Visitors",
+  "dashboardSeriesSales": "Sales",
+
+  "dashboardMemoryUsage": "Memory Usage",
+  "dashboardCpuUsage": "CPU Usage",
+  "dashboardDiskUsage": "Disk Usage",
+  "dashboardLastUpdated": "Last updated {value} min ago",
+
+  "dashboardMoreThanLastWeek": "{pct} more than last week",
+  "dashboardNewVisitors": "{pct} new visitors",
+  "dashboardBounceRate": "{pct} bounce rate",
+  "dashboardNewOrders": "{pct} new orders",
+  "dashboardConversionRate": "{pct} conversion rate",
+  "dashboardFromFacebook": "{pct} from facebook",
+  "dashboardFromYoutube": "{pct} from youtube",
+  "dashboardFromTotalUsage": "{pct} from total usage",
+  "dashboardPerVisit": "{size} per visit",
+
+  "dashboardQty": "QTY",
+  "dashboardRevenue": "Revenue",
+  "dashboardProfit": "Profit"
+}

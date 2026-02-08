@@ -598,7 +598,7 @@
 <!-- END divider -->
 
 <!-- BEGIN #pricing -->
-<!-- <div id="pricing" class="py-5 text-body text-opacity-75">
+<div id="pricing" class="py-5 text-body text-opacity-75">
   <div class="container-xxl p-3 p-lg-5">
     <h1 class="mb-3 text-center">{m.pricing_title()}</h1>
     <p class="fs-16px text-body text-opacity-50 text-center mb-0">
@@ -1044,7 +1044,7 @@
       </div>
     </div>
   </div>
-</div> -->
+</div>
 <!-- END #pricing -->
 
 <!-- BEGIN divider -->

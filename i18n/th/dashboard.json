@@ -1,0 +1,39 @@
+{
+  "dashboardTitle": "แดชบอร์ด",
+  "dashboardServerStats": "สถิติเซิร์ฟเวอร์",
+  "dashboardTrafficAnalytics": "การวิเคราะห์ทราฟฟิก",
+  "dashboardTopProducts": "สินค้ายอดนิยม",
+  "dashboardActivityLog": "บันทึกกิจกรรม",
+
+  "dashboardTableCountry": "ประเทศ",
+  "dashboardTableVisits": "จำนวนครั้ง",
+  "dashboardTablePct": "เปอร์เซ็นต์",
+  "commonNoRecords": "ไม่พบข้อมูล",
+
+  "dashboardSiteVisitors": "ผู้เข้าชมเว็บไซต์",
+  "dashboardStoreSales": "ยอดขาย",
+  "dashboardNewMembers": "สมาชิกใหม่",
+  "dashboardBandwidth": "แบนด์วิดท์",
+
+  "dashboardSeriesVisitors": "ผู้เข้าชม",
+  "dashboardSeriesSales": "ยอดขาย",
+
+  "dashboardMemoryUsage": "การใช้หน่วยความจำ",
+  "dashboardCpuUsage": "การใช้ CPU",
+  "dashboardDiskUsage": "การใช้ดิสก์",
+  "dashboardLastUpdated": "อัปเดตล่าสุด {value} นาทีที่แล้ว",
+
+  "dashboardMoreThanLastWeek": "มากกว่าสัปดาห์ที่แล้ว {pct}",
+  "dashboardNewVisitors": "ผู้เข้าชมใหม่ {pct}",
+  "dashboardBounceRate": "อัตราตีกลับ {pct}",
+  "dashboardNewOrders": "คำสั่งซื้อใหม่ {pct}",
+  "dashboardConversionRate": "อัตราการแปลง {pct}",
+  "dashboardFromFacebook": "จาก Facebook {pct}",
+  "dashboardFromYoutube": "จาก YouTube {pct}",
+  "dashboardFromTotalUsage": "จากการใช้งานทั้งหมด {pct}",
+  "dashboardPerVisit": "ต่อการเข้าชม {size}",
+
+  "dashboardQty": "จำนวน",
+  "dashboardRevenue": "รายได้",
+  "dashboardProfit": "กำไร"
+}
