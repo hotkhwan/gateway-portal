@@ -24,7 +24,9 @@ const publicExact = new Set([
   '/landing',
   '/robots.txt',
   '/favicon.ico',
-  '/test'
+  '/documentation',
+  '/error',
+  '/comming-soon'
 ])
 
 const publicPrefixes = [

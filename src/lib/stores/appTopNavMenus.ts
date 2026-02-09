@@ -29,8 +29,8 @@ export const appTopNavMenus = writable<TopNavMenu[]>([
 		icon: 'bi bi-stars',
 		text: () => m.navAiStudio(),
 		children: [
-			{ url: 'ai/chat', text: () => m.navAiChat() },
-			{ url: 'ai/image-generator', text: () => m.navAiImage() }
+			{ url: 'error', text: () => m.navAiChat() },
+			{ url: 'error', text: () => m.navAiImage() }
 		]
 	},
 	{

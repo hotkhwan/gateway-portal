@@ -19,7 +19,7 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'events',
-		url: 'events',
+		url: 'error',
 		icon: 'bi bi-bar-chart',
 		textKey: 'navEvents'
 	},
@@ -31,9 +31,9 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		icon: 'bi bi-envelope',
 		textKey: 'navEmail',
 		children: [
-			{ id: 'emailInbox', url: 'email/inbox', textKey: 'navEmailInbox' },
-			{ id: 'emailCompose', url: 'email/compose', textKey: 'navEmailCompose' },
-			{ id: 'emailDetail', url: 'email/detail', textKey: 'navEmailDetail' }
+			{ id: 'emailInbox', url: 'comingsoon', textKey: 'navEmailInbox' },
+			{ id: 'emailCompose', url: 'comingsoon', textKey: 'navEmailCompose' },
+			{ id: 'emailDetail', url: 'comingsoon', textKey: 'navEmailDetail' }
 		]
 	},
 
@@ -48,7 +48,7 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'widgets',
-		url: 'widgets',
+		url: 'comingsoon',
 		icon: 'bi bi-columns-gap',
 		textKey: 'navWidgets'
 	},
@@ -61,25 +61,25 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		textKey: 'navAiStudio',
 		highlight: true,
 		children: [
-			{ id: 'aiChat', url: 'ai/chat', textKey: 'navAiChat' },
-			{ id: 'aiImage', url: 'ai/image-generator', textKey: 'navAiImage' }
+			{ id: 'aiChat', url: 'comingsoon', textKey: 'navAiChat' },
+			{ id: 'aiImage', url: 'comingsoon', textKey: 'navAiImage' }
 		]
 	},
 
 	// ===== POS =====
-	{
-		kind: 'link',
-		id: 'pos',
-		icon: 'bi bi-bag-check',
-		textKey: 'navPosSystem',
-		children: [
-			{ id: 'posCustomer', url: 'pos/customer-order', textKey: 'navPosCustomer' },
-			{ id: 'posKitchen', url: 'pos/kitchen-order', textKey: 'navPosKitchen' },
-			{ id: 'posCounter', url: 'pos/counter-checkout', textKey: 'navPosCounter' },
-			{ id: 'posTable', url: 'pos/table-booking', textKey: 'navPosTable' },
-			{ id: 'posStock', url: 'pos/menu-stock', textKey: 'navPosStock' }
-		]
-	},
+	// {
+	// 	kind: 'link',
+	// 	id: 'pos',
+	// 	icon: 'bi bi-bag-check',
+	// 	textKey: 'navPosSystem',
+	// 	children: [
+	// 		{ id: 'posCustomer', url: 'pos/customer-order', textKey: 'navPosCustomer' },
+	// 		{ id: 'posKitchen', url: 'pos/kitchen-order', textKey: 'navPosKitchen' },
+	// 		{ id: 'posCounter', url: 'pos/counter-checkout', textKey: 'navPosCounter' },
+	// 		{ id: 'posTable', url: 'pos/table-booking', textKey: 'navPosTable' },
+	// 		{ id: 'posStock', url: 'pos/menu-stock', textKey: 'navPosStock' }
+	// 	]
+	// },
 
 	{ kind: 'divider', id: 'divUser' },
 
@@ -92,28 +92,28 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'profile',
-		url: 'profile',
+		url: 'comingsoon',
 		icon: 'bi bi-people',
 		textKey: 'navProfile'
 	},
 	{
 		kind: 'link',
 		id: 'calendar',
-		url: 'calendar',
+		url: 'comingsoon',
 		icon: 'bi bi-calendar4',
 		textKey: 'navCalendar'
 	},
 	{
 		kind: 'link',
 		id: 'settings',
-		url: 'settings',
+		url: 'comingsoon',
 		icon: 'bi bi-gear',
 		textKey: 'navSettings'
 	},
 	{
 		kind: 'link',
 		id: 'helper',
-		url: 'helper',
+		url: 'comingsoon',
 		icon: 'bi bi-gem',
 		textKey: 'navHelper'
 	}

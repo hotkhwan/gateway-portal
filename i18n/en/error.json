@@ -4,5 +4,11 @@
   "authErrorDesc": "An error occurred during the authentication process. Please try again.",
   "authErrorRetry": "Retry Login",
   "authErrorContactSupport": "Contact Support",
-  "authTryAgain": "Try Again"
+  "authTryAgain": "Try Again",
+  "error404Title": "404 - Page Not Found",
+  "error404Desc": "The page you are looking for does not exist or has been",
+  "errorPageTitle"  : "Error Page",
+  "errorOops": "Oops!",
+  "errorNotFoundDesc": "We can't seem to find the page you're looking for.",
+  "errorHelpfulLinks": "Here are some helpful links instead:"
 }
