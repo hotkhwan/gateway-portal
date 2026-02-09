@@ -1,5 +1,6 @@
-<script>
+<script lang="ts">
   import { m } from '$lib/i18n/messages'
+  import { goto } from '$app/navigation'
   import {
     currentLocaleStore,
     initLocale,
@@ -8,10 +9,13 @@
 
   initLocale()
   $: currentLocale = $currentLocaleStore
-
+  const base = import.meta.env.PUBLIC_APP_BASE_PATH ?? ''
   function toggleLanguage() {
     const newLang = $currentLocaleStore === 'en' ? 'th' : 'en'
     changeLocale(newLang)
+  }
+  function goHome() {
+    goto(base || '/')
   }
 </script>
 
@@ -25,9 +29,14 @@
   <h1>{m.documentationTitle()}</h1>
   <p class="lead">{m.documentationOverview()}</p>
 
-  <div class="mt-4">
-    <a href="/" class="btn btn-primary btn-lg">
-      {m.documentationPageDesc()}
-    </a>
+  <div>
+    <button
+      type="button"
+      onclick={goHome}
+      class="btn btn-outline-theme px-3 rounded-pill"
+    >
+      <i class="fa fa-arrow-left me-1 ms-n1"></i>
+      {m.documentPageDesc()}
+    </button>
   </div>
 </div>
