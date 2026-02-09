@@ -20,6 +20,7 @@
   "headerAriaLogout": "ออกจากระบบ",
 
   "_comments_header_text": "Header UI strings",
+  "headerBrand": "G",
   "headerBrandText": "AISOM",
   "headerNotificationsTitle": "การแจ้งเตือน",
   "headerSeeAll": "ดูทั้งหมด",

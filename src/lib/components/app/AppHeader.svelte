@@ -130,7 +130,7 @@
       class="brand-logo"
     >
       <span class="brand-img">
-        <span class="brand-img-text text-theme">H</span>
+        <span class="brand-img-text text-theme">{m.headerBrand()}</span>
       </span>
       <span class="brand-text">{m.headerBrandText()}</span>
     </a>

@@ -1,0 +1,8 @@
+{
+  "_comments_error": "ข้อความป้ายรหัสข้อผิดพลาด",
+  "authErrorTitle": "ข้อผิดพลาดการยืนยันตัวตน",
+  "authErrorDesc": "เกิดข้อผิดพลาดระหว่างกระบวนการยืนยันตัวตน กรุณาลองใหม่อีกครั้ง",
+  "authErrorRetry": "ลองใหม่",
+  "authErrorContactSupport": "ติดต่อฝ่ายสนับสนุน",
+  "authTryAgain": "ลองอีกครั้ง"
+}

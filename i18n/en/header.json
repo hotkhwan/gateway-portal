@@ -20,6 +20,7 @@
   "headerAriaLogout": "Logout",
 
   "_comments_header_text": "Header UI strings",
+  "headerBrand": "G",
   "headerBrandText": "AISOM",
   "headerNotificationsTitle": "NOTIFICATIONS",
   "headerSeeAll": "SEE ALL",

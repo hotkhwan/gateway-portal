@@ -26,7 +26,7 @@
   <p class="lead">{m.documentationOverview()}</p>
 
   <div class="mt-4">
-    <a href="dashboard" class="btn btn-primary btn-lg">
+    <a href="/" class="btn btn-primary btn-lg">
       {m.documentationPageDesc()}
     </a>
   </div>

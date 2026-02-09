@@ -36,7 +36,11 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
   const base = normalizeBase(PUBLIC_APP_BASE_PATH)
   const cookiePath = '/'
 
-  const redirectUri = `${url.origin}${base}/auth/callback`
+  const appOrigin =
+    process.env.PUBLIC_APP_ORIGIN ||
+    `${url.protocol}//${url.host}`
+
+  const redirectUri = `${appOrigin}${base}/auth/callback`
   const state = crypto.randomUUID()
 
   const authUrl = new URL(`${issuer}/realms/${realm}/protocol/openid-connect/auth`)

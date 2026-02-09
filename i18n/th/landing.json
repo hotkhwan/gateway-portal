@@ -10,7 +10,7 @@
   "heroDescriptionLine1": "รวม ingress, routing, auth และ observability สำหรับบริการ edge + cloud ของคุณไว้ในที่เดียว",
   "heroDescriptionLine2": "ออกแบบเพื่อโหลดสูง ด้วย latency ที่คุมได้ และ guardrail ที่ชัดเจน",
   "heroDescriptionLine3": "ส่งมอบเร็วขึ้น โดยไม่เสียความปลอดภัย ความตรวจสอบได้ และความชัดเจนด้านปฏิบัติการ",
-  "heroPrimaryCta": "สำรวจแพลตฟอร์ม Gateway",
+  "heroPrimaryCta": "ทำความรู้จักแพลตฟอร์ม",
   "heroStatDownloadValue": "1.8k+",
   "heroStatDownloadLabel": "สภาพแวดล้อมที่ติดตั้งใช้งาน",
   "heroStatVersionValue": "v1.0",

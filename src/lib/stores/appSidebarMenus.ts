@@ -12,14 +12,14 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'dashboard',
-		url: '/dashboard',
+		url: 'dashboard',
 		icon: 'bi bi-cpu',
 		textKey: 'navDashboard'
 	},
 	{
 		kind: 'link',
 		id: 'events',
-		url: '/events',
+		url: 'events',
 		icon: 'bi bi-bar-chart',
 		textKey: 'navEvents'
 	},
@@ -31,9 +31,9 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		icon: 'bi bi-envelope',
 		textKey: 'navEmail',
 		children: [
-			{ id: 'emailInbox', url: '/email/inbox', textKey: 'navEmailInbox' },
-			{ id: 'emailCompose', url: '/email/compose', textKey: 'navEmailCompose' },
-			{ id: 'emailDetail', url: '/email/detail', textKey: 'navEmailDetail' }
+			{ id: 'emailInbox', url: 'email/inbox', textKey: 'navEmailInbox' },
+			{ id: 'emailCompose', url: 'email/compose', textKey: 'navEmailCompose' },
+			{ id: 'emailDetail', url: 'email/detail', textKey: 'navEmailDetail' }
 		]
 	},
 
@@ -48,7 +48,7 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'widgets',
-		url: '/widgets',
+		url: 'widgets',
 		icon: 'bi bi-columns-gap',
 		textKey: 'navWidgets'
 	},
@@ -61,8 +61,8 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		textKey: 'navAiStudio',
 		highlight: true,
 		children: [
-			{ id: 'aiChat', url: '/ai/chat', textKey: 'navAiChat' },
-			{ id: 'aiImage', url: '/ai/image-generator', textKey: 'navAiImage' }
+			{ id: 'aiChat', url: 'ai/chat', textKey: 'navAiChat' },
+			{ id: 'aiImage', url: 'ai/image-generator', textKey: 'navAiImage' }
 		]
 	},
 
@@ -73,11 +73,11 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		icon: 'bi bi-bag-check',
 		textKey: 'navPosSystem',
 		children: [
-			{ id: 'posCustomer', url: '/pos/customer-order', textKey: 'navPosCustomer' },
-			{ id: 'posKitchen', url: '/pos/kitchen-order', textKey: 'navPosKitchen' },
-			{ id: 'posCounter', url: '/pos/counter-checkout', textKey: 'navPosCounter' },
-			{ id: 'posTable', url: '/pos/table-booking', textKey: 'navPosTable' },
-			{ id: 'posStock', url: '/pos/menu-stock', textKey: 'navPosStock' }
+			{ id: 'posCustomer', url: 'pos/customer-order', textKey: 'navPosCustomer' },
+			{ id: 'posKitchen', url: 'pos/kitchen-order', textKey: 'navPosKitchen' },
+			{ id: 'posCounter', url: 'pos/counter-checkout', textKey: 'navPosCounter' },
+			{ id: 'posTable', url: 'pos/table-booking', textKey: 'navPosTable' },
+			{ id: 'posStock', url: 'pos/menu-stock', textKey: 'navPosStock' }
 		]
 	},
 
@@ -92,28 +92,28 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'profile',
-		url: '/profile',
+		url: 'profile',
 		icon: 'bi bi-people',
 		textKey: 'navProfile'
 	},
 	{
 		kind: 'link',
 		id: 'calendar',
-		url: '/calendar',
+		url: 'calendar',
 		icon: 'bi bi-calendar4',
 		textKey: 'navCalendar'
 	},
 	{
 		kind: 'link',
 		id: 'settings',
-		url: '/settings',
+		url: 'settings',
 		icon: 'bi bi-gear',
 		textKey: 'navSettings'
 	},
 	{
 		kind: 'link',
 		id: 'helper',
-		url: '/helper',
+		url: 'helper',
 		icon: 'bi bi-gem',
 		textKey: 'navHelper'
 	}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { appTopNavMenus } from '$lib/stores/appTopNavMenus'
   import type { TopNavChild, TopNavMenu } from '$lib/types/navigation'
 
@@ -18,7 +18,7 @@
    * ====================================================== */
   function checkChildMenu(children?: TopNavChild[]): boolean {
     if (!children) return false
-    return children.some((c) => c.url === $page.url.pathname)
+    return children.some((c) => c.url === page.url.pathname)
   }
 
   function slideUp(elm: HTMLElement | null) {
@@ -214,7 +214,7 @@
       <div
         class="menu-item"
         class:has-sub={hasChildren(menu)}
-        class:active={menu.url === $page.url.pathname ||
+        class:active={menu.url === page.url.pathname ||
           checkChildMenu(menu.children)}
       >
         <a href={menu.url ?? '#'} class="menu-link">
@@ -240,7 +240,7 @@
               <div
                 class="menu-item"
                 class:has-sub={hasChildren(child)}
-                class:active={$page.url.pathname === child.url}
+                class:active={page.url.pathname === child.url}
               >
                 <a href={child.url} class="menu-link">
                   <span class="menu-text">{child.text}</span>

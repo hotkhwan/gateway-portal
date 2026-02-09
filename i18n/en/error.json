@@ -1,0 +1,8 @@
+{
+  "_comments_error": "Error code labels",
+  "authErrorTitle": "Authentication Error",
+  "authErrorDesc": "An error occurred during the authentication process. Please try again.",
+  "authErrorRetry": "Retry Login",
+  "authErrorContactSupport": "Contact Support",
+  "authTryAgain": "Try Again"
+}

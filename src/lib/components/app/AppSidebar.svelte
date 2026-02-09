@@ -4,9 +4,34 @@
   import { m } from '$lib/i18n/messages'
   import { appOptions } from '$lib/stores/appOptions'
   import { appSidebarMenus } from '$lib/stores/appSidebarMenus'
-  import { page, navigating } from '$app/stores'
-  import type { SidebarChild } from '$lib/types/navigation'
 
+  import { page } from '$app/state'
+  import { afterNavigate } from '$app/navigation'
+  import { onMount, tick } from 'svelte'
+
+  import type {
+    SidebarChild,
+    SidebarMenu,
+    SidebarMenuLink
+  } from '$lib/types/navigation'
+
+  /* -------------------------
+   * App init (enable animation)
+   * ------------------------- */
+  onMount(() => {
+    document.body.classList.add('app-init')
+  })
+
+  /* -------------------------
+   * Type guard
+   * ------------------------- */
+  function isLinkMenu(menu: SidebarMenu): menu is SidebarMenuLink {
+    return menu.kind === 'link'
+  }
+
+  /* -------------------------
+   * Mobile behavior
+   * ------------------------- */
   function mobileToggler() {
     $appOptions.appSidebarMobileToggled = !$appOptions.appSidebarMobileToggled
   }
@@ -15,10 +40,17 @@
     $appOptions.appSidebarMobileToggled = false
   }
 
-  $: if ($navigating) hideMobileSidebar()
+  // close sidebar after navigation (mobile)
+  afterNavigate(() => {
+    hideMobileSidebar()
+  })
 
+  /* -------------------------
+   * Helpers
+   * ------------------------- */
   function hasActiveChild(children?: SidebarChild[]) {
-    return children?.some((c) => c.url === $page.url.pathname) ?? false
+    const pathname = page.url.pathname
+    return children?.some((c) => c.url === pathname) ?? false
   }
 
   function withBase(url?: string) {
@@ -27,8 +59,45 @@
     return `${base}${url}`.replace(/\/+/g, '/')
   }
 
-  function t(key: keyof typeof m): string {
-    return (m[key] as () => string)()
+  function t(key: string): string {
+    const fn = (m as Record<string, unknown>)[key]
+    return typeof fn === 'function' ? (fn as () => string)() : key
+  }
+
+  /* -------------------------
+   * Expand / collapse logic
+   * ------------------------- */
+  let openedMenuId: string | null = null
+
+  async function toggleMenu(menu: SidebarMenu) {
+    if (!isLinkMenu(menu) || !menu.children?.length) return
+
+    openedMenuId = openedMenuId === menu.id ? null : menu.id
+
+    // PerfectScrollbar reflow
+    await tick()
+    window.dispatchEvent(new Event('resize'))
+  }
+
+  function onParentClick(e: MouseEvent, menu: SidebarMenu) {
+    if (isLinkMenu(menu) && menu.children?.length) {
+      e.preventDefault()
+      toggleMenu(menu)
+      return
+    }
+    hideMobileSidebar()
+  }
+
+  // auto-open parent when route is active
+  $: {
+    const activeParent = $appSidebarMenus.find(
+      (x): x is SidebarMenuLink =>
+        x.kind === 'link' && !!x.children?.length && hasActiveChild(x.children)
+    )
+
+    if (activeParent?.id) {
+      openedMenuId = activeParent.id
+    }
   }
 </script>
 
@@ -42,14 +111,19 @@
           </div>
         {:else if menu.kind === 'divider'}
           <div class="menu-divider"></div>
-        {:else}
+        {:else if isLinkMenu(menu)}
           <div
             class="menu-item"
-            class:has-sub={!!menu.children}
-            class:active={menu.url === $page.url.pathname ||
+            class:has-sub={!!menu.children?.length}
+            class:expand={openedMenuId === menu.id}
+            class:active={menu.url === page.url.pathname ||
               hasActiveChild(menu.children)}
           >
-            <a class="menu-link" href={menu.url ? withBase(menu.url) : '#'}>
+            <a
+              class="menu-link"
+              href={menu.url ? withBase(menu.url) : '#'}
+              on:click={(e) => onParentClick(e, menu)}
+            >
               {#if menu.icon}
                 <span class="menu-icon">
                   <i class={menu.icon}></i>
@@ -63,17 +137,19 @@
                 {t(menu.textKey)}
               </span>
 
-              {#if menu.children}
-                <span class="menu-caret"><b class="caret"></b></span>
+              {#if menu.children?.length}
+                <span class="menu-caret">
+                  <b class="caret"></b>
+                </span>
               {/if}
             </a>
 
-            {#if menu.children}
+            {#if menu.children?.length}
               <div class="menu-submenu">
                 {#each menu.children as child (child.id)}
                   <div
                     class="menu-item"
-                    class:active={$page.url.pathname === child.url}
+                    class:active={page.url.pathname === child.url}
                   >
                     <a
                       class="menu-link"
@@ -94,12 +170,13 @@
     </div>
 
     <div class="p-3 px-4 mt-auto">
+      <!-- href="https://seantheme.com/hud-svelte/documentation/" -->
       <a
-        href="https://seantheme.com/hud-svelte/documentation/"
+        href="documentation"
         target="_blank"
         class="btn d-block btn-outline-theme"
       >
-        <i class="fa fa-code-branch me-2"></i>
+        <i class="fa fa-book me-2"></i>
         {m.navDocumentation()}
       </a>
     </div>

@@ -1,7 +1,7 @@
 <!-- src/routes/+page.svelte -->
 <script lang="ts">
   import { m } from '$lib/i18n/messages'
-  import { onMount, onDestroy } from 'svelte'
+  import { onMount } from 'svelte'
   import Icon from '@iconify/svelte'
   import { asset } from '$lib/utils/asset'
 
@@ -63,7 +63,7 @@
     >
       <span class="brand-logo d-flex">
         <span class="brand-img">
-          <span class="brand-img-text text-theme">G</span>
+          <span class="brand-img-text text-theme">{m.headerBrand()}</span>
         </span>
         <span class="brand-text">{m.landingHome()}</span>
       </span>
@@ -155,7 +155,7 @@
           </div>
 
           <div class="mb-2">
-            <a href="/" class="btn btn-lg btn-outline-white px-3">
+            <a href="documentation" class="btn btn-lg btn-outline-white px-3">
               {m.heroPrimaryCta()}
               <i class="fa fa-arrow-right ms-2 opacity-5"></i>
             </a>
