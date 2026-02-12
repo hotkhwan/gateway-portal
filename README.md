@@ -1,6 +1,6 @@
 # AISOM Web Portal
 
-SvelteKit + Vite + Bun + Paraglide (inlang)
+SvelteKit + Vite + Bun + Paraglide (inlang) New
 รองรับ Multi-language (i18n) แบบ production-grade
 
 ---
