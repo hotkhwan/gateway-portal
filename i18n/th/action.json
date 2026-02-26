@@ -3,6 +3,7 @@
   "actionSubscribe": "สมัครรับข่าวสาร",
   "actionCreate": "สร้าง",
   "actionEdit": "แก้ไข",
+  "actionUpdate": "อัปเดต",
   "actionDelete": "ลบ",
   "actionSave": "บันทึก",
   "actionCancel": "ยกเลิก",
@@ -24,5 +25,10 @@
   "commonError": "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
   "commonSuccess": "บันทึกสำเร็จ",
   "commonDeleted": "ลบสำเร็จ",
-  "commonConfirmDelete": "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"
+  "commonConfirmDelete": "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?",
+  "showing": "แสดง ",
+  "of": " จาก ",
+  "usersSelected": "ผู้ใช้ที่เลือก",
+  "actionPrevPage": "หน้าก่อนหน้า",
+  "actionNextPage": "หน้าถัดไป"
 }

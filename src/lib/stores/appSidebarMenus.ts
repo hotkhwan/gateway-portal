@@ -38,6 +38,7 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		icon: 'bi bi-diagram-3',
 		textKey: 'navTenancy',
 		children: [
+			{ id: 'orgUsers', url: 'orgs/users', textKey: 'orgUsersTitle' },
 			{ id: 'orgUnits', url: 'orgs/units', textKey: 'navOrgUnits' },
 			{ id: 'orgTargets', url: 'orgs/targets', textKey: 'navOrgTargets' },
 			{ id: 'orgPermissions', url: 'orgs/permissions', textKey: 'navOrgPermissions' },
@@ -45,49 +46,9 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		]
 	},
 
-	// ===== Email =====
-	{
-		kind: 'link',
-		id: 'email',
-		icon: 'bi bi-envelope',
-		textKey: 'navEmail',
-		children: [
-			{ id: 'emailInbox', url: 'comingsoon', textKey: 'navEmailInbox' },
-			{ id: 'emailCompose', url: 'comingsoon', textKey: 'navEmailCompose' },
-			{ id: 'emailDetail', url: 'comingsoon', textKey: 'navEmailDetail' }
-		]
-	},
+		{ kind: 'divider', id: 'divMain' },
 
-	{ kind: 'divider', id: 'divMain' },
-
-	// ===== Components =====
-	{
-		kind: 'header',
-		id: 'componentsHeader',
-		textKey: 'navComponents'
-	},
-	{
-		kind: 'link',
-		id: 'widgets',
-		url: 'comingsoon',
-		icon: 'bi bi-columns-gap',
-		textKey: 'navWidgets'
-	},
-
-	// ===== AI =====
-	{
-		kind: 'link',
-		id: 'ai',
-		icon: 'bi bi-stars',
-		textKey: 'navAiStudio',
-		highlight: true,
-		children: [
-			{ id: 'aiChat', url: 'comingsoon', textKey: 'navAiChat' },
-			{ id: 'aiImage', url: 'comingsoon', textKey: 'navAiImage' }
-		]
-	},
-
-	// ===== POS =====
+	// ===== User =====
 	// {
 	// 	kind: 'link',
 	// 	id: 'pos',
@@ -116,13 +77,6 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		url: 'comingsoon',
 		icon: 'bi bi-people',
 		textKey: 'navProfile'
-	},
-	{
-		kind: 'link',
-		id: 'calendar',
-		url: 'comingsoon',
-		icon: 'bi bi-calendar4',
-		textKey: 'navCalendar'
 	},
 	{
 		kind: 'link',

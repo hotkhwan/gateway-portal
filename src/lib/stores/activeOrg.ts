@@ -1,6 +1,7 @@
 // src/lib/stores/activeOrg.ts
 import { writable, derived } from 'svelte/store'
 import type { Org } from '$lib/types/org'
+import { updateOrg } from '$lib/api/org'
 
 const STORAGE_KEY = 'activeOrgId'
 
@@ -32,7 +33,16 @@ export const activeOrg = derived(
     $orgList.find((o) => o.id === $activeOrgId) ?? null
 )
 
-export function setActiveOrg(id: string | null) {
+export async function setActiveOrg(id: string | null) {
+  if (id) {
+    try {
+      // Call PATCH /orgs/:id with isActive=true
+      await updateOrg(id, { isActive: true })
+    } catch (e) {
+      console.error('Failed to set active org:', e)
+      // Continue with local state update even if API fails
+    }
+  }
   activeOrgId.set(id)
 }
 

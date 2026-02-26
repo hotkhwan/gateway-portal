@@ -3,6 +3,7 @@
   "actionSubscribe": "Subscribe",
   "actionCreate": "Create",
   "actionEdit": "Edit",
+  "actionUpdate": "Update",
   "actionDelete": "Delete",
   "actionSave": "Save",
   "actionCancel": "Cancel",
@@ -24,5 +25,10 @@
   "commonError": "An error occurred. Please try again.",
   "commonSuccess": "Saved successfully.",
   "commonDeleted": "Deleted successfully.",
-  "commonConfirmDelete": "Are you sure you want to delete this item?"
+  "commonConfirmDelete": "Are you sure you want to delete this item?",
+  "showing": "Showing ",
+  "of": " of ",
+  "usersSelected": "users selected",
+  "actionPrevPage": "Previous page",
+  "actionNextPage": "Next page"
 }

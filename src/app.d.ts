@@ -15,6 +15,19 @@ declare global {
       }
     }
   }
+
+  namespace SvelteKit {
+    interface Platform {}
+  }
+
+  interface ImportMetaEnv {
+    readonly PUBLIC_APP_BASE_PATH?: string
+    readonly PUBLIC_APP_BASE_PORT?: string
+  }
+
+  interface ImportMeta {
+    readonly env: ImportMetaEnv
+  }
 }
 
 export { }

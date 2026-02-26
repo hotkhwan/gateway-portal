@@ -1,7 +1,8 @@
 // src/lib/api/permission.ts
 import type { ApiResponse, TargetPermissionProfile, OrgUnitRelation } from '$lib/types/org'
 
-const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '').replace(/\/$/, '')
+// Client-side ใช้ import.meta.env.PUBLIC_*
+const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')
 const BASE = `${APP_BASE}/api`
 
 async function apiFetch<T>(

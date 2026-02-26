@@ -8,6 +8,12 @@ const basePath = rawBase === '/' ? '' : rawBase.replace(/\/+$/, '')
 const config = {
 	preprocess: vitePreprocess(),
 
+	vite: {
+		define: {
+			'import.meta.env.PUBLIC_APP_BASE_PATH': JSON.stringify(rawBase)
+		}
+	},
+
 	kit: {
 		alias: {
 			$paraglide: 'src/paraglide'

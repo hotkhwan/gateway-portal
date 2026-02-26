@@ -152,55 +152,6 @@
 
   <!-- BEGIN menu -->
   <div class="menu">
-    <!-- Org Switcher -->
-    {#if $orgList.length > 0}
-      <div class="menu-item dropdown">
-        <a
-          href="#/"
-          aria-label={m.orgSwitchLabel()}
-          data-bs-toggle="dropdown"
-          data-bs-display="static"
-          class="menu-link d-flex align-items-center gap-1"
-        >
-          <i class="bi bi-building nav-icon opacity-75"></i>
-          <span
-            class="d-none d-sm-inline small text-truncate"
-            style="max-width:120px"
-          >
-            {$activeOrg?.name ?? m.orgSwitchPlaceholder()}
-          </span>
-          <i class="bi bi-chevron-down fs-10px opacity-50"></i>
-        </a>
-        <div
-          class="dropdown-menu dropdown-menu-end mt-1 fs-11px"
-          style="min-width:200px"
-        >
-          <h6 class="dropdown-header fs-10px mb-1">{m.orgSwitchLabel()}</h6>
-          <div class="dropdown-divider mt-1"></div>
-          {#each $orgList as org}
-            <button
-              type="button"
-              class="dropdown-item d-flex align-items-center gap-2"
-              class:fw-bold={$activeOrg?.id === org.id}
-              onclick={() => setActiveOrg(org.id)}
-            >
-              {#if $activeOrg?.id === org.id}
-                <i class="bi bi-check-circle-fill text-theme"></i>
-              {:else}
-                <i class="bi bi-circle text-inverse text-opacity-25"></i>
-              {/if}
-              <span class="flex-grow-1">{org.name}</span>
-            </button>
-          {/each}
-          <div class="dropdown-divider"></div>
-          <a href={resolve('/orgs')} class="dropdown-item small">
-            <i class="bi bi-sliders me-2"></i>
-            {m.orgTitle()}
-          </a>
-        </div>
-      </div>
-    {/if}
-
     <div class="menu-item dropdown">
       <a
         href="#/"
@@ -228,21 +179,6 @@
         <div class="row row-grid gx-0">
           <div class="col-4">
             <a
-              href={resolve('/email/inbox')}
-              aria-label={m.headerAriaInbox()}
-              class="dropdown-item text-decoration-none p-3 bg-none"
-            >
-              <div class="position-relative">
-                <i
-                  class="bi bi-circle-fill position-absolute text-theme top-0 mt-n2 me-n2 fs-6px d-block text-center w-100"
-                ></i>
-                <i class="bi bi-envelope h2 opacity-5 d-block my-1"></i>
-              </div>
-              <div class="fw-500 fs-10px text-inverse">{m.headerInbox()}</div>
-            </a>
-          </div>
-          <div class="col-4">
-            <a
               href={resolve('/pos/customer-order')}
               aria-label={m.headerAriaPosSystem()}
               class="dropdown-item text-decoration-none p-3 bg-none"
@@ -255,23 +191,6 @@
               </div>
             </a>
           </div>
-          <div class="col-4">
-            <a
-              href={resolve('/calendar')}
-              aria-label={m.headerAriaCalendar()}
-              class="dropdown-item text-decoration-none p-3 bg-none"
-            >
-              <div>
-                <i class="bi bi-calendar4 h2 opacity-5 d-block my-1"></i>
-              </div>
-              <div class="fw-500 fs-10px text-inverse">
-                {m.headerCalendar()}
-              </div>
-            </a>
-          </div>
-        </div>
-
-        <div class="row row-grid gx-0">
           <div class="col-4">
             <a
               href={resolve('/helper')}
@@ -301,6 +220,9 @@
               </div>
             </a>
           </div>
+        </div>
+
+        <div class="row row-grid gx-0">
           <div class="col-4">
             <a
               href={resolve('/widgets')}
@@ -403,24 +325,6 @@
         >
           {m.headerProfile()}
           <i class="bi bi-person-circle ms-auto text-theme fs-16px my-n1"></i>
-        </a>
-
-        <a
-          aria-label={m.headerAriaInbox()}
-          class="dropdown-item d-flex align-items-center"
-          href={resolve('/email/inbox')}
-        >
-          {m.headerInbox()}
-          <i class="bi bi-envelope ms-auto text-theme fs-16px my-n1"></i>
-        </a>
-
-        <a
-          aria-label={m.headerAriaCalendar()}
-          class="dropdown-item d-flex align-items-center"
-          href={resolve('/calendar')}
-        >
-          {m.headerCalendar()}
-          <i class="bi bi-calendar ms-auto text-theme fs-16px my-n1"></i>
         </a>
 
         <a

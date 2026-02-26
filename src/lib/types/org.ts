@@ -103,3 +103,25 @@ export interface PaginatedResponse<T> {
   page: number
   limit: number
 }
+
+// ────────────────────────────────────────────
+// Org Members
+// ────────────────────────────────────────────
+export type OrgMemberRole = 'admin' | 'member'
+
+export interface OrgMember {
+  userId: string
+  email?: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  role: OrgMemberRole
+  enabled: boolean
+  createdAt: string
+  joinedAt?: string
+}
+
+export interface OrgInviteUser {
+  userId: string
+  role: OrgMemberRole
+}

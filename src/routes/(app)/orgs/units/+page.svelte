@@ -34,15 +34,45 @@
   let deleteLoading = $state(false)
 
   // Flatten tree for parent selector
-  function flattenTree(nodes: OrgUnit[], depth = 0): Array<{ unit: OrgUnit; depth: number }> {
-    const result: Array<{ unit: OrgUnit; depth: number }> = []
+  function flattenTree(nodes: OrgUnit[], depth = 0, parent: OrgUnit | null = null): Array<{ unit: OrgUnit; depth: number; parent: OrgUnit | null }> {
+    const result: Array<{ unit: OrgUnit; depth: number; parent: OrgUnit | null }> = []
     for (const node of nodes) {
-      result.push({ unit: node, depth })
+      result.push({ unit: node, depth, parent })
       if (node.children?.length) {
-        result.push(...flattenTree(node.children, depth + 1))
+        result.push(...flattenTree(node.children, depth + 1, node))
       }
     }
     return result
+  }
+
+  // Get parent unit name for display
+  function getParentPath(unit: OrgUnit): string {
+    const path: string[] = []
+    let current = unit
+    // Simple lookup by tree traversal to find parent
+    function findParentInTree(nodes: OrgUnit[], targetId: string): OrgUnit | null {
+      for (const node of nodes) {
+        if (node.id === targetId) return null
+        if (node.children?.length) {
+          const found = findParentInTree(node.children, targetId)
+          if (found) return found
+          return node
+        }
+      }
+      return null
+    }
+
+    while (current) {
+      const parent = findParentInTree(tree, current.id)
+      if (parent) {
+        path.unshift(parent.name)
+        current = parent
+      } else {
+        break
+      }
+    }
+
+    return path.length > 0 ? path.join(' > ') : ''
   }
 
   async function loadTree() {
@@ -51,12 +81,18 @@
     loading = true
     error = null
     try {
-      tree = await getUnitTree(orgId)
+      const result = await getUnitTree(orgId)
+      tree = result
     } catch (e: unknown) {
       error = (e as { message?: string })?.message ?? m.commonError()
     } finally {
       loading = false
     }
+  }
+
+  // Get flattened tree with parent info for rendering
+  function getFlattenedTree(): Array<{ unit: OrgUnit; depth: number; parent: OrgUnit | null }> {
+    return flattenTree(tree, 0, null)
   }
 
   function openCreate(parent: OrgUnit | null = null) {

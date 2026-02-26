@@ -1,7 +1,8 @@
 // src/lib/api/orgunit.ts
 import type { ApiResponse, OrgUnit, OrgUnitMember } from '$lib/types/org'
 
-const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '').replace(/\/$/, '')
+// Client-side ใช้ import.meta.env.PUBLIC_*
+const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')
 const BASE = `${APP_BASE}/api`
 
 async function apiFetch<T>(
@@ -26,7 +27,9 @@ async function apiFetch<T>(
 // Org Units
 // ────────────────────────────────────────────
 export async function getUnitTree(orgId: string): Promise<OrgUnit[]> {
+  console.log('🔍 [getUnitTree] calling with orgId:', orgId)
   const r = await apiFetch<OrgUnit[]>('/orgs/units/tree', orgId)
+  console.log('🔍 [getUnitTree] response:', JSON.stringify(r))
   return r.details ?? []
 }
 
@@ -34,10 +37,12 @@ export async function createUnit(
   orgId: string,
   body: { name: string; parentId?: string | null }
 ): Promise<OrgUnit> {
+  console.log('🔍 [createUnit] calling with orgId:', orgId, 'body:', body)
   const r = await apiFetch<OrgUnit>('/orgs/units', orgId, {
     method: 'POST',
     body: JSON.stringify(body)
   })
+  console.log('🔍 [createUnit] response:', JSON.stringify(r))
   return r.details
 }
 
@@ -46,14 +51,17 @@ export async function updateUnit(
   unitId: string,
   body: { name?: string }
 ): Promise<OrgUnit> {
+  console.log('🔍 [updateUnit] calling with orgId:', orgId, 'unitId:', unitId, 'body:', body)
   const r = await apiFetch<OrgUnit>(`/orgs/units/${unitId}`, orgId, {
     method: 'PATCH',
     body: JSON.stringify(body)
   })
+  console.log('🔍 [updateUnit] response:', JSON.stringify(r))
   return r.details
 }
 
 export async function deleteUnit(orgId: string, unitId: string): Promise<void> {
+  console.log('🔍 [deleteUnit] calling with orgId:', orgId, 'unitId:', unitId)
   await apiFetch<void>(`/orgs/units/${unitId}`, orgId, { method: 'DELETE' })
 }
 
@@ -64,7 +72,9 @@ export async function listUnitMembers(
   orgId: string,
   unitId: string
 ): Promise<OrgUnitMember[]> {
+  console.log('🔍 [listUnitMembers] calling with orgId:', orgId, 'unitId:', unitId)
   const r = await apiFetch<OrgUnitMember[]>(`/orgs/units/${unitId}/members`, orgId)
+  console.log('🔍 [listUnitMembers] response:', JSON.stringify(r))
   return r.details ?? []
 }
 
@@ -73,6 +83,7 @@ export async function assignMembers(
   unitId: string,
   users: { userId: string; role: string }[]
 ): Promise<void> {
+  console.log('🔍 [assignMembers] calling with orgId:', orgId, 'unitId:', unitId, 'users:', users)
   await apiFetch<void>(`/orgs/units/${unitId}/members`, orgId, {
     method: 'POST',
     body: JSON.stringify({ users })
@@ -84,6 +95,7 @@ export async function removeMembers(
   unitId: string,
   userIds: string[]
 ): Promise<void> {
+  console.log('🔍 [removeMembers] calling with orgId:', orgId, 'unitId:', unitId, 'userIds:', userIds)
   await apiFetch<void>(`/orgs/units/${unitId}/members`, orgId, {
     method: 'PATCH',
     body: JSON.stringify({ userIds })

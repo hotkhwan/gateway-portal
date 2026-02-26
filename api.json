@@ -1996,7 +1996,7 @@
           "name": "targets",
           "item": [
             {
-              "name": "Create Target",
+              "name": "Create target webhook",
               "request": {
                 "method": "POST",
                 "header": [
@@ -2016,6 +2016,126 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"bmaaiClient\",\n  \"type\": \"webhook\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://apigw.iboc.co/gateway\",\n    \"headers\": { \"X-From\": \"gateway\" },\n    \"signingEnabled\": false,\n    \"timeoutMs\": 5000\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{urlapi}}/targets",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/targets' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}' \\\n--data '{\n  \"name\": \"{{targetName}}\",\n  \"type\": \"webhook\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"headers\": { \"X-From\": \"gateway\" },\n    \"signingEnabled\": false,\n    \"timeoutMs\": 5000\n  }\n}'"
+              },
+              "response": []
+            },
+            {
+              "name": "Create target discoard",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"discord-alerts\",\n  \"type\": \"discord\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://discord.com/api/webhooks/123456/abcdef\",\n    \"signingEnabled\": false,\n    \"timeoutMs\": 4000\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{urlapi}}/targets",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/targets' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}' \\\n--data '{\n  \"name\": \"{{targetName}}\",\n  \"type\": \"webhook\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"headers\": { \"X-From\": \"gateway\" },\n    \"signingEnabled\": false,\n    \"timeoutMs\": 5000\n  }\n}'"
+              },
+              "response": []
+            },
+            {
+              "name": "Create target line",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"line-alert\",\n  \"type\": \"line\",\n  \"enabled\": true,\n  \"config\": {\n    \"channelAccessToken\": \"LINE_CHANNEL_ACCESS_TOKEN\",\n    \"to\": \"U1234567890abcdef\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{urlapi}}/targets",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/targets' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}' \\\n--data '{\n  \"name\": \"{{targetName}}\",\n  \"type\": \"webhook\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"headers\": { \"X-From\": \"gateway\" },\n    \"signingEnabled\": false,\n    \"timeoutMs\": 5000\n  }\n}'"
+              },
+              "response": []
+            },
+            {
+              "name": "Create target telagram",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"telegram-alert\",\n  \"type\": \"telegram\",\n  \"enabled\": true,\n  \"config\": {\n    \"botToken\": \"123456789:AAEXAMPLE_BOT_TOKEN\",\n    \"chatId\": \"-1001234567890\"\n  }\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2259,6 +2379,360 @@
               "response": []
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "item": [
+        {
+          "name": "Get User list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = JSON.parse(pm.response.text());\r",
+                  "if (jsonData.details.length === 0){\r",
+                  "    console.log(\"Device not found\");\r",
+                  "} else {\r",
+                  "    let matchStr = jsonData.details.find((each)=>{\r",
+                  "        return each.username === 'aliz';\r",
+                  "    }); \r",
+                  "    if(matchStr){\r",
+                  "        pm.environment.set(\"sub\", matchStr.id);\r",
+                  "        // pm.environment.set(\"streamUrl\", matchStr.streamUrl);\r",
+                  "    }\r",
+                  "    // console.log(matchStr)\r",
+                  "    // pm.environment.set(\"hwId\", matchStr.hwId);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/users?sortOrder=desc&page=1&perPages=100",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "asc, desc"
+                },
+                {
+                  "key": "sortField",
+                  "value": "roles",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPages",
+                  "value": "100"
+                },
+                {
+                  "key": "search",
+                  "value": "aliz",
+                  "disabled": true
+                },
+                {
+                  "key": "userIds",
+                  "value": "40e89524-3032-4b82-9122-644d90043159,3ef6b3b5-3de1-413c-a950-6094e394d5fc",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"aliz\",\r\n    \"firstName\": \"aliz\",\r\n    \"lastName\": \"น่ารัก\",\r\n    \"email\": \"\",\r\n    \"role\": \"administrator\",\r\n    \"avatar\": \"https://app.pong.kudsonmoo.co/s3/kudson/profile/admin/user.png\",\r\n    \"locale\": \"en\",\r\n    \"password\": \"aliz123\",\r\n    \"perPages\": 11,\r\n    // \"mapLocation\": {\r\n    //     \"lat\": \"14.633536648172495\",\r\n    //     \"long\": \"100.02277439436932\"\r\n    // },\r\n    \"enabled\": true\r\n    // \"permission\": [\r\n    //     \"create\",\r\n    //     \"delete\",\r\n    //     \"read\",\r\n    //     \"write\"\r\n    // ],\r\n\r\n\r\n}\r\n\r\n// {\r\n//     \"username\": \"manager\",\r\n//     \"firstName\": \"manager1\",\r\n//     \"lastName\": \"strong\",\r\n//     \"email\": \"manager@kudsonmoo.co\",\r\n//     \"role\": \"management\",\r\n//     \"avatar\": \"https://app.pong.kudsonmoo.co/s3/kudson/profile/admin/manager.png\",\r\n//     \"locale\": \"th\",\r\n//     \"password\": \"password123\",\r\n//     \"enabled\": true\r\n// }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/users/",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "users",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// var jsonData = JSON.parse(pm.response.text());\r",
+                  "// pm.execution.setNextRequest(\"deviceId\", jsonData.details.id);\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    // \"username\": \"user1\",\r\n    \"firstName\": \"ผู้ใช้งาน\",\r\n    \"lastName\": \"น่ารัก\",\r\n    \"email\": \"user1@kudsonmoo.co\",\r\n    \"role\": \"administrator\",\r\n    \"avatar\": \"https://app.pong.kudsonmoo.co/s3/kudson/profile/aliza/user.png\",\r\n    \"locale\": \"th\",\r\n    \"mapLocation\": {\r\n        \"lat\": \"10.633536648172495\",\r\n        \"lng\": \"101.02277439436932\"\r\n    },\r\n    \"zoomLevel\": 15,\r\n    \"perPages\": 10\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/users/{{sub}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "users",
+                "{{sub}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "disable",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// var jsonData = JSON.parse(pm.response.text());\r",
+                  "// pm.execution.setNextRequest(\"deviceId\", jsonData.details.id);\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    // \"username\": \"user1\",\r\n    \"firstName\": \"ผู้ใช้งาน\",\r\n    \"lastName\": \"น่ารัก\",\r\n    \"email\": \"user1@kudsonmoo.co\",\r\n    \"role\": \"administrator\",\r\n    \"avatar\": \"https://app.pong.kudsonmoo.co/s3/kudson/profile/admin/user.png\",\r\n    \"locale\": \"en\",\r\n    \"permission\": [\r\n        \"create\",\r\n        \"delete\",\r\n        \"read\",\r\n        \"write\"\r\n    ],\r\n    \"mapLocation\": {\r\n        \"lat\": \"10.633536648172495\",\r\n        \"long\": \"101.02277439436932\"\r\n    },\r\n    \"plant\": 12,\r\n    \"perPages\": 11,\r\n    \"enabled\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/users/{{sub}}/disable",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "users",
+                "{{sub}}",
+                "disable"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "enable",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// var jsonData = JSON.parse(pm.response.text());\r",
+                  "// pm.execution.setNextRequest(\"deviceId\", jsonData.details.id);\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/users/{{sub}}/enable",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "users",
+                "{{sub}}",
+                "enable"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change User password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": " {\r\n    \"password\": \"P@ssw0rd\",\r\n    \"temporary\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/users/{{sub}}/password",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "users",
+                "{{sub}}",
+                "password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete users",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/users/{{sub}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "users",
+                "{{sub}}"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }

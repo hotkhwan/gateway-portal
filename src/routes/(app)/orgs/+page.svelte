@@ -3,17 +3,17 @@
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { resolve } from '$app/paths'
+  import { goto } from '$app/navigation'
   import {
     orgList,
     activeOrgId,
     setOrgList,
     setActiveOrg
   } from '$lib/stores/activeOrg'
-  import { listOrgs, createOrg } from '$lib/api/org'
+  import { listOrgs, createOrg, updateOrg, deleteOrg } from '$lib/api/org'
+  import type { Org } from '$lib/types/org'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
-  import type { Org } from '$lib/types/org'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
@@ -24,6 +24,19 @@
   let createDescription = $state('')
   let createLoading = $state(false)
   let createError = $state<string | null>(null)
+
+  // Edit form state
+  let showEditModal = $state(false)
+  let editOrg = $state<Org | null>(null)
+  let editName = $state('')
+  let editDescription = $state('')
+  let editLoading = $state(false)
+  let editError = $state<string | null>(null)
+
+  // Delete confirmation state
+  let showDeleteConfirm = $state(false)
+  let deleteOrgId = $state<string | null>(null)
+  let deleteLoading = $state(false)
 
   async function loadOrgs() {
     loading = true
@@ -67,6 +80,71 @@
 
   function closeCreateModal() {
     showCreateModal = false
+  }
+
+  async function handleEdit() {
+    if (!editOrg || !editName.trim()) return
+    editLoading = true
+    editError = null
+    try {
+      const updated = await updateOrg(editOrg.id, {
+        name: editName.trim(),
+        description: editDescription.trim() || undefined
+      })
+      orgList.update((list) =>
+        list.map((o) => (o.id === updated.id ? updated : o))
+      )
+      closeEditModal()
+    } catch (e: unknown) {
+      editError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      editLoading = false
+    }
+  }
+
+  function openEditModal(org: Org) {
+    editOrg = org
+    editName = org.name
+    editDescription = org.description || ''
+    editError = null
+    showEditModal = true
+  }
+
+  function closeEditModal() {
+    showEditModal = false
+    editOrg = null
+    editName = ''
+    editDescription = ''
+    editError = null
+  }
+
+  async function handleDelete() {
+    if (!deleteOrgId) return
+    deleteLoading = true
+    try {
+      await deleteOrg(deleteOrgId)
+      orgList.update((list) => list.filter((o) => o.id !== deleteOrgId))
+      // If deleted org was active, clear active org
+      if ($activeOrgId === deleteOrgId) {
+        setActiveOrg('')
+      }
+      closeDeleteConfirm()
+    } catch (e: unknown) {
+      alert((e as { message?: string })?.message ?? m.commonError())
+    } finally {
+      deleteLoading = false
+    }
+  }
+
+  function openDeleteConfirm(orgId: string) {
+    deleteOrgId = orgId
+    deleteLoading = false
+    showDeleteConfirm = true
+  }
+
+  function closeDeleteConfirm() {
+    showDeleteConfirm = false
+    deleteOrgId = null
   }
 
   function formatDate(dateStr: string) {
@@ -176,15 +254,30 @@
                   {m.orgSwitchTo()}
                 {/if}
               </button>
-              <a
-                href={resolve('/orgs/[orgId]/ingest', {
-                  orgId: org.id
-                })}
+              <button
                 class="btn btn-sm btn-outline-secondary"
-                title={m.orgIngestTitle()}
+                onclick={() => {
+                  setActiveOrg(org.id)
+                  goto('orgs/users')
+                }}
+                title={m.orgUsersTitle()}
               >
-                <i class="bi bi-cloud-upload"></i>
-              </a>
+                <i class="bi bi-people"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                onclick={() => openEditModal(org)}
+                title="Edit"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-outline-danger"
+                onclick={() => openDeleteConfirm(org.id)}
+                title="Delete"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </CardBody>
         </Card>
@@ -286,6 +379,171 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- Edit Org Modal -->
+{#if showEditModal && editOrg}
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div
+    class="modal d-block"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    onclick={(e) => {
+      if ((e.target as HTMLElement).classList.contains('modal'))
+        closeEditModal()
+    }}
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Organization</h5>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            onclick={closeEditModal}
+          ></button>
+        </div>
+
+        <form
+          onsubmit={(e) => {
+            e.preventDefault()
+            handleEdit()
+          }}
+        >
+          <div class="modal-body">
+            {#if editError}
+              <div class="alert alert-danger small py-2">{editError}</div>
+            {/if}
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="editOrgName">
+                {m.orgName()} <span class="text-danger">*</span>
+              </label>
+              <input
+                id="editOrgName"
+                type="text"
+                class="form-control"
+                placeholder={m.orgNamePlaceholder()}
+                bind:value={editName}
+                required
+                disabled={editLoading}
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="editOrgDesc">
+                {m.orgDescription()}
+              </label>
+              <textarea
+                id="editOrgDesc"
+                class="form-control"
+                rows={3}
+                placeholder={m.orgDescriptionPlaceholder()}
+                bind:value={editDescription}
+                disabled={editLoading}
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick={closeEditModal}
+              disabled={editLoading}
+            >
+              {m.actionCancel()}
+            </button>
+            <button
+              type="submit"
+              class="btn btn-theme"
+              disabled={editLoading || !editName.trim()}
+            >
+              {#if editLoading}
+                <span
+                  class="spinner-border spinner-border-sm me-1"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                {m.actionSubmitting()}
+              {:else}
+                {m.actionUpdate()}
+              {/if}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- Delete Confirmation Modal -->
+{#if showDeleteConfirm && deleteOrgId}
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div
+    class="modal d-block"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    onclick={(e) => {
+      if ((e.target as HTMLElement).classList.contains('modal'))
+        closeDeleteConfirm()
+    }}
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title">Delete Organization</h5>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            onclick={closeDeleteConfirm}
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          <p>Are you sure you want to delete this organization?</p>
+          <p class="small text-inverse text-opacity-50">
+            This action cannot be undone. All data associated with this
+            organization will be permanently deleted.
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick={closeDeleteConfirm}
+            disabled={deleteLoading}
+          >
+            {m.actionCancel()}
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            onclick={handleDelete}
+            disabled={deleteLoading}
+          >
+            {#if deleteLoading}
+              <span
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Deleting...
+            {:else}
+              Delete
+            {/if}
+          </button>
+        </div>
       </div>
     </div>
   </div>

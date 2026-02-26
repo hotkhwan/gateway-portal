@@ -4,6 +4,7 @@
   import { m } from '$lib/i18n/messages'
   import { appOptions } from '$lib/stores/appOptions'
   import { appSidebarMenus } from '$lib/stores/appSidebarMenus'
+  import { orgList, activeOrg, activeOrgId, setActiveOrg } from '$lib/stores/activeOrg'
 
   import { page } from '$app/state'
   import { afterNavigate } from '$app/navigation'
@@ -105,6 +106,48 @@
 <div id="sidebar" class="app-sidebar">
   <PerfectScrollbar class="app-sidebar-content">
     <div class="menu">
+      <!-- Org Switcher -->
+      {#if $orgList.length > 0}
+        <div class="menu-item dropdown">
+          <a
+            href="#/"
+            aria-label={m.orgSwitchLabel()}
+            data-bs-toggle="dropdown"
+            data-bs-display="static"
+            class="menu-link d-flex align-items-center gap-2"
+          >
+            <i class="bi bi-building menu-icon"></i>
+            <span class="menu-text text-truncate">
+              {$activeOrg?.name ?? m.orgSwitchPlaceholder()}
+            </span>
+            <i class="bi bi-chevron-down menu-caret"></i>
+          </a>
+          <div class="dropdown-menu dropdown-menu-end ms-1 fs-11px" style="min-width:200px">
+            <h6 class="dropdown-header fs-10px mb-1">{m.orgSwitchLabel()}</h6>
+            <div class="dropdown-divider mt-1"></div>
+            {#each $orgList as org}
+              <button
+                type="button"
+                class="dropdown-item d-flex align-items-center gap-2"
+                class:fw-bold={$activeOrgId === org.id}
+                onclick={() => setActiveOrg(org.id)}
+              >
+                {#if $activeOrgId === org.id}
+                  <i class="bi bi-check-circle-fill text-theme"></i>
+                {:else}
+                  <i class="bi bi-circle text-inverse text-opacity-25"></i>
+                {/if}
+                <span class="flex-grow-1 text-truncate">{org.name}</span>
+              </button>
+            {/each}
+            <div class="dropdown-divider"></div>
+            <a href={withBase('/orgs')} class="dropdown-item small">
+              <i class="bi bi-sliders me-2"></i>
+              {m.orgTitle()}
+            </a>
+          </div>
+        </div>
+      {/if}
       {#each $appSidebarMenus as menu (menu.id)}
         {#if menu.kind === 'header'}
           <div class="menu-header">
@@ -123,7 +166,7 @@
             <a
               class="menu-link"
               href={menu.url ? withBase(menu.url) : '#'}
-              on:click={(e) => onParentClick(e, menu)}
+              onclick={(e) => onParentClick(e, menu)}
             >
               {#if menu.icon}
                 <span class="menu-icon">
@@ -155,7 +198,7 @@
                     <a
                       class="menu-link"
                       href={withBase(child.url)}
-                      on:click={hideMobileSidebar}
+                      onclick={hideMobileSidebar}
                     >
                       <span class="menu-text">
                         {t(child.textKey)}
@@ -187,5 +230,5 @@
 <button
   class="app-sidebar-mobile-backdrop"
   aria-label="button"
-  on:click={mobileToggler}
+  onclick={mobileToggler}
 ></button>
