@@ -1,0 +1,91 @@
+// src/lib/api/orgunit.ts
+import type { ApiResponse, OrgUnit, OrgUnitMember } from '$lib/types/org'
+
+const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '').replace(/\/$/, '')
+const BASE = `${APP_BASE}/api`
+
+async function apiFetch<T>(
+  path: string,
+  orgId: string,
+  init?: RequestInit
+): Promise<ApiResponse<T>> {
+  const res = await fetch(`${BASE}${path}`, {
+    headers: {
+      'content-type': 'application/json',
+      'x-active-org': orgId,
+      ...init?.headers
+    },
+    ...init
+  })
+  const json = await res.json()
+  if (!res.ok) throw json
+  return json as ApiResponse<T>
+}
+
+// ────────────────────────────────────────────
+// Org Units
+// ────────────────────────────────────────────
+export async function getUnitTree(orgId: string): Promise<OrgUnit[]> {
+  const r = await apiFetch<OrgUnit[]>('/orgs/units/tree', orgId)
+  return r.details ?? []
+}
+
+export async function createUnit(
+  orgId: string,
+  body: { name: string; parentId?: string | null }
+): Promise<OrgUnit> {
+  const r = await apiFetch<OrgUnit>('/orgs/units', orgId, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+  return r.details
+}
+
+export async function updateUnit(
+  orgId: string,
+  unitId: string,
+  body: { name?: string }
+): Promise<OrgUnit> {
+  const r = await apiFetch<OrgUnit>(`/orgs/units/${unitId}`, orgId, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  })
+  return r.details
+}
+
+export async function deleteUnit(orgId: string, unitId: string): Promise<void> {
+  await apiFetch<void>(`/orgs/units/${unitId}`, orgId, { method: 'DELETE' })
+}
+
+// ────────────────────────────────────────────
+// Unit Members
+// ────────────────────────────────────────────
+export async function listUnitMembers(
+  orgId: string,
+  unitId: string
+): Promise<OrgUnitMember[]> {
+  const r = await apiFetch<OrgUnitMember[]>(`/orgs/units/${unitId}/members`, orgId)
+  return r.details ?? []
+}
+
+export async function assignMembers(
+  orgId: string,
+  unitId: string,
+  users: { userId: string; role: string }[]
+): Promise<void> {
+  await apiFetch<void>(`/orgs/units/${unitId}/members`, orgId, {
+    method: 'POST',
+    body: JSON.stringify({ users })
+  })
+}
+
+export async function removeMembers(
+  orgId: string,
+  unitId: string,
+  userIds: string[]
+): Promise<void> {
+  await apiFetch<void>(`/orgs/units/${unitId}/members`, orgId, {
+    method: 'PATCH',
+    body: JSON.stringify({ userIds })
+  })
+}

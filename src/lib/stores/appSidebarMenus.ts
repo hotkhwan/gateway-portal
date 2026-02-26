@@ -24,6 +24,27 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		textKey: 'navEvents'
 	},
 
+	// ===== Tenancy =====
+	{
+		kind: 'link',
+		id: 'orgs',
+		url: 'orgs',
+		icon: 'bi bi-building',
+		textKey: 'navOrgs'
+	},
+	{
+		kind: 'link',
+		id: 'orgTanancy',
+		icon: 'bi bi-diagram-3',
+		textKey: 'navTenancy',
+		children: [
+			{ id: 'orgUnits', url: 'orgs/units', textKey: 'navOrgUnits' },
+			{ id: 'orgTargets', url: 'orgs/targets', textKey: 'navOrgTargets' },
+			{ id: 'orgPermissions', url: 'orgs/permissions', textKey: 'navOrgPermissions' },
+			{ id: 'orgAccess', url: 'orgs/access', textKey: 'navOrgAccess' }
+		]
+	},
+
 	// ===== Email =====
 	{
 		kind: 'link',

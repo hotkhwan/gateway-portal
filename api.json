@@ -1,0 +1,2266 @@
+{
+  "info": {
+    "_postman_id": "6020cc7e-aefe-48a8-8a31-b7ba58d5b78e",
+    "name": "Export",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "6414660",
+    "_collection_link": "https://go.postman.co/collection/6414660-6020cc7e-aefe-48a8-8a31-b7ba58d5b78e?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Org",
+      "item": [
+        {
+          "name": "Permissions",
+          "item": [
+            {
+              "name": "Resources",
+              "item": [
+                {
+                  "name": "Create profilePermistion",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"name\":\"ProfileCEO\",\n   \"describtion\": \"ผู้บริหารสูงสุด\",\n   \"status\":true,\n   \"relations\":[\n      \"viewer\",\n      \"editor\"\n   ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/resource/permissions",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "resource",
+                        "permissions"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update profilePermistions",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"name\": \"ProfileCEO\",\n    \"description\": \"ผู้บริหารสูงสุด\",\n    \"status\": true,\n    \"relations\": [\"viewer\", \"editor\", \"deleter\"],\n    \"orgUnits\": [\"84a3da47-62e3-4d2b-9b49-2bfe6b5483bf\"],\n    \"resourceGroups\": [\"e2b72ed9-90f7-437a-85a2-16067a07479b\"]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/resource/permissions/{{profileId}}",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "resource",
+                        "permissions",
+                        "{{profileId}}"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete profilePermistions",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/resource/permissions/{{profileId}}",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "resource",
+                        "permissions",
+                        "{{profileId}}"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get profilePermistions details",
+                  "protocolProfileBehavior": {
+                    "disableBodyPruning": true
+                  },
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"name\":\"ProfileCEO\",\n   \"describtion\": \"ผู้บริหารสูงสุด\",\n   \"status\":false,\n   \"relations\":[\n      \"viewer\",\n      \"editor\"\n   ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/resource/permissions/{{profileId}}",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "resource",
+                        "permissions",
+                        "{{profileId}}"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get profilePermistion",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text())",
+                          "",
+                          "if (!jsonData.details || jsonData.details.length === 0) {",
+                          "    console.log(\"profileId not found\")",
+                          "} else {",
+                          "",
+                          "    let matchStr = jsonData.details.find(each => each.name === \"ProfileCEO\")",
+                          "",
+                          "    if (matchStr) {",
+                          "        pm.environment.set(\"profileId\", matchStr.id)",
+                          "        console.log(\"profileId set:\", matchStr.id)",
+                          "    } else {",
+                          "        console.log(\"Matching org not found\")",
+                          "    }",
+                          "}",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/resource/permissions",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "resource",
+                        "permissions"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List myAcces",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text());",
+                          "",
+                          "if (!jsonData.details) {",
+                          "    console.log(\"Profile not found\");",
+                          "} else {",
+                          "    console.log(\"Profile loaded:\", jsonData.details.name);",
+                          "}"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/resource/access",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "resource",
+                        "access"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request GET '{{urlapi}}/orgs/menu/permissions/{{profileId}}' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}'"
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Menu",
+              "item": [
+                {
+                  "name": "List menu",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text());",
+                          "",
+                          "if (!jsonData.details || jsonData.details.length === 0) {",
+                          "    console.log(\"Menu list empty\");",
+                          "} else {",
+                          "    console.log(\"Menus loaded:\", jsonData.details.length);",
+                          "}"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/menu/list",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "menu",
+                        "list"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request GET '{{urlapi}}/orgs/menu/list' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}'"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Create Profile Menu",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text());",
+                          "",
+                          "if (!jsonData.details) {",
+                          "    console.log(\"Create failed\");",
+                          "} else {",
+                          "    pm.environment.set(\"profileId\", jsonData.details.profileId);",
+                          "    console.log(\"profileId set:\", jsonData.details.profileId);",
+                          "}"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"name\":\"ProfileCEO\",\n   \"description\":\"ผู้บริหารสูงสุด\",\n   \"status\":true,\n   \"relations\":[\n      \"viewer\",\n      \"creator\"\n   ],\n   \"menus\":[\n      \"kcontrol\",\n      \"system\"\n   ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/menu/permissions",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "menu",
+                        "permissions"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request POST '{{urlapi}}/orgs/menu/permissions' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}' \\\n--data '{\n   \"name\":\"ProfileCEO\",\n   \"description\":\"ผู้บริหารสูงสุด\",\n   \"status\":true,\n   \"menus\":[\n      \"biDash\",\n      \"dashboard\"\n   ]\n}'"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List Menu profile",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text())",
+                          "",
+                          "if (!jsonData.details || jsonData.details.length === 0) {",
+                          "    console.log(\"profileId not found\")",
+                          "} else {",
+                          "",
+                          "    let matchStr = jsonData.details.find(each => each.name === \"ProfileCEO\")",
+                          "",
+                          "    if (matchStr) {",
+                          "        pm.environment.set(\"profileId\", matchStr.id)",
+                          "        console.log(\"profileId set:\", matchStr.id)",
+                          "    } else {",
+                          "        console.log(\"Matching org not found\")",
+                          "    }",
+                          "}",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/menu/permissions?page=1&perPages=10",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "menu",
+                        "permissions"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "1"
+                        },
+                        {
+                          "key": "perPages",
+                          "value": "10"
+                        }
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request GET '{{urlapi}}/orgs/menu/permissions?page=1&perPages=10' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}'"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List detail",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text());",
+                          "",
+                          "if (!jsonData.details) {",
+                          "    console.log(\"Profile not found\");",
+                          "} else {",
+                          "    console.log(\"Profile loaded:\", jsonData.details.name);",
+                          "}"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/menu/permissions/{{profileId}}",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "menu",
+                        "permissions",
+                        "{{profileId}}"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request GET '{{urlapi}}/orgs/menu/permissions/{{profileId}}' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}'"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List myAccess",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text());",
+                          "",
+                          "if (!jsonData.details) {",
+                          "    console.log(\"Profile not found\");",
+                          "} else {",
+                          "    console.log(\"Profile loaded:\", jsonData.details.name);",
+                          "}"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/menu/access",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "menu",
+                        "access"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request GET '{{urlapi}}/orgs/menu/permissions/{{profileId}}' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}'"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Profile",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"name\":\"ProfileCEO\",\n   \"description\":\"แก้ไขแล้ว\",\n   \"status\":true,\n   \"relations\":[\n      \"viewer\",\n      \"creator\"\n   ],\n   \"orgUnits\":[\n      \"{{unit_CEO}}\"\n   ],\n   \"menus\":[\n      \"kcontrol\"\n   ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/menu/permissions/{{profileId}}",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "menu",
+                        "permissions",
+                        "{{profileId}}"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request PATCH '{{urlapi}}/orgs/menu/permissions/{{profileId}}' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}' \\\n--data '{\n   \"name\":\"ProfileCEO-Updated\",\n   \"description\":\"แก้ไขแล้ว\",\n   \"status\":true,\n   \"orgUnits\":[\n      \"ou-uuid-1\",\n      \"ou-uuid-2\"\n   ],\n   \"menus\":[\n      \"biDash\"\n   ]\n}'"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete menu profile",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "X-Active-Org",
+                        "value": "{{orgId}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{urlapi}}/orgs/menu/permissions/{{profileId}}",
+                      "host": [
+                        "{{urlapi}}"
+                      ],
+                      "path": [
+                        "orgs",
+                        "menu",
+                        "permissions",
+                        "{{profileId}}"
+                      ]
+                    },
+                    "description": "Generated from cURL: curl --location --request DELETE '{{urlapi}}/orgs/menu/permissions/{{profileId}}' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}'"
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "List ORG",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = JSON.parse(pm.response.text())",
+                  "",
+                  "if (!jsonData.details || jsonData.details.length === 0) {",
+                  "    console.log(\"Org not found\")",
+                  "} else {",
+                  "",
+                  "    let matchStr = jsonData.details.find(each => each.name === \"Aliza Corp\")",
+                  "",
+                  "    if (matchStr) {",
+                  "        pm.environment.set(\"orgId\", matchStr.orgId)",
+                  "        console.log(\"orgId set:\", matchStr.orgId)",
+                  "    } else {",
+                  "        console.log(\"Matching org not found\")",
+                  "    }",
+                  "}",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                ""
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Create org",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"AMP Corp\",\n    \"description\": \"ทดสอบ123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                ""
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "update ORG",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Klynx Corp\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/{{orgId}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "{{orgId}}"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete ORG",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/{{orgId}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "{{orgId}}"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Invite Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    { \"userId\": \"{{userUserId}}\", \"role\": \"member\" },\n    { \"userId\": \"{{managerUserId}}\", \"role\": \"admin\" },\n    { \"userId\": \"uuid3\", \"role\": \"member\" },\n    { \"userId\": \"uuid4\", \"role\": \"admin\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/users/invite",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "users",
+                "invite"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    { \"userId\": \"uuid1\", \"role\": \"member\" },\n    { \"userId\": \"uuid2\", \"role\": \"admin\" },\n    { \"userId\": \"uuid3\", \"role\": \"member\" },\n    { \"userId\": \"uuid4\", \"role\": \"admin\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/users/remove",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "users",
+                "remove"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "List member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = JSON.parse(pm.response.text());",
+                  "",
+                  "if (!jsonData.details || jsonData.details.length === 0) {",
+                  "    console.log(\"No users found\");",
+                  "} else {",
+                  "",
+                  "    function setUserByFirstName(firstName, envKey) {",
+                  "        let matchUser = jsonData.details.find(u => ",
+                  "        u.firstName && u.firstName === firstName",
+                  "            // u.firstName && u.firstName === firstName && u.enabled === true",
+                  "        );",
+                  "",
+                  "        if (matchUser) {",
+                  "            pm.environment.set(envKey, matchUser.userId);",
+                  "            console.log(envKey + \" set:\", matchUser.userId);",
+                  "        } else {",
+                  "            console.log(\"User not found for firstName:\", firstName);",
+                  "        }",
+                  "    }",
+                  "",
+                  "    setUserByFirstName(\"User\", \"userUserId\");",
+                  "    setUserByFirstName(\"Manager\", \"managerUserId\");",
+                  "    setUserByFirstName(\"Admin\", \"adminUserId\");",
+                  "}",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/users/members?page=1&perPages=10&sortField=role&sortOrder=desc",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "users",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "ad",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPages",
+                  "value": "10"
+                },
+                {
+                  "key": "sortField",
+                  "value": "role"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OrgUni",
+      "item": [
+        {
+          "name": "List OU",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json()",
+                  "",
+                  "if (!jsonData.details || jsonData.details.length === 0) {",
+                  "    console.log(\"Unit not found\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const targetParentName = pm.environment.get(\"targetParentUnitName\") || \"test\"",
+                  "const targetChildName = pm.environment.get(\"targetChildUnitName\") || \"ตำบล55\"",
+                  "",
+                  "const parent = jsonData.details.find(each => each.name === targetParentName)",
+                  "",
+                  "if (!parent) {",
+                  "    console.log(\"Parent not found:\", targetParentName)",
+                  "    return",
+                  "}",
+                  "",
+                  "// set parent",
+                  "const parentKey = `unit_${parent.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(parentKey, parent.id)",
+                  "console.log(`Set ${parentKey} = ${parent.id}`)",
+                  "",
+                  "// match child",
+                  "if (!parent.children || parent.children.length === 0) {",
+                  "    console.log(\"No children found under parent\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const child = parent.children.find(each => each.name === targetChildName)",
+                  "",
+                  "if (!child) {",
+                  "    console.log(\"Child not found:\", targetChildName)",
+                  "    return",
+                  "}",
+                  "",
+                  "const childKey = `unit_${child.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(childKey, child.id)",
+                  "console.log(`Set ${childKey} = ${child.id}`)",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/tree",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "tree"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Create OU",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"CEO\",\n    \"description\": \"ทดสอบOU\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Update OU",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Aliza CEO\",\n    \"description\": \"ทดสอบOU แปลี่ยนค่า2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_CEO}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_CEO}}"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Update OU Child",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"ตำบล55\",\n    \"description\": \"ทดสอบOU แปลี่ยนค่า ตำบล55 0จ้า\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_55}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_55}}"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Create OU Child",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"ลูกของ_OUCEO\",\n    \"parentId\": \"{{unit_CEO}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete OU",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_test}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_test}}"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete OU Child",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_55}}",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_55}}"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Users into OU",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    { \"userId\": \"{{managerUserId}}\", \"role\": \"admin\" },\n    { \"userId\": \"{{userUserId}}\", \"role\": \"member\" },\n    { \"userId\": \"uuid2\", \"role\": \"admin\" },\n    { \"userId\": \"uuid3\", \"role\": \"member\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_CEO}}/members",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_CEO}}",
+                "members"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Users into OU child",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    // { \"userId\": \"5b7ca5bf-6261-46dd-87e5-681882f83ee3\", \"role\": \"admin\" }\n    { \"userId\": \"uuid1\", \"role\": \"member\" },\n    { \"userId\": \"uuid2\", \"role\": \"member\" },\n    { \"userId\": \"uuid3\", \"role\": \"member\" },\n    { \"userId\": \"uuid4\", \"role\": \"admin\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_55}}/members",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_55}}",
+                "members"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "List OU members",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json()",
+                  "",
+                  "if (!jsonData.details || jsonData.details.length === 0) {",
+                  "    console.log(\"Unit not found\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const targetParentName = pm.environment.get(\"targetParentUnitName\") || \"CEO\"",
+                  "const targetChildName = pm.environment.get(\"targetChildUnitName\") || \"ตำบล55\"",
+                  "",
+                  "const parent = jsonData.details.find(each => each.name === targetParentName)",
+                  "",
+                  "if (!parent) {",
+                  "    console.log(\"Parent not found:\", targetParentName)",
+                  "    return",
+                  "}",
+                  "",
+                  "// set parent",
+                  "const parentKey = `unit_${parent.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(parentKey, parent.id)",
+                  "console.log(`Set ${parentKey} = ${parent.id}`)",
+                  "",
+                  "// match child",
+                  "if (!parent.children || parent.children.length === 0) {",
+                  "    console.log(\"No children found under parent\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const child = parent.children.find(each => each.name === targetChildName)",
+                  "",
+                  "if (!child) {",
+                  "    console.log(\"Child not found:\", targetChildName)",
+                  "    return",
+                  "}",
+                  "",
+                  "const childKey = `unit_${child.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(childKey, child.id)",
+                  "console.log(`Set ${childKey} = ${child.id}`)",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_CEO}}/members?page=1&perPages=10&sortField=firstName&sortOrder=desc",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_CEO}}",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "ai",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPages",
+                  "value": "10"
+                },
+                {
+                  "key": "sortField",
+                  "value": "firstName"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "List OU child member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json()",
+                  "",
+                  "if (!jsonData.details || jsonData.details.length === 0) {",
+                  "    console.log(\"Unit not found\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const targetParentName = pm.environment.get(\"targetParentUnitName\") || \"CEO\"",
+                  "const targetChildName = pm.environment.get(\"targetChildUnitName\") || \"ตำบล55\"",
+                  "",
+                  "const parent = jsonData.details.find(each => each.name === targetParentName)",
+                  "",
+                  "if (!parent) {",
+                  "    console.log(\"Parent not found:\", targetParentName)",
+                  "    return",
+                  "}",
+                  "",
+                  "// set parent",
+                  "const parentKey = `unit_${parent.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(parentKey, parent.id)",
+                  "console.log(`Set ${parentKey} = ${parent.id}`)",
+                  "",
+                  "// match child",
+                  "if (!parent.children || parent.children.length === 0) {",
+                  "    console.log(\"No children found under parent\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const child = parent.children.find(each => each.name === targetChildName)",
+                  "",
+                  "if (!child) {",
+                  "    console.log(\"Child not found:\", targetChildName)",
+                  "    return",
+                  "}",
+                  "",
+                  "const childKey = `unit_${child.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(childKey, child.id)",
+                  "console.log(`Set ${childKey} = ${child.id}`)",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_55}}/members?page=1&perPages=10&sortField=firstName&sortOrder=desc",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_55}}",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "ai",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPages",
+                  "value": "10"
+                },
+                {
+                  "key": "sortField",
+                  "value": "firstName"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove OU member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json()",
+                  "",
+                  "if (!jsonData.details || jsonData.details.length === 0) {",
+                  "    console.log(\"Unit not found\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const targetParentName = pm.environment.get(\"targetParentUnitName\") || \"CEO\"",
+                  "const targetChildName = pm.environment.get(\"targetChildUnitName\") || \"ตำบล55\"",
+                  "",
+                  "const parent = jsonData.details.find(each => each.name === targetParentName)",
+                  "",
+                  "if (!parent) {",
+                  "    console.log(\"Parent not found:\", targetParentName)",
+                  "    return",
+                  "}",
+                  "",
+                  "// set parent",
+                  "const parentKey = `unit_${parent.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(parentKey, parent.id)",
+                  "console.log(`Set ${parentKey} = ${parent.id}`)",
+                  "",
+                  "// match child",
+                  "if (!parent.children || parent.children.length === 0) {",
+                  "    console.log(\"No children found under parent\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const child = parent.children.find(each => each.name === targetChildName)",
+                  "",
+                  "if (!child) {",
+                  "    console.log(\"Child not found:\", targetChildName)",
+                  "    return",
+                  "}",
+                  "",
+                  "const childKey = `unit_${child.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(childKey, child.id)",
+                  "console.log(`Set ${childKey} = ${child.id}`)",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    { \"userId\": \"uuid1\" },\n    { \"userId\": \"uuid2\" },\n    { \"userId\": \"5b7ca5bf-6261-46dd-87e5-681882f83ee3\", \"role\": \"admin\" },\n    { \"userId\": \"uuid3\", \"role\": \"member\" },\n    { \"userId\": \"uuid4\", \"role\": \"admin\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_CEO}}/members",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_CEO}}",
+                "members"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove OU child member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json()",
+                  "",
+                  "if (!jsonData.details || jsonData.details.length === 0) {",
+                  "    console.log(\"Unit not found\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const targetParentName = pm.environment.get(\"targetParentUnitName\") || \"CEO\"",
+                  "const targetChildName = pm.environment.get(\"targetChildUnitName\") || \"ตำบล55\"",
+                  "",
+                  "const parent = jsonData.details.find(each => each.name === targetParentName)",
+                  "",
+                  "if (!parent) {",
+                  "    console.log(\"Parent not found:\", targetParentName)",
+                  "    return",
+                  "}",
+                  "",
+                  "// set parent",
+                  "const parentKey = `unit_${parent.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(parentKey, parent.id)",
+                  "console.log(`Set ${parentKey} = ${parent.id}`)",
+                  "",
+                  "// match child",
+                  "if (!parent.children || parent.children.length === 0) {",
+                  "    console.log(\"No children found under parent\")",
+                  "    return",
+                  "}",
+                  "",
+                  "const child = parent.children.find(each => each.name === targetChildName)",
+                  "",
+                  "if (!child) {",
+                  "    console.log(\"Child not found:\", targetChildName)",
+                  "    return",
+                  "}",
+                  "",
+                  "const childKey = `unit_${child.name.replace(/\\s+/g, \"_\").replace(/[^a-zA-Z0-9_]/g, \"\")}`",
+                  "pm.environment.set(childKey, child.id)",
+                  "console.log(`Set ${childKey} = ${child.id}`)",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Active-Org",
+                "value": "{{orgId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    // { \"userId\": \"5b7ca5bf-6261-46dd-87e5-681882f83ee3\", \"role\": \"admin\" }\n    { \"userId\": \"uuid3\", \"role\": \"member\" },\n    { \"userId\": \"uuid4\", \"role\": \"admin\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlapi}}/orgs/units/{{unit_55}}/members",
+              "host": [
+                "{{urlapi}}"
+              ],
+              "path": [
+                "orgs",
+                "units",
+                "{{unit_55}}",
+                "members"
+              ]
+            },
+            "description": "Generated from cURL: curl --location 'http://localhost:8080/orgs' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--header 'Content-Type: application/json' \\\n--data '{\n    \"name\": \"Acme Corp\"\n}'\n"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ingressEvent",
+      "item": [
+        {
+          "name": "ingrest",
+          "item": [
+            {
+              "name": "Get Ingrest",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{urlapi}}/ingest",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "ingest"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/{{orgId}}/ingest' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json'"
+              },
+              "response": []
+            },
+            {
+              "name": "Create Ingrest service",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{urlapi}}/ingest/rotateSecret",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "ingest",
+                    "rotateSecret"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/{{orgId}}/ingest' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json'"
+              },
+              "response": []
+            },
+            {
+              "name": "Post Events",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"sensor\": \"temp\", \"value\": 36.4}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/events/f9eb611c-f350-4714-b00d-74a7b9e9ff40",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "f9eb611c-f350-4714-b00d-74a7b9e9ff40"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/{{orgId}}/ingest' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json'"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "targets",
+          "item": [
+            {
+              "name": "Create Target",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"bmaaiClient\",\n  \"type\": \"webhook\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://apigw.iboc.co/gateway\",\n    \"headers\": { \"X-From\": \"gateway\" },\n    \"signingEnabled\": false,\n    \"timeoutMs\": 5000\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{urlapi}}/targets",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/targets' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}' \\\n--data '{\n  \"name\": \"{{targetName}}\",\n  \"type\": \"webhook\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"headers\": { \"X-From\": \"gateway\" },\n    \"signingEnabled\": false,\n    \"timeoutMs\": 5000\n  }\n}'"
+              },
+              "response": []
+            },
+            {
+              "name": "Get targets",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = JSON.parse(pm.response.text())",
+                      "",
+                      "if (!jsonData.details || jsonData.details.length === 0) {",
+                      "    console.log(\"targetId not found\")",
+                      "} else {",
+                      "",
+                      "    let matchStr = jsonData.details.find(each => each.name === \"bmaaiClient\")",
+                      "",
+                      "    if (matchStr) {",
+                      "        pm.environment.set(\"targetId\", matchStr.id)",
+                      "        console.log(\"targetId set:\", matchStr.id)",
+                      "    } else {",
+                      "        console.log(\"Matching targetId not found\")",
+                      "    }",
+                      "}",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{urlapi}}/targets",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/{{orgId}}/ingest' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json'"
+              },
+              "response": []
+            },
+            {
+              "name": "Get targets details",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = JSON.parse(pm.response.text())",
+                      "",
+                      "if (!jsonData.details || jsonData.details.length === 0) {",
+                      "    console.log(\"targetId not found\")",
+                      "} else {",
+                      "",
+                      "    let matchStr = jsonData.details.find(each => each.name === \"bmaaiClient\")",
+                      "",
+                      "    if (matchStr) {",
+                      "        pm.environment.set(\"targetId\", matchStr.id)",
+                      "        console.log(\"targetId set:\", matchStr.id)",
+                      "    } else {",
+                      "        console.log(\"Matching targetId not found\")",
+                      "    }",
+                      "}",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{urlapi}}/targets/{{targetId}}",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets",
+                    "{{targetId}}"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/{{orgId}}/ingest' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json'"
+              },
+              "response": []
+            },
+            {
+              "name": "Delete target",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = JSON.parse(pm.response.text())",
+                      "",
+                      "if (!jsonData.details || jsonData.details.length === 0) {",
+                      "    console.log(\"targetId not found\")",
+                      "} else {",
+                      "",
+                      "    let matchStr = jsonData.details.find(each => each.name === \"bmaaiClient\")",
+                      "",
+                      "    if (matchStr) {",
+                      "        pm.environment.set(\"targetId\", matchStr.id)",
+                      "        console.log(\"targetId set:\", matchStr.id)",
+                      "    } else {",
+                      "        console.log(\"Matching targetId not found\")",
+                      "    }",
+                      "}",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{urlapi}}/targets/{{targetId}}",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets",
+                    "{{targetId}}"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location '{{urlapi}}/api/v1/orgs/{{orgId}}/ingest' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json'"
+              },
+              "response": []
+            },
+            {
+              "name": "Patch Target",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Active-Org",
+                    "value": "{{orgId}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"bmaaiClient\",\n  \"enabled\": false,\n  \"config\": {\n    \"url\": \"https://apigw.iboc.co/gatewayDev\",\n    \"headers\": { \"X-From\": \"gateway\", \"X-Env\": \"dev\" },\n    \"signingEnabled\": true,\n    \"signingSecret\": \"dev-secret-change-me\",\n    \"timeoutMs\": 7000\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{urlapi}}/targets/{{targetId}}",
+                  "host": [
+                    "{{urlapi}}"
+                  ],
+                  "path": [
+                    "targets",
+                    "{{targetId}}"
+                  ]
+                },
+                "description": "Generated from cURL: curl --location --request PATCH '{{urlapi}}/api/v1/orgs/targets/{{targetId}}' \\\n--header 'Authorization: Bearer {{access_token}}' \\\n--header 'Content-Type: application/json' \\\n--header 'X-Active-Org: {{orgId}}' \\\n--data '{\n  \"name\": \"Webhook Primary (Updated)\",\n  \"enabled\": true,\n  \"config\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"headers\": { \"X-From\": \"gateway\", \"X-Env\": \"dev\" },\n    \"signingEnabled\": true,\n    \"signingSecret\": \"dev-secret-change-me\",\n    \"timeoutMs\": 7000\n  }\n}'"
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

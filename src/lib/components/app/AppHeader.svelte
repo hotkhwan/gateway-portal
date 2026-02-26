@@ -1,11 +1,14 @@
 <!-- src/lib/components/app/AppHeader.svelte -->
 <script>
   import { appOptions } from '$lib/stores/appOptions'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { asset } from '$lib/utils/asset'
   import { page } from '$app/stores'
   import { goto } from '$app/navigation'
   import { m } from '$lib/i18n/messages'
+  import { orgList, activeOrg, setActiveOrg } from '$lib/stores/activeOrg'
+  import { listOrgs } from '$lib/api/org'
+  import { onMount } from 'svelte'
 
   // Prefer user from server load (layout/+layout.server.ts) -> page.data.user
   $: userEmail =
@@ -14,6 +17,16 @@
 
   let isLoggingOut = false
   let logoutError = ''
+
+  onMount(async () => {
+    try {
+      const { setOrgList } = await import('$lib/stores/activeOrg')
+      const orgs = await listOrgs()
+      setOrgList(orgs)
+    } catch {
+      // silently ignore — user may not have orgs yet
+    }
+  })
 
   let notificationData = [
     {
@@ -67,7 +80,7 @@
 
     try {
       // BFF endpoint should clear HttpOnly cookies (session_token/session_refresh)
-      const res = await fetch(`${base}/api/auth/logout`, {
+      const res = await fetch(resolve('/api/auth/logout'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
@@ -80,10 +93,10 @@
       }
 
       // Redirect to public landing/login
-      await goto(`${base}/`, { replaceState: true })
+      await goto(resolve('/'), { replaceState: true })
     } catch (err) {
       logoutError = m.headerLogoutFailed()
-      await goto(`${base}/`, { replaceState: true })
+      await goto(resolve('/'), { replaceState: true })
     } finally {
       isLoggingOut = false
     }
@@ -125,7 +138,7 @@
   <!-- BEGIN brand -->
   <div class="brand">
     <a
-      href={`${base}/`}
+      href={resolve('/')}
       aria-label={m.headerAriaBrandLink()}
       class="brand-logo"
     >
@@ -139,6 +152,55 @@
 
   <!-- BEGIN menu -->
   <div class="menu">
+    <!-- Org Switcher -->
+    {#if $orgList.length > 0}
+      <div class="menu-item dropdown">
+        <a
+          href="#/"
+          aria-label={m.orgSwitchLabel()}
+          data-bs-toggle="dropdown"
+          data-bs-display="static"
+          class="menu-link d-flex align-items-center gap-1"
+        >
+          <i class="bi bi-building nav-icon opacity-75"></i>
+          <span
+            class="d-none d-sm-inline small text-truncate"
+            style="max-width:120px"
+          >
+            {$activeOrg?.name ?? m.orgSwitchPlaceholder()}
+          </span>
+          <i class="bi bi-chevron-down fs-10px opacity-50"></i>
+        </a>
+        <div
+          class="dropdown-menu dropdown-menu-end mt-1 fs-11px"
+          style="min-width:200px"
+        >
+          <h6 class="dropdown-header fs-10px mb-1">{m.orgSwitchLabel()}</h6>
+          <div class="dropdown-divider mt-1"></div>
+          {#each $orgList as org}
+            <button
+              type="button"
+              class="dropdown-item d-flex align-items-center gap-2"
+              class:fw-bold={$activeOrg?.id === org.id}
+              onclick={() => setActiveOrg(org.id)}
+            >
+              {#if $activeOrg?.id === org.id}
+                <i class="bi bi-check-circle-fill text-theme"></i>
+              {:else}
+                <i class="bi bi-circle text-inverse text-opacity-25"></i>
+              {/if}
+              <span class="flex-grow-1">{org.name}</span>
+            </button>
+          {/each}
+          <div class="dropdown-divider"></div>
+          <a href={resolve('/orgs')} class="dropdown-item small">
+            <i class="bi bi-sliders me-2"></i>
+            {m.orgTitle()}
+          </a>
+        </div>
+      </div>
+    {/if}
+
     <div class="menu-item dropdown">
       <a
         href="#/"
@@ -166,7 +228,7 @@
         <div class="row row-grid gx-0">
           <div class="col-4">
             <a
-              href={`${base}/email/inbox`}
+              href={resolve('/email/inbox')}
               aria-label={m.headerAriaInbox()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -181,7 +243,7 @@
           </div>
           <div class="col-4">
             <a
-              href={`${base}/pos/customer-order`}
+              href={resolve('/pos/customer-order')}
               aria-label={m.headerAriaPosSystem()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -195,7 +257,7 @@
           </div>
           <div class="col-4">
             <a
-              href={`${base}/calendar`}
+              href={resolve('/calendar')}
               aria-label={m.headerAriaCalendar()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -212,7 +274,7 @@
         <div class="row row-grid gx-0">
           <div class="col-4">
             <a
-              href={`${base}/helper`}
+              href={resolve('/helper')}
               aria-label={m.headerAriaHelper()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -224,7 +286,7 @@
           </div>
           <div class="col-4">
             <a
-              href={`${base}/settings`}
+              href={resolve('/settings')}
               aria-label={m.headerAriaSettings()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -241,7 +303,7 @@
           </div>
           <div class="col-4">
             <a
-              href={`${base}/widgets`}
+              href={resolve('/widgets')}
               aria-label={m.headerAriaWidgets()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -337,7 +399,7 @@
         <a
           aria-label={m.headerAriaProfile()}
           class="dropdown-item d-flex align-items-center"
-          href={`${base}/profile`}
+          href={resolve('/profile')}
         >
           {m.headerProfile()}
           <i class="bi bi-person-circle ms-auto text-theme fs-16px my-n1"></i>
@@ -346,7 +408,7 @@
         <a
           aria-label={m.headerAriaInbox()}
           class="dropdown-item d-flex align-items-center"
-          href={`${base}/email/inbox`}
+          href={resolve('/email/inbox')}
         >
           {m.headerInbox()}
           <i class="bi bi-envelope ms-auto text-theme fs-16px my-n1"></i>
@@ -355,7 +417,7 @@
         <a
           aria-label={m.headerAriaCalendar()}
           class="dropdown-item d-flex align-items-center"
-          href={`${base}/calendar`}
+          href={resolve('/calendar')}
         >
           {m.headerCalendar()}
           <i class="bi bi-calendar ms-auto text-theme fs-16px my-n1"></i>
@@ -364,7 +426,7 @@
         <a
           aria-label={m.headerAriaSettings()}
           class="dropdown-item d-flex align-items-center"
-          href={`${base}/settings`}
+          href={resolve('/settings')}
         >
           {m.headerSettings()}
           <i class="bi bi-gear ms-auto text-theme fs-16px my-n1"></i>
@@ -375,7 +437,7 @@
         <a
           aria-label={m.headerAriaLogout()}
           class="dropdown-item d-flex align-items-center"
-          href={`${base}/`}
+          href={resolve('/')}
           onclick={handleLogout}
         >
           {#if isLoggingOut}

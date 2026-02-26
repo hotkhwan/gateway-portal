@@ -7,6 +7,7 @@
 
   import { page } from '$app/state'
   import { afterNavigate } from '$app/navigation'
+  import { resolve } from '$app/paths'
   import { onMount, tick } from 'svelte'
 
   import type {
@@ -50,13 +51,13 @@
    * ------------------------- */
   function hasActiveChild(children?: SidebarChild[]) {
     const pathname = page.url.pathname
-    return children?.some((c) => c.url === pathname) ?? false
+    return children?.some((c) => c.url ? withBase(c.url) === pathname : false) ?? false
   }
 
+  const _resolve = resolve as (path: string) => string
   function withBase(url?: string) {
-    const base = import.meta.env.PUBLIC_APP_BASE_PATH ?? ''
     if (!url) return '#'
-    return `${base}${url}`.replace(/\/+/g, '/')
+    return _resolve(`/${url}`)
   }
 
   function t(key: string): string {
@@ -116,7 +117,7 @@
             class="menu-item"
             class:has-sub={!!menu.children?.length}
             class:expand={openedMenuId === menu.id}
-            class:active={menu.url === page.url.pathname ||
+            class:active={(menu.url ? withBase(menu.url) === page.url.pathname : false) ||
               hasActiveChild(menu.children)}
           >
             <a
@@ -149,7 +150,7 @@
                 {#each menu.children as child (child.id)}
                   <div
                     class="menu-item"
-                    class:active={page.url.pathname === child.url}
+                    class:active={child.url ? withBase(child.url) === page.url.pathname : false}
                   >
                     <a
                       class="menu-link"
