@@ -109,6 +109,6 @@ export async function removeMembers(
   logger.log('🔍 [removeMembers] calling with orgId:', orgId, 'unitId:', unitId, 'userIds:', userIds)
   await apiFetch<void>(`/orgs/units/${unitId}/members`, orgId, {
     method: 'PATCH',
-    body: JSON.stringify({ userIds })
+    body: JSON.stringify({ users: userIds.map((userId) => ({ userId })) })
   })
 }
