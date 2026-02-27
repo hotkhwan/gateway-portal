@@ -4,6 +4,7 @@
   import { onMount } from 'svelte'
   import Icon from '@iconify/svelte'
   import { asset } from '$lib/utils/asset'
+  import { env } from '$env/dynamic/public'
 
   import { setPageTitle } from '$lib/utils/title'
   import { appOptions } from '$lib/stores/appOptions'
@@ -19,7 +20,12 @@
   initLocale()
 
   // ✅ ทำให้ข้อความใน template re-render เมื่อเปลี่ยนภาษา
-  $: currentLocale = $currentLocaleStore
+  const currentLocale = $derived($currentLocaleStore)
+
+  // URLs ที่รองรับ base path - อ่านจาก PUBLIC_APP_BASE_PATH env
+  const basePath = env.PUBLIC_APP_BASE_PATH || ''
+  const authStartUrl = `${basePath}/auth/session/start?returnTo=${basePath}/dashboard`
+  const dashboardUrl = `${basePath}/dashboard`
 
   function onChangeLanguage(locale: AppLocale) {
     changeLocale(locale)
@@ -108,7 +114,7 @@
       </div>
     </div>
     <a
-      href="dashboard"
+      href={authStartUrl}
       class="btn btn-outline-theme btn-sm fw-semibold text-uppercase px-2 py-1 fs-10px"
     >
       {m.landingGetStarted()}
@@ -805,7 +811,7 @@
               </div>
             </div>
 
-            <a href="/dashboard" class="btn btn-lg btn-outline-white px-3">
+            <a href={dashboardUrl} class="btn btn-lg btn-outline-white px-3">
               {m.pricingCtaGetStarted()}
               <i class="fa fa-arrow-right ms-2 opacity-5"></i>
             </a>
@@ -918,7 +924,7 @@
             </div>
 
             <a
-              href="/dashboard"
+              href={dashboardUrl}
               aria-label="link"
               class="btn btn-theme btn-lg w-100 text-black font-monospace"
             >
@@ -1021,7 +1027,7 @@
 
             <div class="mx-n2">
               <a
-                href="/dashboard"
+                href={dashboardUrl}
                 aria-label="link"
                 class="btn btn-outline-default btn-lg w-100 font-monospace"
               >
@@ -1751,7 +1757,7 @@
               <button
                 type="button"
                 class="dropdown-item"
-                on:click={() => onChangeLanguage('en')}
+                onclick={() => onChangeLanguage('en')}
               >
                 {m.langEn()}
               </button>
@@ -1760,7 +1766,7 @@
               <button
                 type="button"
                 class="dropdown-item"
-                on:click={() => onChangeLanguage('th')}
+                onclick={() => onChangeLanguage('th')}
               >
                 {m.langTh()}
               </button>

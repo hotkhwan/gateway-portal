@@ -226,7 +226,7 @@
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
     {m.orgSelectOrgPre()}
-    <a href={resolve('/orgs', {})} class="alert-link">{m.navOrgs()}</a>
+    <a href={resolve('/orgs')} class="alert-link">{m.navOrgs()}</a>
     {m.orgSelectOrgPost()}
   </div>
 {:else if loading}

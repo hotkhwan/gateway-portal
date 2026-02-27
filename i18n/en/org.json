@@ -25,7 +25,7 @@
   "orgStatusInactive": "Inactive",
   "orgSwitchActive": "Active",
   "orgSwitchTo": "Switch to",
-  "orgSelectOrgPre": "Please select an active organization from the",
+  "orgSelectOrgPre": "Please select an active organization from",
   "orgSelectOrgPost": "page.",
 
   "_comments_org_section": "Org section sidebar labels",

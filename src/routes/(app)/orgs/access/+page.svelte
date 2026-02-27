@@ -19,7 +19,10 @@
 
   async function loadAccess() {
     const orgId = $activeOrg?.id
-    if (!orgId) { loading = false; return }
+    if (!orgId) {
+      loading = false
+      return
+    }
     loading = true
     error = null
     try {
@@ -70,7 +73,7 @@
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
     {m.orgSelectOrgPre()}
-    <a href={resolve('/orgs', {})} class="alert-link">{m.navOrgs()}</a>
+    <a href={resolve('/orgs')} class="alert-link">{m.navOrgs()}</a>
     {m.orgSelectOrgPost()}
   </div>
 {:else if loading}
@@ -82,7 +85,9 @@
 {:else if error}
   <div class="alert alert-danger">
     <i class="bi bi-exclamation-triangle me-2"></i>{error}
-    <button class="btn btn-sm btn-danger ms-2" onclick={loadAccess}>{m.actionRefresh()}</button>
+    <button class="btn btn-sm btn-danger ms-2" onclick={loadAccess}
+      >{m.actionRefresh()}</button
+    >
   </div>
 {:else}
   <div class="row g-3">
@@ -106,7 +111,9 @@
           {:else}
             <ul class="list-group list-group-flush">
               {#each targetAccess as entry}
-                <li class="list-group-item bg-transparent d-flex align-items-center gap-2">
+                <li
+                  class="list-group-item bg-transparent d-flex align-items-center gap-2"
+                >
                   <i class="bi bi-send text-theme"></i>
                   <span class="flex-grow-1">{entry.name}</span>
                   {#if entry.type}
@@ -147,7 +154,9 @@
           {:else}
             <ul class="list-group list-group-flush">
               {#each menuAccess as entry}
-                <li class="list-group-item bg-transparent d-flex align-items-center gap-2">
+                <li
+                  class="list-group-item bg-transparent d-flex align-items-center gap-2"
+                >
                   <i class="bi bi-menu-button text-theme"></i>
                   <span class="flex-grow-1">{entry.name}</span>
                   {#if entry.relation}
@@ -167,8 +176,12 @@
 
 <style>
   @keyframes spin {
-    from { transform: rotate(0deg) }
-    to   { transform: rotate(360deg) }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
   .spinning {
     animation: spin 0.7s linear infinite;

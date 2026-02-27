@@ -210,7 +210,7 @@
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
     {m.orgSelectOrgPre()}
-    <a href={resolve('/orgs', {})} class="alert-link">{m.navOrgs()}</a>
+    <a href={resolve('/orgs')} class="alert-link">{m.navOrgs()}</a>
     {m.orgSelectOrgPost()}
   </div>
 {:else if loading}
@@ -438,7 +438,8 @@
               {#if unitFlat.length === 0}
                 <p class="small text-inverse text-opacity-50">
                   {m.permNoUnitsHint()}
-                  <a href={resolve('/orgs/units', {})}>{m.permCreateUnitsFirst()}</a>
+                  <a href={resolve('/orgs/units')}>{m.permCreateUnitsFirst()}</a
+                  >
                 </p>
               {:else}
                 <div
@@ -473,7 +474,9 @@
               {#if targets.length === 0}
                 <p class="small text-inverse text-opacity-50">
                   {m.permNoTargetsHint()}
-                  <a href={resolve('/orgs/targets', {})}>{m.permCreateTargetsFirst()}</a>
+                  <a href={resolve('/orgs/targets')}
+                    >{m.permCreateTargetsFirst()}</a
+                  >
                 </p>
               {:else}
                 <div

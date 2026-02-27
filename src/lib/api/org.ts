@@ -36,13 +36,14 @@ export async function listOrgs(): Promise<Org[]> {
   // Map backend response (orgId) to frontend type (id)
   const items = r.details ?? []
   console.log('🔍 [listOrgs] response:', JSON.stringify(r))
+  const now = new Date().toISOString()
   return items.map((item: any) => ({
     id: item.orgId ?? item.id,
     name: item.name,
-    description: item.description,
-    status: item.status ?? 'active', // default if not provided
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt
+    description: item.description ?? '',
+    status: item.status ?? 'active',
+    createdAt: item.createdAt ?? now,
+    updatedAt: item.updatedAt ?? now
   }))
 }
 
@@ -54,36 +55,38 @@ export async function createOrg(body: {
     method: 'POST',
     body: JSON.stringify(body)
   })
-  const item = r.details
+  const item = r.details ?? r // Backend might return data directly or wrapped in details
   console.log('🔍 [createOrg] response:', JSON.stringify(r))
   // Handle both 'id' and 'orgId' from backend response
   if (!item) {
     throw new Error('Failed to create org: no data returned')
   }
+  const now = new Date().toISOString()
   return {
     id: item.id ?? item.orgId,
     name: item.name,
-    description: item.description,
+    description: item.description ?? '',
     status: item.status ?? 'active',
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt
+    createdAt: item.createdAt ?? now,
+    updatedAt: item.updatedAt ?? now
   }
 }
 
 export async function getOrg(id: string): Promise<Org> {
   const r = await apiFetch<any>(`/orgs/${id}`)
-  const item = r.details
+  const item = r.details ?? r // Backend might return data directly or wrapped in details
   console.log('🔍 [getOrg] response:', JSON.stringify(r))
   if (!item) {
     throw new Error('Failed to get org: no data returned')
   }
+  const now = new Date().toISOString()
   return {
     id: item.orgId ?? item.id,
     name: item.name,
-    description: item.description,
+    description: item.description ?? '',
     status: item.status ?? 'active',
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt
+    createdAt: item.createdAt ?? now,
+    updatedAt: item.updatedAt ?? now
   }
 }
 
@@ -95,18 +98,19 @@ export async function updateOrg(
     method: 'PATCH',
     body: JSON.stringify(body)
   })
-  const item = r.details
+  const item = r.details ?? r // Backend might return data directly or wrapped in details
   console.log('🔍 [updateOrg] response:', JSON.stringify(r))
   if (!item) {
     throw new Error('Failed to update org: no data returned')
   }
+  const now = new Date().toISOString()
   return {
     id: item.orgId ?? item.id,
     name: item.name,
-    description: item.description,
+    description: item.description ?? '',
     status: item.status ?? 'active',
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt
+    createdAt: item.createdAt ?? now,
+    updatedAt: item.updatedAt ?? now
   }
 }
 

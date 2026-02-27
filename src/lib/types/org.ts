@@ -26,12 +26,14 @@ export type OrgUnitRelation = 'viewer' | 'editor' | 'deleter'
 
 export interface OrgUnit {
   id: string
-  orgId: string
   name: string
-  parentUnitId?: string | null
+  parentId?: string
+  description?: string
+  isRoot: boolean
   children?: OrgUnit[]
   memberCount?: number
   createdAt: string
+  updatedAt?: string
 }
 
 export interface OrgUnitMember {

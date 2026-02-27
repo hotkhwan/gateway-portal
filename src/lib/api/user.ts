@@ -24,6 +24,19 @@ async function apiFetch<T>(
 // ────────────────────────────────────────────
 // Users
 // ────────────────────────────────────────────
+interface UsersApiResponse {
+  details: User[]
+  pagination: {
+    page: number
+    perPages: number
+    totalRecords: number
+    totalPages: number
+    sortField: string
+    sortOrder: string
+  }
+  status: boolean
+}
+
 export async function listUsers(params?: {
   page?: number
   perPages?: number
@@ -40,9 +53,14 @@ export async function listUsers(params?: {
 
   const queryString = queryParams.toString()
   console.log('🔍 [listUsers] calling with params:', params, 'queryString:', queryString)
-  const r = await apiFetch<PaginatedResponse<User>>(
+  const r = await apiFetch<UsersApiResponse>(
     `/users${queryString ? '?' + queryString : ''}`
   )
   console.log('🔍 [listUsers] response:', JSON.stringify(r))
-  return r.details
+  return {
+    items: r.details,
+    total: r.pagination.totalRecords,
+    page: r.pagination.page,
+    limit: r.pagination.perPages
+  }
 }

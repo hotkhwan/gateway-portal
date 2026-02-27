@@ -1,22 +1,23 @@
 <!-- src/lib/components/app/AppHeader.svelte -->
-<script>
+<script lang="ts">
   import { appOptions } from '$lib/stores/appOptions'
   import { resolve } from '$app/paths'
   import { asset } from '$lib/utils/asset'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { goto } from '$app/navigation'
   import { m } from '$lib/i18n/messages'
-  import { orgList, activeOrg, setActiveOrg } from '$lib/stores/activeOrg'
+  import { activeOrg } from '$lib/stores/activeOrg'
   import { listOrgs } from '$lib/api/org'
   import { onMount } from 'svelte'
 
   // Prefer user from server load (layout/+layout.server.ts) -> page.data.user
-  $: userEmail =
-    $page?.data?.user?.email ?? $page?.data?.user?.name ?? 'user@local'
-  $: userImg = $page?.data?.user?.img ?? asset('/img/user/profile.jpg')
+  const userEmail = $derived(
+    page?.data?.user?.email ?? page?.data?.user?.name ?? 'user@local'
+  )
+  const userImg = $derived(page?.data?.user?.img ?? asset('/img/user/profile.jpg'))
 
-  let isLoggingOut = false
-  let logoutError = ''
+  let isLoggingOut = $state(false)
+  let logoutError = $state('')
 
   onMount(async () => {
     try {
@@ -71,7 +72,7 @@
     $appOptions.appHeaderSearchToggled = !$appOptions.appHeaderSearchToggled
   }
 
-  async function handleLogout(event) {
+  async function handleLogout(event?: Event) {
     event?.preventDefault?.()
     if (isLoggingOut) return
 
