@@ -1,4 +1,3 @@
-<!-- src/routes/(app)/orgs/units/+page.svelte -->
 <script lang="ts">
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
@@ -16,20 +15,18 @@
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
   import type { OrgUnit } from '$lib/types/org'
-
   import { resolve } from '$app/paths'
 
+  // $state ยังใช้ปกติสำหรับ primitive และ array/object ที่ต้องการ deep reactivity
   let loading = $state(true)
   let error = $state<string | null>(null)
   let tree = $state<OrgUnit[]>([])
 
-  // Track expanded units, their loading state, and child availability
+  // SvelteMap/SvelteSet แทน Map/Set ธรรมดา เพื่อให้ reactive
   let expandedUnits = new SvelteMap<string, boolean>()
   let loadingChildren = new SvelteSet<string>()
-  let loadedUnits = new SvelteSet<string>()
-  // let expandedUnits = $state<Map<string, boolean>>(new Map())
-  // let loadingChildren = $state<Set<string>>(new Set())
-  // let loadedUnits = $state<Set<string>>(new Set())
+  // เก็บ children ที่โหลดแล้วแยกต่างหาก ไม่ mutate tree โดยตรง
+  let childrenCache = new SvelteMap<string, OrgUnit[]>()
 
   // Modal state
   let showModal = $state(false)
@@ -43,59 +40,7 @@
   let showDeleteModal = $state(false)
   let deleteUnitItem = $state<OrgUnit | null>(null)
   let deleteLoading = $state(false)
-
-  // Flatten tree for parent selector
-  function flattenTree(
-    nodes: OrgUnit[],
-    depth = 0,
-    parent: OrgUnit | null = null
-  ): Array<{ unit: OrgUnit; depth: number; parent: OrgUnit | null }> {
-    const result: Array<{
-      unit: OrgUnit
-      depth: number
-      parent: OrgUnit | null
-    }> = []
-    for (const node of nodes) {
-      result.push({ unit: node, depth, parent })
-      if (node.children?.length) {
-        result.push(...flattenTree(node.children, depth + 1, node))
-      }
-    }
-    return result
-  }
-
-  // Get parent unit name for display
-  function getParentPath(unit: OrgUnit): string {
-    const path: string[] = []
-    let current = unit
-    // Simple lookup by tree traversal to find parent
-    function findParentInTree(
-      nodes: OrgUnit[],
-      targetId: string
-    ): OrgUnit | null {
-      for (const node of nodes) {
-        if (node.id === targetId) return null
-        if (node.children?.length) {
-          const found = findParentInTree(node.children, targetId)
-          if (found) return found
-          return node
-        }
-      }
-      return null
-    }
-
-    while (current) {
-      const parent = findParentInTree(tree, current.id)
-      if (parent) {
-        path.unshift(parent.name)
-        current = parent
-      } else {
-        break
-      }
-    }
-
-    return path.length > 0 ? path.join(' > ') : ''
-  }
+  let deleteError = $state<string | null>(null)
 
   async function loadTree() {
     const orgId = $activeOrg?.id
@@ -105,6 +50,10 @@
     }
     loading = true
     error = null
+    // Reset state เมื่อ reload tree
+    expandedUnits.clear()
+    loadingChildren.clear()
+    childrenCache.clear()
     try {
       const result = await getUnitTree(orgId)
       tree = result
@@ -115,68 +64,47 @@
     }
   }
 
-  // Get flattened tree with parent info for rendering
-  function getFlattenedTree(): Array<{
-    unit: OrgUnit
-    depth: number
-    parent: OrgUnit | null
-  }> {
-    return flattenTree(tree, 0, null)
-  }
-
-  // Toggle expanded state and load children
+  // Toggle ทุก node ได้เสมอ - ไม่ block ถ้าไม่มี child
   async function toggleExpanded(unit: OrgUnit) {
-    // Don't allow expanding if already loaded and has no children
-    if (loadedUnits.has(unit.id) && (unit.children?.length ?? 0) === 0) return
+    const isOpen = expandedUnits.get(unit.id) ?? false
 
-    const isExpanded = expandedUnits.get(unit.id)
-
-    if (isExpanded) {
-      // Collapse
+    if (isOpen) {
       expandedUnits.set(unit.id, false)
-    } else {
-      // Expand - load children
-      const orgId = $activeOrg?.id
-      if (!orgId) return
+      return
+    }
 
-      loadingChildren.add(unit.id)
-      try {
-        const details = await getUnitDetails(orgId, unit.id)
-        unit.children = details.children ?? []
-        loadedUnits.add(unit.id)
-        // Mark as expanded (even if no children, to show user it was loaded)
-        expandedUnits.set(unit.id, true)
-        // Trigger reactivity by updating tree reference
-        tree = [...tree]
-      } catch (e: unknown) {
-        error = (e as { message?: string })?.message ?? m.commonError()
-      } finally {
-        loadingChildren.delete(unit.id)
-      }
+    // ถ้า cache แล้ว แค่ expand เลย ไม่ต้องเรียก API ใหม่
+    if (childrenCache.has(unit.id)) {
+      expandedUnits.set(unit.id, true)
+      return
+    }
+
+    // เรียก API
+    const orgId = $activeOrg?.id
+    if (!orgId) return
+
+    loadingChildren.add(unit.id)
+    try {
+      const details = await getUnitDetails(orgId, unit.id)
+      childrenCache.set(unit.id, details.children ?? [])
+      expandedUnits.set(unit.id, true)
+    } catch (e: unknown) {
+      error = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      loadingChildren.delete(unit.id)
     }
   }
 
-  // Check if unit is expanded
+  function getChildren(unit: OrgUnit): OrgUnit[] {
+    return childrenCache.get(unit.id) ?? []
+  }
+
   function isExpanded(unit: OrgUnit): boolean {
     return expandedUnits.get(unit.id) ?? false
   }
 
-  // Check if children are loading
   function isLoadingChildren(unit: OrgUnit): boolean {
     return loadingChildren.has(unit.id)
-  }
-
-  // Check if unit has children (either loaded with children, or not loaded yet)
-  function hasChildren(unit: OrgUnit): boolean {
-    // If not loaded yet, assume it might have children (show expandable)
-    if (!loadedUnits.has(unit.id)) return true
-    // If loaded, check actual children (empty array means no children)
-    return (unit.children?.length ?? 0) > 0
-  }
-
-  // Check if unit is expandable (has children or hasn't been loaded)
-  function isExpandable(unit: OrgUnit): boolean {
-    return hasChildren(unit)
   }
 
   function openCreate(parent: OrgUnit | null = null) {
@@ -220,6 +148,7 @@
 
   function confirmDelete(unit: OrgUnit) {
     deleteUnitItem = unit
+    deleteError = null // ← reset error ทุกครั้งที่เปิด modal
     showDeleteModal = true
   }
 
@@ -227,13 +156,16 @@
     const orgId = $activeOrg?.id
     if (!orgId || !deleteUnitItem) return
     deleteLoading = true
+    deleteError = null
     try {
       await deleteUnit(orgId, deleteUnitItem.id)
-      showDeleteModal = false
+      showDeleteModal = false // ← ปิดเฉพาะตอน success
       await loadTree()
       deleteUnitItem = null
     } catch (e: unknown) {
-      error = (e as { message?: string })?.message ?? m.commonError()
+      // 409 หรือ error อื่น → แสดงใน modal ไม่ปิด
+      const err = e as { message?: string; code?: string }
+      deleteError = err?.message ?? m.commonError()
     } finally {
       deleteLoading = false
     }
@@ -306,16 +238,7 @@
 {:else}
   <Card>
     <CardBody class="p-0">
-      {@render UnitTreeNode({
-        nodes: tree,
-        openCreate,
-        openEdit,
-        confirmDelete,
-        toggleExpanded,
-        isExpanded,
-        isLoadingChildren,
-        isExpandable
-      })}
+      {@render UnitTreeNode({ nodes: tree })}
     </CardBody>
   </Card>
 {/if}
@@ -381,10 +304,8 @@
               type="button"
               class="btn btn-secondary"
               onclick={() => (showModal = false)}
-              disabled={modalLoading}
+              disabled={modalLoading}>{m.actionCancel()}</button
             >
-              {m.actionCancel()}
-            </button>
             <button
               type="submit"
               class="btn btn-theme"
@@ -423,6 +344,13 @@
         <div class="modal-body small text-inverse text-opacity-60">
           <strong>"{deleteUnitItem.name}"</strong><br />
           {m.unitDeleteWarning()}
+
+          <!-- ← แสดง error ใน modal แทนหน้า -->
+          {#if deleteError}
+            <div class="alert alert-danger py-2 mt-2 mb-0 small">
+              <i class="bi bi-x-circle me-1"></i>{deleteError}
+            </div>
+          {/if}
         </div>
         <div class="modal-footer border-0 pt-0">
           <button
@@ -430,11 +358,10 @@
             onclick={() => {
               showDeleteModal = false
               deleteUnitItem = null
+              deleteError = null
             }}
-            disabled={deleteLoading}
+            disabled={deleteLoading}>{m.actionCancel()}</button
           >
-            {m.actionCancel()}
-          </button>
           <button
             class="btn btn-sm btn-danger"
             onclick={handleDelete}
@@ -456,103 +383,84 @@
   <div class="modal-backdrop fade show"></div>
 {/if}
 
-<!-- Tree node component (inline snippet) -->
-{#snippet UnitTreeNode(props: {
-  nodes: OrgUnit[]
-  openCreate: (parent: OrgUnit | null) => void
-  openEdit: (unit: OrgUnit) => void
-  confirmDelete: (unit: OrgUnit) => void
-  toggleExpanded: (unit: OrgUnit) => void
-  isExpanded: (unit: OrgUnit) => boolean
-  isLoadingChildren: (unit: OrgUnit) => boolean
-  isExpandable: (unit: OrgUnit) => boolean
-})}
+<!-- Tree node snippet - อ่านจาก SvelteMap/SvelteSet โดยตรง ไม่ส่ง function เป็น props -->
+<!-- Tree node snippet - เอาลูกศรออก กด folder/ชื่อเพื่อ expand -->
+{#snippet UnitTreeNode(props: { nodes: OrgUnit[] })}
   <ul class="list-unstyled mb-0">
     {#each props.nodes as node (node.id)}
-      <li class="border-bottom border-inverse border-opacity-10 last:border-0">
+      <li class="border-bottom border-inverse border-opacity-10">
         <div class="d-flex align-items-center px-2 py-1 gap-2">
-          <!-- Expand/Collapse folder icon - only show if expandable -->
-          {#if props.isLoadingChildren(node)}
-            <span
-              class="spinner-border spinner-border-sm text-theme"
-              role="status"
-            ></span>
-          {:else if props.isExpandable(node)}
-            <!-- Folder icon shows expandable state via the icon itself -->
-            <span style="width: 20px;"></span>
-          {:else}
-            <!-- Placeholder for non-expandable items -->
-            <span style="width: 20px;"></span>
-          {/if}
-          <!-- Folder icon - change based on state -->
-          {#if props.isExpandable(node)}
-            {#if props.isExpanded(node)}
-              <i class="bi bi-folder2-open text-theme opacity-75"></i>
+          <!-- Folder icon คลิกได้ + spinner ตอน loading -->
+          <button
+            type="button"
+            class="btn btn-link p-0 border-0 text-theme d-flex align-items-center"
+            onclick={() => toggleExpanded(node)}
+            disabled={isLoadingChildren(node)}
+            style="min-width: 20px;"
+          >
+            {#if isLoadingChildren(node)}
+              <span
+                class="spinner-border spinner-border-sm text-theme"
+                role="status"
+              ></span>
+            {:else if isExpanded(node)}
+              <i class="bi bi-folder2-open fs-6 opacity-75"></i>
             {:else}
-              <i class="bi bi-folder-plus text-theme opacity-75"></i>
+              <i class="bi bi-folder fs-6 opacity-75"></i>
             {/if}
-          {:else}
-            <i class="bi bi-folder text-theme opacity-75"></i>
-          {/if}
-          {#if props.isExpandable(node)}
-            <button
-              type="button"
-              class="btn btn-link p-0 border-0 text-start flex-grow-1 fw-semibold"
-              onclick={() => props.toggleExpanded(node)}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  props.toggleExpanded(node)
-                }
-              }}
-            >
-              {node.name}
-            </button>
-          {:else}
-            <span class="flex-grow-1 fw-semibold">{node.name}</span>
-          {/if}
+          </button>
+
+          <!-- ชื่อ กดได้เพื่อ expand เช่นกัน -->
+          <button
+            type="button"
+            class="btn btn-link p-0 border-0 text-start flex-grow-1 fw-semibold text-inverse"
+            onclick={() => toggleExpanded(node)}
+          >
+            {node.name}
+          </button>
+
           {#if node.memberCount !== undefined}
             <span class="badge bg-inverse bg-opacity-15 text-inverse small">
               <i class="bi bi-people me-1"></i>{node.memberCount}
             </span>
           {/if}
+
           <button
             class="btn btn-xs btn-outline-theme btn-sm py-0 px-2"
-            onclick={() => props.openCreate(node)}
+            onclick={() => openCreate(node)}
             title={m.unitAddChild()}
           >
             <i class="bi bi-plus"></i>
           </button>
           <button
             class="btn btn-xs btn-outline-secondary btn-sm py-0 px-2"
-            onclick={() => props.openEdit(node)}
+            onclick={() => openEdit(node)}
             title={m.actionEdit()}
           >
             <i class="bi bi-pencil"></i>
           </button>
           <button
             class="btn btn-xs btn-outline-danger btn-sm py-0 px-2"
-            onclick={() => props.confirmDelete(node)}
+            onclick={() => confirmDelete(node)}
             title={m.actionDelete()}
           >
             <i class="bi bi-trash"></i>
           </button>
           <button
             class="btn btn-xs btn-outline-secondary btn-sm py-0 px-2"
-            onclick={() => {
-              goto(`orgs/units/${node.id}/members`)
-            }}
+            onclick={() => goto(`units/${node.id}/members`)}
             title={m.unitMembers()}
           >
             <i class="bi bi-people"></i>
           </button>
         </div>
-        {#if props.isExpanded(node) && node.children?.length}
+
+        {#if isExpanded(node) && getChildren(node).length > 0}
           <div
             class="border-start border-inverse border-opacity-10"
-            style="margin-left: 1rem; padding-left: 0.4rem;"
+            style="margin-left: 1.25rem; padding-left: 0.4rem;"
           >
-            {@render UnitTreeNode({ ...props, nodes: node.children })}
+            {@render UnitTreeNode({ nodes: getChildren(node) })}
           </div>
         {/if}
       </li>

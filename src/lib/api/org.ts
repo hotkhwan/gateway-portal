@@ -156,14 +156,21 @@ export async function listOrgMembers(
   }
 
   const queryString = queryParams.toString()
-  console.log('🔍 [listOrgMembers] calling with orgId:', orgId, 'params:', params, 'queryString:', queryString)
-  const r = await apiFetch<PaginatedResponse<OrgMember>>(
+  const r = await apiFetch<any>(
     `/orgs/users/members${queryString ? '?' + queryString : ''}`,
     undefined,
     orgId
   )
   console.log('🔍 [listOrgMembers] response:', JSON.stringify(r))
-  return r.details
+
+  // API ส่ง details[] + pagination แทน { items, total }
+  return {
+    items: r.details ?? [],
+    total: r.pagination?.totalRecords ?? 0,
+    page: r.pagination?.page ?? 1,
+    perPages: r.pagination?.perPages ?? 10,
+    totalPages: r.pagination?.totalPages ?? 1
+  }
 }
 
 export async function inviteOrgUsers(

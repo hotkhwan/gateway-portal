@@ -6,15 +6,16 @@
   import { page } from '$app/state'
   import { goto } from '$app/navigation'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
   import { listOrgs } from '$lib/api/org'
   import { onMount } from 'svelte'
 
   // Prefer user from server load (layout/+layout.server.ts) -> page.data.user
   const userEmail = $derived(
-    page?.data?.user?.email ?? page?.data?.user?.name ?? 'user@local'
+    page?.data?.user?.email ?? page?.data?.user?.name ?? page?.data?.user?.sub ?? 'user@local'
   )
-  const userImg = $derived(page?.data?.user?.img ?? asset('/img/user/profile.jpg'))
+  const userImg = $derived(
+    page?.data?.user?.img ?? asset('/img/user/profile.jpg')
+  )
 
   let isLoggingOut = $state(false)
   let logoutError = $state('')
@@ -22,10 +23,16 @@
   onMount(async () => {
     try {
       const { setOrgList } = await import('$lib/stores/activeOrg')
-      const orgs = await listOrgs()
+      const orgs = await Promise.race([
+        listOrgs(),
+        new Promise<[]>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout fetching orgs')), 10000)
+        )
+      ])
       setOrgList(orgs)
-    } catch {
-      // silently ignore — user may not have orgs yet
+    } catch (e) {
+      // silently ignore — user may not have orgs yet or API is down
+      console.error('Failed to load orgs:', e)
     }
   })
 
@@ -194,7 +201,7 @@
           </div>
           <div class="col-4">
             <a
-              href={resolve('/helper')}
+              href={resolve('helper')}
               aria-label={m.headerAriaHelper()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >

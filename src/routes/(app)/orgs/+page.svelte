@@ -37,6 +37,7 @@
   let showDeleteConfirm = $state(false)
   let deleteOrgId = $state<string | null>(null)
   let deleteLoading = $state(false)
+  let deleteError = $state<string | null>(null)
 
   async function loadOrgs() {
     loading = true
@@ -60,8 +61,8 @@
         name: createName.trim(),
         description: createDescription.trim() || undefined
       })
-      orgList.update((list) => [...list, org])
-      // auto-switch to newly created org
+      // ← fetch ใหม่แทน mutate local
+      await loadOrgs()
       setActiveOrg(org.id)
       closeCreateModal()
     } catch (e: unknown) {
@@ -87,13 +88,12 @@
     editLoading = true
     editError = null
     try {
-      const updated = await updateOrg(editOrg.id, {
+      await updateOrg(editOrg.id, {
         name: editName.trim(),
         description: editDescription.trim() || undefined
       })
-      orgList.update((list) =>
-        list.map((o) => (o.id === updated.id ? updated : o))
-      )
+      // ← fetch ใหม่แทน mutate local
+      await loadOrgs()
       closeEditModal()
     } catch (e: unknown) {
       editError = (e as { message?: string })?.message ?? m.commonError()
@@ -123,14 +123,14 @@
     deleteLoading = true
     try {
       await deleteOrg(deleteOrgId)
-      orgList.update((list) => list.filter((o) => o.id !== deleteOrgId))
-      // If deleted org was active, clear active org
-      if ($activeOrgId === deleteOrgId) {
-        setActiveOrg('')
-      }
+      const wasActive = $activeOrgId === deleteOrgId
+      // ← fetch ใหม่แทน mutate local
+      await loadOrgs()
+      if (wasActive) setActiveOrg('')
       closeDeleteConfirm()
     } catch (e: unknown) {
-      alert((e as { message?: string })?.message ?? m.commonError())
+      // แสดง error ใน modal แทน alert
+      deleteError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
       deleteLoading = false
     }
@@ -139,12 +139,14 @@
   function openDeleteConfirm(orgId: string) {
     deleteOrgId = orgId
     deleteLoading = false
+    deleteError = null
     showDeleteConfirm = true
   }
 
   function closeDeleteConfirm() {
     showDeleteConfirm = false
     deleteOrgId = null
+    deleteError = null
   }
 
   function formatDate(dateStr: string) {
@@ -217,11 +219,9 @@
             <div class="d-flex align-items-start mb-2">
               <div class="flex-grow-1">
                 <h5 class="mb-1 fw-bold">{org.name}</h5>
-                {#if org.description}
-                  <p class="small text-inverse text-opacity-60 mb-0">
-                    {org.description}
-                  </p>
-                {/if}
+                <p class="small text-inverse text-opacity-60 mb-0">
+                  {org.description || m.orgDescriptionNoDesc()}
+                </p>
               </div>
               <span
                 class="badge rounded-pill ms-2"
@@ -267,14 +267,14 @@
               <button
                 class="btn btn-sm btn-outline-secondary"
                 onclick={() => openEditModal(org)}
-                title="Edit"
+                title={m.actionEdit()}
               >
                 <i class="bi bi-pencil"></i>
               </button>
               <button
                 class="btn btn-sm btn-outline-danger"
                 onclick={() => openDeleteConfirm(org.id)}
-                title="Delete"
+                title={m.actionDelete()}
               >
                 <i class="bi bi-trash"></i>
               </button>
@@ -306,7 +306,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeCreateModal}
           ></button>
         </div>
@@ -401,11 +401,11 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
         <div class="modal-header">
-          <h5 class="modal-title">Edit Organization</h5>
+          <h5 class="modal-title">{m.orgEditTitle()}</h5>
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeEditModal}
           ></button>
         </div>
@@ -500,21 +500,27 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
         <div class="modal-header">
-          <h5 class="modal-title">Delete Organization</h5>
+          <h5 class="modal-title">{m.orgDeleteTitle()}</h5>
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeDeleteConfirm}
           ></button>
         </div>
 
+        <!-- Delete modal body - เพิ่ม error display -->
         <div class="modal-body">
-          <p>Are you sure you want to delete this organization?</p>
+          <p>{m.orgDeleteConfirm()}</p>
           <p class="small text-inverse text-opacity-50">
-            This action cannot be undone. All data associated with this
-            organization will be permanently deleted.
+            {m.orgDeleteWarning()}
           </p>
+
+          {#if deleteError}
+            <div class="alert alert-danger py-2 small mb-0">
+              <i class="bi bi-x-circle me-1"></i>{deleteError}
+            </div>
+          {/if}
         </div>
 
         <div class="modal-footer">
@@ -538,9 +544,9 @@
                 role="status"
                 aria-hidden="true"
               ></span>
-              Deleting...
+              {m.orgDeleteDeleting()}
             {:else}
-              Delete
+              {m.actionDelete()}
             {/if}
           </button>
         </div>

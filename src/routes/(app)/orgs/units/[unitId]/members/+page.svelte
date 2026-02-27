@@ -4,8 +4,10 @@
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { activeOrg } from '$lib/stores/activeOrg'
-  import { listUnitMembers, removeMembers } from '$lib/api/orgunit'
+  import { listUnitMembers, removeMembers, assignMembers, getUnitDetails } from '$lib/api/orgunit'
+  import { listUsers } from '$lib/api/user'
   import type { OrgUnitMember } from '$lib/types/org'
+  import type { User } from '$lib/types/user'
   import { page } from '$app/state'
 
   let loading = $state(true)
@@ -23,6 +25,15 @@
   let selectedUserIds = $state<string[]>([])
   let currentUnit = $state<{ id: string; name: string } | null>(null)
 
+  // Assign modal state
+  let showAssignModal = $state(false)
+  let assignLoading = $state(false)
+  let assignError = $state<string | null>(null)
+  let availableUsers = $state<User[]>([])
+  let assignSearch = $state('')
+  let selectedAssignUserIds = $state<string[]>([])
+  let assignLoadingUsers = $state(false)
+
   async function loadMembers() {
     loading = true
     error = null
@@ -32,7 +43,7 @@
         error = m.unitErrorNoOrg()
         return
       }
-      const unitId = page.url.searchParams.get('unitId')
+      const unitId = page.params.unitId
       if (!unitId) {
         error = m.unitErrorInvalidId()
         return
@@ -45,6 +56,75 @@
     } finally {
       loading = false
     }
+  }
+
+  async function loadAvailableUsers() {
+    assignLoadingUsers = true
+    try {
+      const result = await listUsers({ search: assignSearch, page: 1, perPages: 100 })
+      // Filter out users already in this unit
+      const memberIds = new Set(members.map((m) => m.userId))
+      availableUsers = result.items.filter((u) => !memberIds.has(u.id))
+    } catch (e: unknown) {
+      assignError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      assignLoadingUsers = false
+    }
+  }
+
+  function openAssignModal() {
+    selectedAssignUserIds = []
+    assignError = null
+    assignSearch = ''
+    showAssignModal = true
+    loadAvailableUsers()
+  }
+
+  function closeAssignModal() {
+    showAssignModal = false
+    selectedAssignUserIds = []
+    assignSearch = ''
+    availableUsers = []
+  }
+
+  async function handleAssign() {
+    if (!$activeOrg || !currentUnit || selectedAssignUserIds.length === 0) return
+
+    assignLoading = true
+    assignError = null
+    try {
+      await assignMembers(
+        $activeOrg.id,
+        currentUnit.id,
+        selectedAssignUserIds.map((userId) => ({ userId, role: 'member' }))
+      )
+      closeAssignModal()
+      await loadMembers()
+    } catch (e: unknown) {
+      assignError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      assignLoading = false
+    }
+  }
+
+  function toggleSelectAssignUser(userId: string) {
+    if (selectedAssignUserIds.includes(userId)) {
+      selectedAssignUserIds = selectedAssignUserIds.filter((id) => id !== userId)
+    } else {
+      selectedAssignUserIds = [...selectedAssignUserIds, userId]
+    }
+  }
+
+  function toggleSelectAllAssign() {
+    if (selectedAssignUserIds.length === availableUsers.length) {
+      selectedAssignUserIds = []
+    } else {
+      selectedAssignUserIds = availableUsers.map((u) => u.id)
+    }
+  }
+
+  function handleAssignSearch() {
+    loadAvailableUsers()
   }
 
   function handleSearch() {
@@ -102,9 +182,17 @@
 
   onMount(() => {
     setPageTitle(m.unitMembers())
-    const unitId = page.url.searchParams.get('unitId')
+    const unitId = page.params.unitId
     if (unitId) {
       currentUnit = { id: unitId, name: m.unitMembers() }
+      // Load unit name from tree
+      if ($activeOrg) {
+        getUnitDetails($activeOrg.id, unitId).then((unit) => {
+          currentUnit = { id: unit.id, name: unit.name }
+        }).catch(() => {
+          // Keep default name if load fails
+        })
+      }
     }
     loadMembers()
   })
@@ -130,6 +218,13 @@
     {/if}
   </div>
   <div class="d-flex gap-2">
+    <button
+      class="btn btn-outline-theme btn-sm"
+      onclick={openAssignModal}
+    >
+      <i class="bi bi-person-plus me-1"></i>
+      {m.unitMembersAssign()}
+    </button>
     <button
       class="btn btn-outline-danger btn-sm"
       class:disabled={selectedUserIds.length === 0}
@@ -216,9 +311,9 @@
                 onchange={toggleSelectAll}
               />
             </th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Roles</th>
+            <th>{m.unitMembersTableName()}</th>
+            <th>{m.unitMembersTableRoles()}</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -233,24 +328,16 @@
                 />
               </td>
               <td>
-                <span class="fw-semibold">{member.name}</span>
+                <span class="fw-semibold">{member.firstName} {member.lastName}</span>
               </td>
               <td>
-                {#if member.email}
-                  <a href="mailto:{member.email}" class="text-theme">
-                    {member.email}
-                  </a>
-                {:else}
-                  <span class="text-muted">-</span>
-                {/if}
+                <span class="badge bg-secondary">{member.role}</span>
               </td>
               <td>
-                {#if member.roles?.length}
-                  {#each member.roles as role, i}
-                    <span class="badge bg-secondary me-1">{role}</span>
-                  {/each}
+                {#if member.enabled}
+                  <span class="badge bg-success">{m.commonStatusActive()}</span>
                 {:else}
-                  <span class="text-muted">-</span>
+                  <span class="badge bg-secondary">{m.commonStatusInactive()}</span>
                 {/if}
               </td>
             </tr>
@@ -381,6 +468,153 @@
               {m.actionSubmitting()}
             {:else}
               {m.actionRemove()}
+            {/if}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- Assign Modal -->
+{#if showAssignModal}
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div
+    class="modal d-block"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    onclick={(e) => {
+      if ((e.target as HTMLElement).classList.contains('modal'))
+        closeAssignModal()
+    }}
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title">{m.unitMembersAssign()}</h5>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            onclick={closeAssignModal}
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          {#if assignError}
+            <div class="alert alert-danger small py-2">{assignError}</div>
+          {/if}
+
+          <!-- Search -->
+          <div class="mb-3">
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control"
+                placeholder={m.unitMembersSearchPlaceholder()}
+                bind:value={assignSearch}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter') handleAssignSearch()
+                }}
+              />
+              <button class="btn btn-outline-secondary" onclick={handleAssignSearch}>
+                {m.actionSearch()}
+              </button>
+            </div>
+          </div>
+
+          <!-- Users table -->
+          {#if assignLoadingUsers}
+            <div class="text-center py-3">
+              <div class="spinner-border spinner-border-sm text-theme" role="status">
+                <span class="visually-hidden">{m.actionLoading()}</span>
+              </div>
+            </div>
+          {:else if availableUsers.length === 0}
+            <div class="text-center py-3 text-muted">
+              <i class="bi bi-people fs-3 d-block mb-2"></i>
+              <small>{m.unitMembersNoRecords()}</small>
+            </div>
+          {:else}
+            <div class="table-responsive" style="max-height: 300px">
+              <table class="table table-hover table-striped table-striped-theme mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 40px">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        checked={selectedAssignUserIds.length === availableUsers.length && availableUsers.length > 0}
+                        onchange={toggleSelectAllAssign}
+                      />
+                    </th>
+                    <th>{m.unitMembersTableName()}</th>
+                    <th>{m.unitMembersTableEmail()}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each availableUsers as user (user.id)}
+                    <tr>
+                      <td>
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          checked={selectedAssignUserIds.includes(user.id)}
+                          onchange={() => toggleSelectAssignUser(user.id)}
+                        />
+                      </td>
+                      <td>
+                        <span class="fw-semibold">{user.firstName} {user.lastName || '-'}</span>
+                      </td>
+                      <td>
+                        {#if user.email}
+                          <a href="mailto:{user.email}" class="text-theme">
+                            {user.email}
+                          </a>
+                        {:else}
+                          <span class="text-muted">-</span>
+                        {/if}
+                      </td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-2 text-muted small">
+              {m.usersSelected()}: {selectedAssignUserIds.length}
+            </div>
+          {/if}
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick={closeAssignModal}
+            disabled={assignLoading}
+          >
+            {m.actionCancel()}
+          </button>
+          <button
+            type="button"
+            class="btn btn-theme"
+            onclick={handleAssign}
+            disabled={assignLoading || selectedAssignUserIds.length === 0}
+          >
+            {#if assignLoading}
+              <span
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              {m.actionSubmitting()}
+            {:else}
+              {m.actionAdd()}
             {/if}
           </button>
         </div>

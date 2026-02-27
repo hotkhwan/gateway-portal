@@ -38,9 +38,10 @@ export interface OrgUnit {
 
 export interface OrgUnitMember {
   userId: string
-  email: string
-  name: string
-  roles: string[]
+  role: string
+  firstName: string
+  lastName: string
+  enabled: boolean
 }
 
 export type TargetType = 'webhook' | 'line' | 'telegram' | 'discord'
@@ -92,18 +93,27 @@ export interface TargetPermissionProfile {
   updatedAt?: string
 }
 
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T> {
   code: string
-  message: string
+  message?: string
   status: boolean
   details: T
+  pagination?: {
+    page: number
+    perPages: number
+    totalRecords: number
+    totalPages: number
+    sortField?: string
+    sortOrder?: string
+  }
 }
 
 export interface PaginatedResponse<T> {
   items: T[]
   total: number
-  page: number
-  limit: number
+  page?: number
+  perPages?: number
+  totalPages?: number
 }
 
 // ────────────────────────────────────────────
@@ -118,7 +128,7 @@ export interface OrgMember {
   lastName?: string
   fullName?: string
   role: OrgMemberRole
-  enabled: boolean
+  enabled?: boolean
   createdAt: string
   joinedAt?: string
 }
@@ -127,3 +137,5 @@ export interface OrgInviteUser {
   userId: string
   role: OrgMemberRole
 }
+
+

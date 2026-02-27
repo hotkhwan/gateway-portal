@@ -4,14 +4,22 @@
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { activeOrgId } from '$lib/stores/activeOrg'
-  import { listOrgMembers, inviteOrgUsers, removeOrgUsers, inviteUserByEmail } from '$lib/api/org'
+  import {
+    listOrgMembers,
+    inviteOrgUsers,
+    removeOrgUsers,
+    inviteUserByEmail
+  } from '$lib/api/org'
   import { listUsers } from '$lib/api/user'
   import type {
     OrgMember,
     PaginatedResponse,
     OrgMemberRole
   } from '$lib/types/org'
-  import type { User, PaginatedResponse as UserPaginatedResponse } from '$lib/types/user'
+  import type {
+    User,
+    PaginatedResponse as UserPaginatedResponse
+  } from '$lib/types/user'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
@@ -58,16 +66,13 @@
           m.orgSelectOrgPre() + ' ' + m.navOrgs() + ' ' + m.orgSelectOrgPost()
         return
       }
-      const result: PaginatedResponse<OrgMember> = await listOrgMembers(
-        $activeOrgId,
-        {
-          page,
-          perPages: limit,
-          search: search || undefined,
-          sortField,
-          sortOrder
-        }
-      )
+      const result = await listOrgMembers($activeOrgId, {
+        page,
+        perPages: limit,
+        search: search || undefined,
+        sortField,
+        sortOrder
+      })
       members = result.items ?? []
       total = result.total ?? 0
     } catch (e: unknown) {
@@ -562,7 +567,7 @@
               <button
                 class="nav-link"
                 class:active={inviteMode === 'email'}
-                onclick={() => inviteMode = 'email'}
+                onclick={() => (inviteMode = 'email')}
                 type="button"
                 role="tab"
                 aria-selected={inviteMode === 'email'}
@@ -575,7 +580,7 @@
               <button
                 class="nav-link"
                 class:active={inviteMode === 'existing'}
-                onclick={() => inviteMode = 'existing'}
+                onclick={() => (inviteMode = 'existing')}
                 type="button"
                 role="tab"
                 aria-selected={inviteMode === 'existing'}
@@ -589,11 +594,7 @@
           <!-- Email Invite Tab -->
           {#if inviteMode === 'email'}
             <h6 class="mb-3 fw-semibold">Invite by Email</h6>
-            <div
-              class="vstack gap-2"
-              role="group"
-              aria-label="Email invites"
-            >
+            <div class="vstack gap-2" role="group" aria-label="Email invites">
               {#each emailInvites as invite, index}
                 <div class="input-group">
                   <input
@@ -709,7 +710,9 @@
             class="btn btn-theme"
             onclick={handleInvite}
             disabled={inviteLoading ||
-              (inviteMode === 'email' ? emailInvites.every((e) => !e.email.trim()) : inviteUsers.every((u) => !u.userId.trim()))}
+              (inviteMode === 'email'
+                ? emailInvites.every((e) => !e.email.trim())
+                : inviteUsers.every((u) => !u.userId.trim()))}
           >
             {#if inviteLoading}
               <span
@@ -844,24 +847,31 @@
                   if (e.key === 'Enter') handleUserSearch()
                 }}
               />
-              <button class="btn btn-outline-secondary" onclick={handleUserSearch}>
+              <button
+                class="btn btn-outline-secondary"
+                onclick={handleUserSearch}
+              >
                 {m.actionSearch()}
               </button>
             </div>
           </div>
 
           <!-- Users list -->
-          <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+          <div
+            class="list-group list-group-flush"
+            style="max-height: 300px; overflow-y: auto;"
+          >
             {#if usersLoading}
               <div class="text-center py-3">
-                <div class="spinner-border spinner-border-sm text-theme" role="status">
+                <div
+                  class="spinner-border spinner-border-sm text-theme"
+                  role="status"
+                >
                   <span class="visually-hidden">{m.actionLoading()}</span>
                 </div>
               </div>
             {:else if allUsers.length === 0}
-              <div class="text-center py-3 text-muted">
-                No users found
-              </div>
+              <div class="text-center py-3 text-muted">No users found</div>
             {:else}
               {#each allUsers as user (user.id)}
                 <button
@@ -869,7 +879,9 @@
                   onclick={() => selectUser(user.id)}
                 >
                   <div class="flex-grow-1 text-start">
-                    <div class="fw-semibold">{getUserDisplayNameFromUser(user)}</div>
+                    <div class="fw-semibold">
+                      {getUserDisplayNameFromUser(user)}
+                    </div>
                     {#if user.email}
                       <div class="small text-muted">{user.email}</div>
                     {/if}
@@ -895,4 +907,3 @@
   </div>
   <div class="modal-backdrop fade show"></div>
 {/if}
-

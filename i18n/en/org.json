@@ -7,6 +7,7 @@
   "orgNamePlaceholder": "e.g. Acme Corp",
   "orgDescription": "Description",
   "orgDescriptionPlaceholder": "Brief description (optional)",
+  "orgDescriptionNoDesc": "No description",
   "orgCreatedAt": "Created",
   "orgNoRecords": "No organizations found. Create one to get started.",
   "orgCreateBtn": "New Organization",
@@ -61,5 +62,9 @@
   "orgUsersInviteSuccess": "Users invited successfully!",
   "orgUsersRemoveConfirmTitle": "Remove Users",
   "orgUsersRemoveConfirmDesc": "Are you sure you want to remove the selected users from this organization?",
-  "orgUsersRemoveSuccess": "Users removed successfully!"
+  "orgUsersRemoveSuccess": "Users removed successfully!",
+  "orgDeleteTitle": "Delete Organization",
+  "orgDeleteConfirm": "Are you sure you want to delete this organization?",
+  "orgDeleteWarning": "This action cannot be undone. All associated data will be permanently deleted.",
+  "orgDeleteDeleting": "Deleting..."
 }

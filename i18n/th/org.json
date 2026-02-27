@@ -7,6 +7,7 @@
   "orgNamePlaceholder": "เช่น บริษัท แอคมี จำกัด",
   "orgDescription": "คำอธิบาย",
   "orgDescriptionPlaceholder": "คำอธิบายสั้น ๆ (ไม่บังคับ)",
+  "orgDescriptionNoDesc": "ไม่มีคำอธิบาย",
   "orgCreatedAt": "สร้างเมื่อ",
   "orgNoRecords": "ไม่พบองค์กร กรุณาสร้างองค์กรใหม่เพื่อเริ่มต้น",
   "orgCreateBtn": "สร้างองค์กร",
@@ -61,5 +62,9 @@
   "orgUsersInviteSuccess": "เชิญผู้ใช้สำเร็จ!",
   "orgUsersRemoveConfirmTitle": "ลบผู้ใช้ออก",
   "orgUsersRemoveConfirmDesc": "คุณแน่ใจหรือไม่ที่จะลบผู้ใช้ที่เลือกออกจากองค์กรนี้?",
-  "orgUsersRemoveSuccess": "ลบผู้ใช้ออกสำเร็จ!"
+  "orgUsersRemoveSuccess": "ลบผู้ใช้ออกสำเร็จ!",
+  "orgDeleteTitle": "ลบองค์กร",
+  "orgDeleteConfirm": "คุณแน่ใจหรือไม่ที่จะลบองค์กรนี้?",
+  "orgDeleteWarning": "การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลทั้งหมดที่เกี่ยวข้องจะถูกลบออกถาวร",
+  "orgDeleteDeleting": "กำลังลบ..."
 }
