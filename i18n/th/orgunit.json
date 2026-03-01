@@ -35,5 +35,8 @@
   "unitRelationEditor": "ผู้แก้ไข",
   "unitRelationDeleter": "ผู้ลบ",
   "unitAddChild": "เพิ่มหน่วยงานย่อย",
-  "unitCreateUnder": "ใต้ \"{name}\""
+  "unitCreateUnder": "ใต้ \"{name}\"",
+  "unitExpand": "ขยาย",
+  "unitCollapse": "ย่อ",
+  "unitMembersTableStatus": "สถานะ"
 }

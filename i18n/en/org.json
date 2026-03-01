@@ -66,5 +66,16 @@
   "orgDeleteTitle": "Delete Organization",
   "orgDeleteConfirm": "Are you sure you want to delete this organization?",
   "orgDeleteWarning": "This action cannot be undone. All associated data will be permanently deleted.",
-  "orgDeleteDeleting": "Deleting..."
+  "orgDeleteDeleting": "Deleting...",
+
+  "_comments_ingest": "Ingest endpoint section",
+  "orgIngestSection": "Ingest Endpoint",
+  "orgIngestFailed": "Failed to load ingest config",
+  "orgIngestEndpointLabel": "Endpoint",
+  "orgIngestSecretLabel": "Secret",
+  "orgIngestSignatureLabel": "Signature",
+  "orgIngestRateLimitLabel": "Rate limit",
+  "orgIngestRequired": "Required",
+  "orgIngestOptional": "Optional",
+  "orgIngestBurst": "burst"
 }

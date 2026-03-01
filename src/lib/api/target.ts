@@ -1,9 +1,8 @@
 // src/lib/api/target.ts
+import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, DeliveryTarget } from '$lib/types/org'
 
-// Client-side ใช้ import.meta.env.PUBLIC_*
-const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')
-const BASE = `${APP_BASE}/api`
+const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
 async function apiFetch<T>(
   path: string,
@@ -28,7 +27,7 @@ async function apiFetch<T>(
 // ────────────────────────────────────────────
 export async function listTargets(orgId: string): Promise<DeliveryTarget[]> {
   const r = await apiFetch<DeliveryTarget[]>('/targets', orgId)
-  return r.details ?? []
+  return r.details ?? []                          // array → details
 }
 
 export async function createTarget(
@@ -39,15 +38,14 @@ export async function createTarget(
     method: 'POST',
     body: JSON.stringify(body)
   })
-  return r.details
+  if (!r.detail) throw new Error('created target not returned')
+  return r.detail                                  // single → detail
 }
 
-export async function getTarget(
-  orgId: string,
-  targetId: string
-): Promise<DeliveryTarget> {
+export async function getTarget(orgId: string, targetId: string): Promise<DeliveryTarget> {
   const r = await apiFetch<DeliveryTarget>(`/targets/${targetId}`, orgId)
-  return r.details
+  if (!r.detail) throw new Error('target not found')
+  return r.detail                                  // single → detail
 }
 
 export async function updateTarget(
@@ -59,7 +57,8 @@ export async function updateTarget(
     method: 'PATCH',
     body: JSON.stringify(body)
   })
-  return r.details
+  if (!r.detail) throw new Error('updated target not returned')
+  return r.detail                                  // single → detail
 }
 
 export async function deleteTarget(orgId: string, targetId: string): Promise<void> {

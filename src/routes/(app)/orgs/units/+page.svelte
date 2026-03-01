@@ -2,11 +2,11 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
-  import { SvelteSet } from 'svelte/reactivity'
   import { m } from '$lib/i18n/messages'
   import { activeOrg } from '$lib/stores/activeOrg'
   import {
     getUnitTree,
+    getUnitDetails,
     createUnit,
     updateUnit,
     deleteUnit,
@@ -24,46 +24,27 @@
   import type { User } from '$lib/types/user'
   import { resolve } from '$app/paths'
 
-  // ── Tree state ──────────────────────────────────────────────────────────────
   let loading = $state(true)
   let error = $state<string | null>(null)
   let tree = $state<OrgUnit[]>([])
+  let childrenMap = $state<Record<string, OrgUnit[]>>({})
+  let loadingNodes = $state<Set<string>>(new Set())
 
-  // Track expanded nodes — ใช้ children จาก tree data โดยตรง ไม่ยิง API เพิ่ม
-  let expandedIds = new SvelteSet<string>()
-
-  function toggleExpanded(unit: OrgUnit) {
-    if (expandedIds.has(unit.id)) {
-      expandedIds.delete(unit.id)
-    } else {
-      expandedIds.add(unit.id)
-    }
+  function getChildren(node: OrgUnit): OrgUnit[] {
+    return childrenMap[node.id] ?? node.children ?? []
   }
 
-  function isExpanded(id: string): boolean {
-    return expandedIds.has(id)
-  }
-
-  function hasChildren(unit: OrgUnit): boolean {
-    return Array.isArray(unit.children) && unit.children.length > 0
-  }
-
-  // ── Selected unit (drives right panel) ─────────────────────────────────────
   let selectedUnit = $state<OrgUnit | null>(null)
-
-  // ── Members state ───────────────────────────────────────────────────────────
   let membersLoading = $state(false)
   let membersError = $state<string | null>(null)
   let members = $state<OrgUnitMember[]>([])
   let memberSearch = $state('')
   let selectedUserIds = $state<string[]>([])
 
-  // ── Remove modal ────────────────────────────────────────────────────────────
   let showRemoveModal = $state(false)
   let removeLoading = $state(false)
   let removeError = $state<string | null>(null)
 
-  // ── Assign modal ────────────────────────────────────────────────────────────
   let showAssignModal = $state(false)
   let assignLoading = $state(false)
   let assignError = $state<string | null>(null)
@@ -72,7 +53,6 @@
   let selectedAssignUserIds = $state<string[]>([])
   let assignLoadingUsers = $state(false)
 
-  // ── Unit create/edit modal ──────────────────────────────────────────────────
   let showModal = $state(false)
   let editUnit = $state<OrgUnit | null>(null)
   let parentForNew = $state<OrgUnit | null>(null)
@@ -80,13 +60,11 @@
   let modalError = $state<string | null>(null)
   let fName = $state('')
 
-  // ── Delete modal ────────────────────────────────────────────────────────────
   let showDeleteModal = $state(false)
   let deleteUnitItem = $state<OrgUnit | null>(null)
   let deleteLoading = $state(false)
   let deleteError = $state<string | null>(null)
 
-  // ── Load tree ───────────────────────────────────────────────────────────────
   async function loadTree() {
     const orgId = $activeOrg?.id
     if (!orgId) {
@@ -95,7 +73,9 @@
     }
     loading = true
     error = null
-    expandedIds.clear()
+    childrenMap = {}
+    selectedUnit = null
+    members = []
     try {
       tree = await getUnitTree(orgId)
     } catch (e: unknown) {
@@ -105,23 +85,65 @@
     }
   }
 
-  // ── Select unit → load members ──────────────────────────────────────────────
-  async function selectUnit(unit: OrgUnit) {
-    selectedUnit = unit
+  async function selectUnit(node: OrgUnit) {
+    const orgId = $activeOrg?.id
+    if (!orgId) return
+
+    // กด node เดิมที่ selected → deselect + collapse children
+    if (selectedUnit?.id === node.id) {
+      selectedUnit = null
+      members = []
+      selectedUserIds = []
+      // ลบออกจาก childrenMap เพื่อ collapse
+      const next = { ...childrenMap }
+      delete next[node.id]
+      childrenMap = next
+      return
+    }
+
+    selectedUnit = node
     selectedUserIds = []
     memberSearch = ''
-    await loadMembers()
+
+    loadingNodes = new Set([...loadingNodes, node.id])
+    membersLoading = true
+    membersError = null
+
+    const [unitDetailResult, memberListResult] = await Promise.allSettled([
+      getUnitDetails(orgId, node.id),
+      listUnitMembers(orgId, node.id)
+    ])
+
+    if (unitDetailResult.status === 'fulfilled') {
+      childrenMap = {
+        ...childrenMap,
+        [node.id]: unitDetailResult.value.children ?? []
+      }
+    } else {
+      childrenMap = { ...childrenMap, [node.id]: node.children ?? [] }
+    }
+
+    if (memberListResult.status === 'fulfilled') {
+      members = memberListResult.value ?? []
+    } else {
+      membersError =
+        (memberListResult.reason as { message?: string })?.message ??
+        m.commonError()
+    }
+
+    const next = new Set(loadingNodes)
+    next.delete(node.id)
+    loadingNodes = next
+    membersLoading = false
   }
 
-  // ── Members helpers ─────────────────────────────────────────────────────────
   async function loadMembers() {
     const orgId = $activeOrg?.id
     if (!orgId || !selectedUnit) return
     membersLoading = true
     membersError = null
     try {
-      const result = await listUnitMembers(orgId, selectedUnit.id)
-      members = result ?? []
+      members = (await listUnitMembers(orgId, selectedUnit.id)) ?? []
     } catch (e: unknown) {
       membersError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
@@ -153,7 +175,6 @@
         : visible.map((mb) => mb.userId)
   }
 
-  // ── Remove members ──────────────────────────────────────────────────────────
   function openRemoveModal() {
     if (selectedUserIds.length === 0) return
     removeError = null
@@ -176,7 +197,6 @@
     }
   }
 
-  // ── Assign members ──────────────────────────────────────────────────────────
   async function loadAvailableUsers() {
     assignLoadingUsers = true
     try {
@@ -241,7 +261,6 @@
         : availableUsers.map((u) => u.id)
   }
 
-  // ── Unit CRUD ───────────────────────────────────────────────────────────────
   function openCreate(parent: OrgUnit | null = null) {
     editUnit = null
     parentForNew = parent
@@ -318,7 +337,7 @@
   })
 </script>
 
-<!-- ── Page header ──────────────────────────────────────────────────────────── -->
+<!-- Page header -->
 <div class="d-flex align-items-center mb-3">
   <div class="flex-grow-1">
     <h1 class="page-header mb-0">{m.unitTitle()}</h1>
@@ -353,19 +372,10 @@
     <CardBody class="p-0 flex-1 overflow-hidden">
       <div class="file-manager h-100">
         <div class="file-manager-container h-100">
-          <!-- ╔══════════════════════════════════════╗ -->
-          <!-- ║  LEFT — unit tree sidebar            ║ -->
-          <!-- ╚══════════════════════════════════════╝ -->
+          <!-- LEFT: unit tree -->
           <div class="file-manager-sidebar">
             <div class="file-manager-sidebar-content">
               <PerfectScrollbar class="h-100 p-3">
-                <input
-                  type="text"
-                  class="form-control form-control-sm mb-3"
-                  placeholder={m.unitNamePlaceholder()}
-                  readonly
-                />
-
                 {#if loading}
                   <div class="text-center py-4">
                     <div
@@ -378,10 +388,8 @@
                     {error}
                     <button
                       class="btn btn-sm btn-danger ms-2"
-                      onclick={loadTree}
+                      onclick={loadTree}>{m.actionRefresh()}</button
                     >
-                      {m.actionRefresh()}
-                    </button>
                   </div>
                 {:else if tree.length === 0}
                   <div
@@ -397,23 +405,18 @@
                 {/if}
               </PerfectScrollbar>
             </div>
-            <!-- no sidebar footer -->
           </div>
 
-          <!-- ╔══════════════════════════════════════╗ -->
-          <!-- ║  RIGHT — members panel               ║ -->
-          <!-- ╚══════════════════════════════════════╝ -->
+          <!-- RIGHT: members panel -->
           <div class="file-manager-content d-flex flex-column">
-            <!-- Breadcrumb header (replaces old sidebar footer) -->
             <div
               class="d-flex flex-wrap align-items-center text-nowrap px-10px pt-10px pb-0 border-bottom"
             >
-              <!-- Org info breadcrumb -->
               <div class="d-flex align-items-center gap-2 small me-3 mb-10px">
                 <i class="fa fa-building fa-lg text-theme"></i>
                 <span class="fw-semibold text-inverse">{$activeOrg.name}</span>
                 <i class="bi bi-chevron-right text-inverse text-opacity-25"></i>
-                <i class="fa fa-folder fa-lg text-warning"></i>
+                <i class="bi bi-folder2 text-warning"></i>
                 <span class="fw-semibold text-inverse">{m.unitTitle()}</span>
                 {#if selectedUnit}
                   <i class="bi bi-chevron-right text-inverse text-opacity-25"
@@ -423,8 +426,6 @@
                   >
                 {/if}
               </div>
-
-              <!-- Toolbar -->
               <button
                 class="btn border-0 btn-sm mb-10px"
                 onclick={openAssignModal}
@@ -446,14 +447,12 @@
               </button>
             </div>
 
-            <!-- Members content -->
             <div class="flex-1 overflow-hidden">
               <PerfectScrollbar class="h-100 p-0">
                 {#if !selectedUnit}
                   <div class="text-center py-5 text-inverse text-opacity-25">
-                    <i class="fa fa-folder-open fa-3x text-warning d-block mb-3"
-                    ></i>
-                    <p class="small">{m.unitTitle()}</p>
+                    <i class="bi bi-folder2 fs-1 text-warning d-block mb-3"></i>
+                    <p class="small">{m.unitNoRecords()}</p>
                   </div>
                 {:else if membersLoading}
                   <div class="text-center py-5">
@@ -467,13 +466,10 @@
                     ></i>{membersError}
                     <button
                       class="btn btn-sm btn-danger ms-2"
-                      onclick={loadMembers}
+                      onclick={loadMembers}>{m.actionRefresh()}</button
                     >
-                      {m.actionRefresh()}
-                    </button>
                   </div>
                 {:else}
-                  <!-- Search -->
                   <div class="px-3 py-2 border-bottom">
                     <input
                       type="text"
@@ -482,7 +478,6 @@
                       bind:value={memberSearch}
                     />
                   </div>
-
                   {#if filteredMembers().length === 0}
                     <div class="text-center py-5 text-inverse text-opacity-50">
                       <i class="bi bi-people fs-1 d-block mb-3"></i>
@@ -506,7 +501,7 @@
                           </th>
                           <th class="px-10px">{m.unitMembersTableName()}</th>
                           <th class="px-10px">{m.unitMembersTableRoles()}</th>
-                          <th class="px-10px">Status</th>
+                          <th class="px-10px">{m.unitMembersTableStatus()}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -522,15 +517,14 @@
                                 onchange={() => toggleSelectUser(member.userId)}
                               />
                             </td>
-                            <td class="px-10px border-0 fw-semibold">
-                              {member.firstName}
-                              {member.lastName}
-                            </td>
-                            <td class="px-10px border-0">
-                              <span class="badge bg-secondary"
+                            <td class="px-10px border-0 fw-semibold"
+                              >{member.firstName} {member.lastName}</td
+                            >
+                            <td class="px-10px border-0"
+                              ><span class="badge bg-secondary"
                                 >{member.role}</span
-                              >
-                            </td>
+                              ></td
+                            >
                             <td class="px-10px border-0">
                               {#if member.enabled}
                                 <span class="badge bg-success"
@@ -551,107 +545,114 @@
               </PerfectScrollbar>
             </div>
           </div>
-          <!-- /file-manager-content -->
         </div>
-        <!-- /file-manager-container -->
       </div>
-      <!-- /file-manager -->
     </CardBody>
   </Card>
 {/if}
 
-<!-- ╔══════════════════════════════════════════════════════════════╗ -->
-<!-- ║  Tree node snippet                                           ║ -->
-<!-- ║  - ใช้ file-node / file-link / file-arrow / file-info       ║ -->
-<!-- ║  - กด file-arrow → toggle expand (ใช้ unit.children โดยตรง) ║ -->
-<!-- ║  - กด file-info  → selectUnit (load members)                ║ -->
-<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<!-- Tree node snippet -->
 {#snippet UnitTreeNode(props: { nodes: OrgUnit[] })}
   {#each props.nodes as node (node.id)}
+    {@const isSelected = selectedUnit?.id === node.id}
+    {@const isLoading = loadingNodes.has(node.id)}
+    {@const children = getChildren(node)}
+    {@const isOpen = childrenMap[node.id] !== undefined && children.length > 0}
+
     <div
       class="file-node"
-      class:has-sub={hasChildren(node)}
-      class:expand={isExpanded(node.id)}
-      class:selected={selectedUnit?.id === node.id}
+      class:has-sub={children.length > 0}
+      class:expand={isOpen}
+      class:selected={isSelected}
     >
       <a
         href="#/"
-        aria-label="link"
+        aria-label={node.name}
         class="file-link"
         onclick={(e) => e.preventDefault()}
       >
-        <!-- Arrow: กดเพื่อ expand/collapse (ไม่ยิง API) -->
-        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-        <span
-          class="file-arrow"
-          onclick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            if (hasChildren(node)) toggleExpanded(node)
-          }}
-        ></span>
-
-        <!-- Folder icon + name: กดเพื่อ select unit (load members) -->
-        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-        <span
-          class="file-info"
+        <button
+          type="button"
+          class="file-info border-0 bg-transparent p-0 text-start d-flex align-items-center gap-1 flex-grow-1"
+          aria-label={node.name}
+          disabled={isLoading}
           onclick={(e) => {
             e.preventDefault()
             selectUnit(node)
           }}
         >
-          <span class="file-icon">
-            <i class="fa fa-folder fa-lg text-warning"></i>
-          </span>
+          {#if isLoading}
+            <span class="file-icon">
+              <span
+                class="spinner-border spinner-border-sm text-theme"
+                style="width:14px;height:14px"
+              ></span>
+            </span>
+          {:else}
+            <span class="file-icon">
+              <i
+                class="bi {isSelected
+                  ? 'bi-folder2-open'
+                  : 'bi-folder2'} text-warning"
+              ></i>
+            </span>
+          {/if}
           <span class="file-text">{node.name}</span>
           {#if node.memberCount !== undefined}
             <span
               class="badge bg-inverse bg-opacity-15 text-inverse ms-1"
-              style="font-size:0.7em"
+              style="font-size:0.7em">{node.memberCount}</span
             >
-              {node.memberCount}
-            </span>
           {/if}
-        </span>
+        </button>
 
-        <!-- Inline action buttons -->
-        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-        <span
-          class="ms-auto d-flex gap-1 pe-1"
-          onclick={(e) => e.stopPropagation()}
-        >
+        <div class="ms-auto d-flex gap-1 pe-1 flex-shrink-0">
           <button
             type="button"
             class="btn btn-xs btn-link text-theme p-0 px-1"
-            onclick={() => openCreate(node)}
-            title={m.unitAddChild()}><i class="bi bi-plus-lg"></i></button
+            onclick={(e) => {
+              e.stopPropagation()
+              openCreate(node)
+            }}
+            title={m.unitAddChild()}
           >
+            <i class="bi bi-plus-lg"></i>
+          </button>
           <button
             type="button"
             class="btn btn-xs btn-link text-inverse text-opacity-50 p-0 px-1"
-            onclick={() => openEdit(node)}
-            title={m.actionEdit()}><i class="bi bi-pencil"></i></button
+            onclick={(e) => {
+              e.stopPropagation()
+              openEdit(node)
+            }}
+            title={m.actionEdit()}
           >
+            <i class="bi bi-pencil"></i>
+          </button>
           <button
             type="button"
             class="btn btn-xs btn-link text-danger p-0 px-1"
-            onclick={() => confirmDelete(node)}
-            title={m.actionDelete()}><i class="bi bi-trash"></i></button
+            onclick={(e) => {
+              e.stopPropagation()
+              confirmDelete(node)
+            }}
+            title={m.actionDelete()}
           >
-        </span>
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
       </a>
 
-      <!-- Recursive children (from tree data, no API) -->
-      {#if hasChildren(node) && isExpanded(node.id)}
+      {#if isOpen}
         <div class="file-tree">
-          {@render UnitTreeNode({ nodes: node.children! })}
+          {@render UnitTreeNode({ nodes: children })}
         </div>
       {/if}
     </div>
   {/each}
 {/snippet}
 
-<!-- ── Unit create/edit modal ────────────────────────────────────────────────── -->
+<!-- Unit create/edit modal -->
 {#if showModal}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
@@ -670,9 +671,9 @@
           <h5 class="modal-title">
             {editUnit ? m.unitEditTitle() : m.unitCreateTitle()}
             {#if parentForNew}
-              <small class="text-inverse text-opacity-50 fw-normal ms-2">
-                {m.unitCreateUnder({ name: parentForNew.name })}
-              </small>
+              <small class="text-inverse text-opacity-50 fw-normal ms-2"
+                >{m.unitCreateUnder({ name: parentForNew.name })}</small
+              >
             {/if}
           </h5>
           <button
@@ -740,7 +741,7 @@
   <div class="modal-backdrop fade show"></div>
 {/if}
 
-<!-- ── Delete confirm modal ───────────────────────────────────────────────────── -->
+<!-- Delete unit modal -->
 {#if showDeleteModal && deleteUnitItem}
   <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -790,7 +791,7 @@
   <div class="modal-backdrop fade show"></div>
 {/if}
 
-<!-- ── Remove members modal ───────────────────────────────────────────────────── -->
+<!-- Remove members modal -->
 {#if showRemoveModal}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
@@ -857,7 +858,7 @@
   <div class="modal-backdrop fade show"></div>
 {/if}
 
-<!-- ── Assign members modal ───────────────────────────────────────────────────── -->
+<!-- Assign members modal -->
 {#if showAssignModal}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
@@ -906,13 +907,10 @@
               />
               <button
                 class="btn btn-outline-secondary"
-                onclick={loadAvailableUsers}
+                onclick={loadAvailableUsers}>{m.actionSearch()}</button
               >
-                {m.actionSearch()}
-              </button>
             </div>
           </div>
-
           {#if assignLoadingUsers}
             <div class="text-center py-3">
               <div

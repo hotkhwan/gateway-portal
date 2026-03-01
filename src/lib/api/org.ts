@@ -1,14 +1,8 @@
 // src/lib/api/org.ts
+import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, Org, IngestConfig, OrgMember, PaginatedResponse } from '$lib/types/org'
 
-// Client-side ใช้ import.meta.env.PUBLIC_*
-const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')
-const BASE = `${APP_BASE}/api`
-
-// Debug: log เพื่อเช็คค่า
-console.log('🔍 [org.ts] PUBLIC_APP_BASE_PATH =', import.meta.env.PUBLIC_APP_BASE_PATH)
-console.log('🔍 [org.ts] APP_BASE =', APP_BASE)
-console.log('🔍 [org.ts] BASE =', BASE)
+const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
 async function apiFetch<T>(
   path: string,
@@ -33,7 +27,6 @@ async function apiFetch<T>(
 // ────────────────────────────────────────────
 export async function listOrgs(): Promise<Org[]> {
   const r = await apiFetch<any[]>('/orgs')
-  // Map backend response (orgId) to frontend type (id)
   const items = r.details ?? []
   console.log('🔍 [listOrgs] response:', JSON.stringify(r))
   const now = new Date().toISOString()
@@ -55,12 +48,9 @@ export async function createOrg(body: {
     method: 'POST',
     body: JSON.stringify(body)
   })
-  const item = r.details ?? r // Backend might return data directly or wrapped in details
+  const item = r.details ?? r
   console.log('🔍 [createOrg] response:', JSON.stringify(r))
-  // Handle both 'id' and 'orgId' from backend response
-  if (!item) {
-    throw new Error('Failed to create org: no data returned')
-  }
+  if (!item) throw new Error('Failed to create org: no data returned')
   const now = new Date().toISOString()
   return {
     id: item.id ?? item.orgId,
@@ -74,11 +64,9 @@ export async function createOrg(body: {
 
 export async function getOrg(id: string): Promise<Org> {
   const r = await apiFetch<any>(`/orgs/${id}`)
-  const item = r.details ?? r // Backend might return data directly or wrapped in details
+  const item = r.details ?? r
   console.log('🔍 [getOrg] response:', JSON.stringify(r))
-  if (!item) {
-    throw new Error('Failed to get org: no data returned')
-  }
+  if (!item) throw new Error('Failed to get org: no data returned')
   const now = new Date().toISOString()
   return {
     id: item.orgId ?? item.id,
@@ -98,11 +86,9 @@ export async function updateOrg(
     method: 'PATCH',
     body: JSON.stringify(body)
   })
-  const item = r.details ?? r // Backend might return data directly or wrapped in details
+  const item = r.details ?? r
   console.log('🔍 [updateOrg] response:', JSON.stringify(r))
-  if (!item) {
-    throw new Error('Failed to update org: no data returned')
-  }
+  if (!item) throw new Error('Failed to update org: no data returned')
   const now = new Date().toISOString()
   return {
     id: item.orgId ?? item.id,
@@ -115,9 +101,7 @@ export async function updateOrg(
 }
 
 export async function deleteOrg(id: string): Promise<void> {
-  await apiFetch(`/orgs/${id}`, {
-    method: 'DELETE'
-  })
+  await apiFetch(`/orgs/${id}`, { method: 'DELETE' })
 }
 
 // ────────────────────────────────────────────
@@ -125,16 +109,18 @@ export async function deleteOrg(id: string): Promise<void> {
 // ────────────────────────────────────────────
 export async function getIngestConfig(orgId: string): Promise<IngestConfig> {
   const r = await apiFetch<IngestConfig>('/ingest', undefined, orgId)
-  return r.details
+  if (!r.detail) throw new Error('ingest config not found')
+  return r.detail
 }
 
 export async function rotateIngestSecret(orgId: string): Promise<IngestConfig> {
   const r = await apiFetch<IngestConfig>('/ingest/rotateSecret', { method: 'POST' }, orgId)
-  return r.details
+  if (!r.detail) throw new Error('ingest config not found')
+  return r.detail
 }
 
 // ────────────────────────────────────────────
-// Org Members  →  /users/members, /users/invite, /users/remove
+// Org Members
 // ────────────────────────────────────────────
 export async function listOrgMembers(
   orgId: string,
@@ -154,7 +140,6 @@ export async function listOrgMembers(
     if (params.sortOrder) queryParams.set('sortOrder', params.sortOrder)
     if (params.search) queryParams.set('search', params.search)
   }
-
   const queryString = queryParams.toString()
   const r = await apiFetch<any>(
     `/orgs/users/members${queryString ? '?' + queryString : ''}`,
@@ -162,8 +147,6 @@ export async function listOrgMembers(
     orgId
   )
   console.log('🔍 [listOrgMembers] response:', JSON.stringify(r))
-
-  // API ส่ง details[] + pagination แทน { items, total }
   return {
     items: r.details ?? [],
     total: r.pagination?.totalRecords ?? 0,
@@ -177,10 +160,7 @@ export async function inviteOrgUsers(
   orgId: string,
   users: { userId: string; role: 'admin' | 'member' }[]
 ): Promise<void> {
-  await apiFetch('/orgs/users/invite', {
-    method: 'POST',
-    body: JSON.stringify({ users })
-  }, orgId)
+  await apiFetch('/orgs/users/invite', { method: 'POST', body: JSON.stringify({ users }) }, orgId)
 }
 
 export async function inviteUserByEmail(
@@ -198,8 +178,5 @@ export async function removeOrgUsers(
   orgId: string,
   users: { userId: string; role: 'admin' | 'member' }[]
 ): Promise<void> {
-  await apiFetch('/orgs/users/remove', {
-    method: 'PATCH',
-    body: JSON.stringify({ users })
-  }, orgId)
+  await apiFetch('/orgs/users/remove', { method: 'PATCH', body: JSON.stringify({ users }) }, orgId)
 }

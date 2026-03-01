@@ -1,9 +1,8 @@
 // src/lib/api/permission.ts
+import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, TargetPermissionProfile, OrgUnitRelation } from '$lib/types/org'
 
-// Client-side ใช้ import.meta.env.PUBLIC_*
-const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')
-const BASE = `${APP_BASE}/api`
+const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
 async function apiFetch<T>(
   path: string,
@@ -75,7 +74,7 @@ export async function listPermissionProfiles(
   orgId: string
 ): Promise<TargetPermissionProfile[]> {
   const r = await apiFetch<BackendProfile[]>('/orgs/resource/permissions', orgId)
-  return (r.details ?? []).map(fromBackend)
+  return (r.details ?? []).map(fromBackend)       // array → details
 }
 
 export async function createPermissionProfile(
@@ -86,7 +85,8 @@ export async function createPermissionProfile(
     method: 'POST',
     body: JSON.stringify(toBackendBody(body))
   })
-  return fromBackend(r.details)
+  if (!r.detail) throw new Error('created profile not returned')
+  return fromBackend(r.detail)                    // single → detail
 }
 
 export async function updatePermissionProfile(
@@ -99,7 +99,8 @@ export async function updatePermissionProfile(
     orgId,
     { method: 'PATCH', body: JSON.stringify(toBackendBody(body)) }
   )
-  return fromBackend(r.details)
+  if (!r.detail) throw new Error('updated profile not returned')
+  return fromBackend(r.detail)                    // single → detail
 }
 
 export async function deletePermissionProfile(
@@ -123,10 +124,10 @@ export interface AccessEntry {
 
 export async function getMyTargetAccess(orgId: string): Promise<AccessEntry[]> {
   const r = await apiFetch<AccessEntry[]>('/orgs/resource/access', orgId)
-  return r.details ?? []
+  return r.details ?? []                          // array → details
 }
 
 export async function getMyMenuAccess(orgId: string): Promise<AccessEntry[]> {
   const r = await apiFetch<AccessEntry[]>('/orgs/menu/access', orgId)
-  return r.details ?? []
+  return r.details ?? []                          // array → details
 }

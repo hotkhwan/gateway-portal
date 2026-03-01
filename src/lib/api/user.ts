@@ -1,40 +1,17 @@
 // src/lib/api/user.ts
-import type { ApiResponse, PaginatedResponse, User } from '$lib/types/user'
+import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
+import type { PaginatedResponse, User } from '$lib/types/user'
 
-// Client-side ใช้ import.meta.env.PUBLIC_*
-const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')
-const BASE = `${APP_BASE}/api`
+const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
-async function apiFetch<T>(
-  path: string,
-  init?: RequestInit
-): Promise<ApiResponse<T>> {
+async function apiFetch(path: string, init?: RequestInit): Promise<any> {
   const res = await fetch(`${BASE}${path}`, {
-    headers: {
-      'content-type': 'application/json',
-      ...init?.headers
-    },
+    headers: { 'content-type': 'application/json', ...init?.headers },
     ...init
   })
   const json = await res.json()
   if (!res.ok) throw json
-  return json as ApiResponse<T>
-}
-
-// ────────────────────────────────────────────
-// Users
-// ────────────────────────────────────────────
-interface UsersApiResponse {
-  details: User[]
-  pagination: {
-    page: number
-    perPages: number
-    totalRecords: number
-    totalPages: number
-    sortField: string
-    sortOrder: string
-  }
-  status: boolean
+  return json
 }
 
 export async function listUsers(params?: {
@@ -43,24 +20,20 @@ export async function listUsers(params?: {
   sortOrder?: 'asc' | 'desc'
   search?: string
 }): Promise<PaginatedResponse<User>> {
-  const queryParams = new URLSearchParams()
-  if (params) {
-    if (params.page !== undefined) queryParams.set('page', String(params.page))
-    if (params.perPages !== undefined) queryParams.set('perPages', String(params.perPages))
-    if (params.sortOrder) queryParams.set('sortOrder', params.sortOrder)
-    if (params.search) queryParams.set('search', params.search)
-  }
+  const q = new URLSearchParams()
+  if (params?.page !== undefined) q.set('page', String(params.page))
+  if (params?.perPages !== undefined) q.set('perPages', String(params.perPages))
+  if (params?.sortOrder) q.set('sortOrder', params.sortOrder)
+  if (params?.search) q.set('search', params.search)
 
-  const queryString = queryParams.toString()
-  console.log('🔍 [listUsers] calling with params:', params, 'queryString:', queryString)
-  const r = await apiFetch<UsersApiResponse>(
-    `/users${queryString ? '?' + queryString : ''}`
-  )
+  const r = await apiFetch(`/users${q.toString() ? '?' + q.toString() : ''}`)
   console.log('🔍 [listUsers] response:', JSON.stringify(r))
+
+  // Backend: { details: User[], pagination: { totalRecords, page, perPages, ... } }
   return {
-    items: r.details,
-    total: r.pagination.totalRecords,
-    page: r.pagination.page,
-    limit: r.pagination.perPages
+    items: r.details ?? [],
+    total: r.pagination?.totalRecords ?? 0,
+    page: r.pagination?.page ?? 1,
+    limit: r.pagination?.perPages ?? 10
   }
 }

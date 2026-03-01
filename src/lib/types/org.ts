@@ -97,7 +97,8 @@ export interface ApiResponse<T> {
   code: string
   message?: string
   status: boolean
-  details: T
+  details?: T    // plural — list endpoints (r.details ?? [])
+  detail?: T     // singular — single object endpoints (r.detail)
   pagination?: {
     page: number
     perPages: number

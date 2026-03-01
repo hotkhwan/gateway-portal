@@ -35,5 +35,8 @@
   "unitRelationEditor": "Editor",
   "unitRelationDeleter": "Deleter",
   "unitAddChild": "Add child unit",
-  "unitCreateUnder": "under \"{name}\""
+  "unitCreateUnder": "under \"{name}\"",
+  "unitExpand": "Expand",
+  "unitCollapse": "Collapse",
+  "unitMembersTableStatus": "Status"
 }

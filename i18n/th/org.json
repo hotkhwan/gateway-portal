@@ -66,5 +66,16 @@
   "orgDeleteTitle": "ลบองค์กร",
   "orgDeleteConfirm": "คุณแน่ใจหรือไม่ที่จะลบองค์กรนี้?",
   "orgDeleteWarning": "การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลทั้งหมดที่เกี่ยวข้องจะถูกลบออกถาวร",
-  "orgDeleteDeleting": "กำลังลบ..."
+  "orgDeleteDeleting": "กำลังลบ...",
+
+  "_comments_ingest": "ส่วน Ingest endpoint",
+  "orgIngestSection": "Endpoint รับข้อมูล",
+  "orgIngestFailed": "โหลดการตั้งค่า ingest ไม่สำเร็จ",
+  "orgIngestEndpointLabel": "Endpoint",
+  "orgIngestSecretLabel": "รหัสสลับ",
+  "orgIngestSignatureLabel": "ลายเซ็น",
+  "orgIngestRateLimitLabel": "Rate limit",
+  "orgIngestRequired": "จำเป็น",
+  "orgIngestOptional": "ไม่บังคับ",
+  "orgIngestBurst": "burst"
 }

@@ -1,10 +1,9 @@
 // src/lib/api/orgunit.ts
+import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, OrgUnit, OrgUnitMember } from '$lib/types/org'
 import { logger } from '$lib/utils/logger'
 
-// Client-side ใช้ import.meta.env.PUBLIC_*
-const APP_BASE = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')
-const BASE = `${APP_BASE}/api`
+const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
 async function apiFetch<T>(
   path: string,
@@ -31,44 +30,45 @@ export async function getUnitTree(orgId: string): Promise<OrgUnit[]> {
   logger.log('🔍 [getUnitTree] calling with orgId:', orgId)
   const r = await apiFetch<OrgUnit[]>('/orgs/units/tree', orgId)
   logger.log('🔍 [getUnitTree] response:', JSON.stringify(r))
-  return r.details ?? []
+  return r.details ?? []                        // array → details
 }
 
-export async function getUnitDetails(
-  orgId: string,
-  unitId: string
-): Promise<OrgUnit> {
+export async function getUnitDetails(orgId: string, unitId: string): Promise<OrgUnit> {
   logger.log('🔍 [getUnitDetails] calling with orgId:', orgId, 'unitId:', unitId)
   const r = await apiFetch<OrgUnit>(`/orgs/units/tree/${unitId}`, orgId)
   logger.log('🔍 [getUnitDetails] response:', JSON.stringify(r))
-  return r.details
+  // backend อาจส่ง detail (singular) หรือ details (plural) ขึ้นกับ endpoint
+  const result = r.detail ?? (r.details as unknown as OrgUnit)
+  if (!result) throw new Error('unit not found')
+  return result
 }
 
 export async function createUnit(
   orgId: string,
   body: { name: string; parentId?: string | null }
-): Promise<OrgUnit> {
+): Promise<void> {
+  // Backend returns SuccessMessageCreateResponse: { code, status, message, id }
+  // ไม่มี detail/details — ไม่ต้อง return unit, caller จะ loadTree() เอง
   logger.log('🔍 [createUnit] calling with orgId:', orgId, 'body:', body)
-  const r = await apiFetch<OrgUnit>('/orgs/units', orgId, {
+  await apiFetch<unknown>('/orgs/units', orgId, {
     method: 'POST',
     body: JSON.stringify(body)
   })
-  logger.log('🔍 [createUnit] response:', JSON.stringify(r))
-  return r.details
+  logger.log('🔍 [createUnit] done')
 }
 
 export async function updateUnit(
   orgId: string,
   unitId: string,
   body: { name?: string }
-): Promise<OrgUnit> {
+): Promise<void> {
+  // Backend returns SuccessMessageResponse: { code, status, message }
   logger.log('🔍 [updateUnit] calling with orgId:', orgId, 'unitId:', unitId, 'body:', body)
-  const r = await apiFetch<OrgUnit>(`/orgs/units/${unitId}`, orgId, {
+  await apiFetch<unknown>(`/orgs/units/${unitId}`, orgId, {
     method: 'PATCH',
     body: JSON.stringify(body)
   })
-  logger.log('🔍 [updateUnit] response:', JSON.stringify(r))
-  return r.details
+  logger.log('🔍 [updateUnit] done')
 }
 
 export async function deleteUnit(orgId: string, unitId: string): Promise<void> {
@@ -79,14 +79,11 @@ export async function deleteUnit(orgId: string, unitId: string): Promise<void> {
 // ────────────────────────────────────────────
 // Unit Members
 // ────────────────────────────────────────────
-export async function listUnitMembers(
-  orgId: string,
-  unitId: string
-): Promise<OrgUnitMember[]> {
+export async function listUnitMembers(orgId: string, unitId: string): Promise<OrgUnitMember[]> {
   logger.log('🔍 [listUnitMembers] calling with orgId:', orgId, 'unitId:', unitId)
   const r = await apiFetch<OrgUnitMember[]>(`/orgs/units/${unitId}/members`, orgId)
   logger.log('🔍 [listUnitMembers] response:', JSON.stringify(r))
-  return r.details ?? []
+  return r.details ?? []                        // array → details
 }
 
 export async function assignMembers(

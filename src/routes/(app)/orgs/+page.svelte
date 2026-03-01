@@ -11,21 +11,55 @@
     setActiveOrg
   } from '$lib/stores/activeOrg'
   import { listOrgs, createOrg, updateOrg, deleteOrg } from '$lib/api/org'
-  import type { Org } from '$lib/types/org'
+  import { getIngestConfig } from '$lib/api/ingest' // ← เพิ่ม import
+  import type { Org, IngestConfig } from '$lib/types/org'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
 
+  let ingestConfigs = $state<Record<string, IngestConfig | null>>({})
+  let ingestLoading = $state<Record<string, boolean>>({})
+  let ingestExpanded = $state<Record<string, boolean>>({})
+
+  async function toggleIngest(orgId: string) {
+    // collapse
+    if (ingestExpanded[orgId]) {
+      ingestExpanded = { ...ingestExpanded, [orgId]: false }
+      return
+    }
+    // expand
+    ingestExpanded = { ...ingestExpanded, [orgId]: true }
+    // load only once
+    if (ingestConfigs[orgId] !== undefined) return
+
+    ingestLoading = { ...ingestLoading, [orgId]: true }
+    try {
+      const res = await getIngestConfig(orgId)
+      ingestConfigs = { ...ingestConfigs, [orgId]: res }
+    } catch {
+      ingestConfigs = { ...ingestConfigs, [orgId]: null }
+    } finally {
+      ingestLoading = { ...ingestLoading, [orgId]: false }
+    }
+  }
+
+  let copiedKey = $state<string | null>(null)
+
+  async function copyText(text: string, key: string) {
+    await navigator.clipboard.writeText(text)
+    copiedKey = key
+    setTimeout(() => (copiedKey = null), 1500)
+  }
+
+  // ── Org state ───────────────────────────────────────────────────────────────
   let loading = $state(true)
   let error = $state<string | null>(null)
   let showCreateModal = $state(false)
 
-  // Create form state
   let createName = $state('')
   let createDescription = $state('')
   let createLoading = $state(false)
   let createError = $state<string | null>(null)
 
-  // Edit form state
   let showEditModal = $state(false)
   let editOrg = $state<Org | null>(null)
   let editName = $state('')
@@ -33,12 +67,12 @@
   let editLoading = $state(false)
   let editError = $state<string | null>(null)
 
-  // Delete confirmation state
   let showDeleteConfirm = $state(false)
   let deleteOrgId = $state<string | null>(null)
   let deleteLoading = $state(false)
   let deleteError = $state<string | null>(null)
 
+  // ── Org CRUD ────────────────────────────────────────────────────────────────
   async function loadOrgs() {
     loading = true
     error = null
@@ -61,7 +95,6 @@
         name: createName.trim(),
         description: createDescription.trim() || undefined
       })
-      // ← fetch ใหม่แทน mutate local
       await loadOrgs()
       setActiveOrg(org.id)
       closeCreateModal()
@@ -92,7 +125,6 @@
         name: editName.trim(),
         description: editDescription.trim() || undefined
       })
-      // ← fetch ใหม่แทน mutate local
       await loadOrgs()
       closeEditModal()
     } catch (e: unknown) {
@@ -124,12 +156,10 @@
     try {
       await deleteOrg(deleteOrgId)
       const wasActive = $activeOrgId === deleteOrgId
-      // ← fetch ใหม่แทน mutate local
       await loadOrgs()
       if (wasActive) setActiveOrg('')
       closeDeleteConfirm()
     } catch (e: unknown) {
-      // แสดง error ใน modal แทน alert
       deleteError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
       deleteLoading = false
@@ -163,7 +193,7 @@
   })
 </script>
 
-<!-- Page header -->
+<!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div class="d-flex align-items-center mb-3">
   <div class="flex-grow-1">
     <h1 class="page-header mb-0">{m.orgTitle()}</h1>
@@ -174,7 +204,6 @@
   </button>
 </div>
 
-<!-- Loading state -->
 {#if loading}
   <div class="text-center py-5">
     <div class="spinner-border text-theme" role="status">
@@ -182,8 +211,6 @@
     </div>
     <p class="mt-2 text-inverse text-opacity-50 small">{m.actionLoading()}</p>
   </div>
-
-  <!-- Error state -->
 {:else if error}
   <div class="alert alert-danger">
     <i class="bi bi-exclamation-triangle me-2"></i>
@@ -192,8 +219,6 @@
       {m.actionRefresh()}
     </button>
   </div>
-
-  <!-- Empty state -->
 {:else if $orgList.length === 0}
   <Card>
     <CardBody>
@@ -202,20 +227,18 @@
         ></i>
         <p class="text-inverse text-opacity-50">{m.orgNoRecords()}</p>
         <button class="btn btn-outline-theme" onclick={openCreateModal}>
-          <i class="bi bi-plus-lg me-1"></i>
-          {m.orgCreateBtn()}
+          <i class="bi bi-plus-lg me-1"></i>{m.orgCreateBtn()}
         </button>
       </div>
     </CardBody>
   </Card>
-
-  <!-- Org list -->
 {:else}
   <div class="row">
     {#each $orgList as org (org.id)}
       <div class="col-md-6 col-xl-4 mb-3">
         <Card>
           <CardBody>
+            <!-- ── Org header ─────────────────────────────────────────────── -->
             <div class="d-flex align-items-start mb-2">
               <div class="flex-grow-1">
                 <h5 class="mb-1 fw-bold">{org.name}</h5>
@@ -239,7 +262,8 @@
               {m.orgCreatedAt()}: {formatDate(org.createdAt)}
             </div>
 
-            <div class="d-flex gap-2">
+            <!-- ── Action buttons ─────────────────────────────────────────── -->
+            <div class="d-flex gap-2 mb-3">
               <button
                 class="btn btn-sm flex-grow-1"
                 class:btn-theme={$activeOrgId === org.id}
@@ -247,11 +271,10 @@
                 onclick={() => setActiveOrg(org.id)}
               >
                 {#if $activeOrgId === org.id}
-                  <i class="bi bi-check-circle-fill me-1"></i>
-                  {m.orgSwitchActive()}
+                  <i class="bi bi-check-circle-fill me-1"
+                  ></i>{m.orgSwitchActive()}
                 {:else}
-                  <i class="bi bi-circle me-1"></i>
-                  {m.orgSwitchTo()}
+                  <i class="bi bi-circle me-1"></i>{m.orgSwitchTo()}
                 {/if}
               </button>
               <button
@@ -260,25 +283,151 @@
                   setActiveOrg(org.id)
                   goto('orgs/users')
                 }}
-                title={m.orgUsersTitle()}
+                title={m.orgUsersTitle()}><i class="bi bi-people"></i></button
               >
-                <i class="bi bi-people"></i>
-              </button>
               <button
                 class="btn btn-sm btn-outline-secondary"
                 onclick={() => openEditModal(org)}
-                title={m.actionEdit()}
+                title={m.actionEdit()}><i class="bi bi-pencil"></i></button
               >
-                <i class="bi bi-pencil"></i>
-              </button>
               <button
                 class="btn btn-sm btn-outline-danger"
                 onclick={() => openDeleteConfirm(org.id)}
-                title={m.actionDelete()}
+                title={m.actionDelete()}><i class="bi bi-trash"></i></button
               >
-                <i class="bi bi-trash"></i>
-              </button>
             </div>
+
+            <!-- ── Ingest endpoint section ────────────────────────────────── -->
+            <div class="border-top pt-2">
+              <button
+                type="button"
+                class="btn btn-link btn-sm p-0 text-decoration-none d-flex align-items-center gap-1 w-100 text-start"
+                onclick={() => toggleIngest(org.id)}
+              >
+                <i class="bi bi-broadcast text-theme"></i>
+                <span class="small fw-semibold text-inverse"
+                  >{m.orgIngestSection()}</span
+                >
+                <i
+                  class="bi ms-auto text-inverse text-opacity-50 small"
+                  class:bi-chevron-down={!ingestExpanded[org.id]}
+                  class:bi-chevron-up={ingestExpanded[org.id]}
+                ></i>
+              </button>
+
+              {#if ingestExpanded[org.id]}
+                <div class="mt-2">
+                  {#if ingestLoading[org.id]}
+                    <div class="text-center py-2">
+                      <div
+                        class="spinner-border spinner-border-sm text-theme"
+                        role="status"
+                      ></div>
+                    </div>
+                  {:else if ingestConfigs[org.id] === null}
+                    <div class="alert alert-warning py-2 small mb-0">
+                      <i class="bi bi-exclamation-triangle me-1"></i>
+                      {m.orgIngestFailed()}
+                    </div>
+                  {:else if ingestConfigs[org.id]}
+                    {@const cfg = ingestConfigs[org.id]!}
+                    <div
+                      class="rounded border p-2 small"
+                      style="background: var(--bs-body-bg)"
+                    >
+                      <!-- Endpoint URL -->
+                      <div class="mb-2">
+                        <div class="text-inverse text-opacity-50 mb-1">
+                          <i class="bi bi-link-45deg me-1"></i>{m.orgIngestEndpointLabel()}
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                          <code
+                            class="flex-grow-1 text-theme small"
+                            style="word-break:break-all"
+                          >
+                            {cfg.ingestEndpoint}
+                          </code>
+                          <button
+                            type="button"
+                            class="btn btn-xs btn-outline-secondary px-1 py-0 flex-shrink-0"
+                            onclick={() =>
+                              copyText(cfg.ingestEndpoint, `ep-${org.id}`)}
+                            title={m.actionCopy()}
+                          >
+                            {#if copiedKey === `ep-${org.id}`}
+                              <i class="bi bi-check text-success"></i>
+                            {:else}
+                              <i class="bi bi-copy"></i>
+                            {/if}
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Secret -->
+                      <div class="mb-2">
+                        <div class="text-inverse text-opacity-50 mb-1">
+                          <i class="bi bi-key me-1"></i>{m.orgIngestSecretLabel()}
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                          <code
+                            class="flex-grow-1 text-inverse text-opacity-75 small"
+                          >
+                            {cfg.ingestSecretMasked}
+                          </code>
+                          <button
+                            type="button"
+                            class="btn btn-xs btn-outline-secondary px-1 py-0 flex-shrink-0"
+                            onclick={() =>
+                              copyText(
+                                cfg.ingestSecretMasked ?? '',
+                                `sk-${org.id}`
+                              )}
+                            title={m.actionCopy()}
+                          >
+                            {#if copiedKey === `sk-${org.id}`}
+                              <i class="bi bi-check text-success"></i>
+                            {:else}
+                              <i class="bi bi-copy"></i>
+                            {/if}
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Meta row -->
+                      <div class="d-flex gap-3 flex-wrap">
+                        <div>
+                          <span class="text-inverse text-opacity-50"
+                            >{m.orgIngestSignatureLabel()}</span
+                          >
+                          <span class="ms-1">
+                            {#if cfg.signatureRequired}
+                              <span class="badge bg-warning text-dark"
+                                >{m.orgIngestRequired()}</span
+                              >
+                            {:else}
+                              <span class="badge bg-secondary">{m.orgIngestOptional()}</span>
+                            {/if}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="text-inverse text-opacity-50"
+                            >{m.orgIngestRateLimitLabel()}</span
+                          >
+                          <span class="ms-1 text-inverse">
+                            <i class="bi bi-lightning-charge text-theme"></i>
+                            {cfg.rateLimit.perSecond}/s
+                            <span class="text-opacity-50"
+                              >({m.orgIngestBurst()} {cfg.rateLimit.burst})</span
+                            >
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+            <!-- /ingest section -->
           </CardBody>
         </Card>
       </div>
@@ -286,7 +435,7 @@
   </div>
 {/if}
 
-<!-- Create Org Modal -->
+<!-- ── Create Org Modal ──────────────────────────────────────────────────────── -->
 {#if showCreateModal}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
@@ -310,7 +459,6 @@
             onclick={closeCreateModal}
           ></button>
         </div>
-
         <form
           onsubmit={(e) => {
             e.preventDefault()
@@ -321,7 +469,6 @@
             {#if createError}
               <div class="alert alert-danger small py-2">{createError}</div>
             {/if}
-
             <div class="mb-3">
               <label class="form-label fw-semibold" for="orgName">
                 {m.orgName()} <span class="text-danger">*</span>
@@ -336,11 +483,10 @@
                 disabled={createLoading}
               />
             </div>
-
             <div class="mb-3">
-              <label class="form-label fw-semibold" for="orgDesc">
-                {m.orgDescription()}
-              </label>
+              <label class="form-label fw-semibold" for="orgDesc"
+                >{m.orgDescription()}</label
+              >
               <textarea
                 id="orgDesc"
                 class="form-control"
@@ -351,7 +497,6 @@
               ></textarea>
             </div>
           </div>
-
           <div class="modal-footer">
             <button
               type="button"
@@ -385,7 +530,7 @@
   <div class="modal-backdrop fade show"></div>
 {/if}
 
-<!-- Edit Org Modal -->
+<!-- ── Edit Org Modal ────────────────────────────────────────────────────────── -->
 {#if showEditModal && editOrg}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
@@ -409,7 +554,6 @@
             onclick={closeEditModal}
           ></button>
         </div>
-
         <form
           onsubmit={(e) => {
             e.preventDefault()
@@ -420,7 +564,6 @@
             {#if editError}
               <div class="alert alert-danger small py-2">{editError}</div>
             {/if}
-
             <div class="mb-3">
               <label class="form-label fw-semibold" for="editOrgName">
                 {m.orgName()} <span class="text-danger">*</span>
@@ -435,11 +578,10 @@
                 disabled={editLoading}
               />
             </div>
-
             <div class="mb-3">
-              <label class="form-label fw-semibold" for="editOrgDesc">
-                {m.orgDescription()}
-              </label>
+              <label class="form-label fw-semibold" for="editOrgDesc"
+                >{m.orgDescription()}</label
+              >
               <textarea
                 id="editOrgDesc"
                 class="form-control"
@@ -450,7 +592,6 @@
               ></textarea>
             </div>
           </div>
-
           <div class="modal-footer">
             <button
               type="button"
@@ -484,7 +625,7 @@
   <div class="modal-backdrop fade show"></div>
 {/if}
 
-<!-- Delete Confirmation Modal -->
+<!-- ── Delete Confirmation Modal ─────────────────────────────────────────────── -->
 {#if showDeleteConfirm && deleteOrgId}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
@@ -508,21 +649,17 @@
             onclick={closeDeleteConfirm}
           ></button>
         </div>
-
-        <!-- Delete modal body - เพิ่ม error display -->
         <div class="modal-body">
           <p>{m.orgDeleteConfirm()}</p>
           <p class="small text-inverse text-opacity-50">
             {m.orgDeleteWarning()}
           </p>
-
           {#if deleteError}
             <div class="alert alert-danger py-2 small mb-0">
               <i class="bi bi-x-circle me-1"></i>{deleteError}
             </div>
           {/if}
         </div>
-
         <div class="modal-footer">
           <button
             type="button"
