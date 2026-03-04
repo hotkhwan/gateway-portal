@@ -22,6 +22,10 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-#clause coding 
+#clause coding
 .claude*
 api.json
+
+# i18n generated files
+src/lib/i18n/messages/
+messages/
