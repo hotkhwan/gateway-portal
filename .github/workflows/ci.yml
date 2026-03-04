@@ -23,8 +23,17 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Setup i18n
+        run: |
+          bun run i18n:merge
+          bun x paraglide-js compile --project ./project.inlang --outdir ./src/lib/i18n
+        env:
+          PUBLIC_APP_BASE_PATH: /aisom
+
       - name: Type check
         run: bun run check
+        env:
+          PUBLIC_APP_BASE_PATH: /aisom
 
       - name: Lint
         run: bun run lint
@@ -46,7 +55,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Setup i18n
+        run: |
+          bun run i18n:merge
+          bun x paraglide-js compile --project ./project.inlang --outdir ./src/lib/i18n
+
       - name: Build
         run: bun run build
         env:
           PUBLIC_APP_BASE_PORT: 3001
+          PUBLIC_APP_BASE_PATH: /aisom
