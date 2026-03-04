@@ -18,6 +18,13 @@
   let error = $state<string | null>(null)
   let events = $state<ApprovedEvent[]>([])
 
+  // Filter state
+  let showFilters = $state(false)
+  let filterStartDate = $state('')
+  let filterEndDate = $state('')
+  let filterStatus = $state<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  let filterEventType = $state('')
+
   // Stats data
   let totalEvents = $state(0)
   let deliveredEvents = $state(0)
@@ -49,9 +56,22 @@
     loading = true
     error = null
     try {
+      // Build filter params
+      const params: {
+        startDate?: string
+        endDate?: string
+        status?: 'all' | 'pending' | 'approved' | 'rejected'
+        eventType?: string
+      } = {}
+
+      if (filterStartDate) params.startDate = filterStartDate
+      if (filterEndDate) params.endDate = filterEndDate
+      if (filterStatus !== 'all') params.status = filterStatus
+      if (filterEventType) params.eventType = filterEventType
+
       // Load dashboard stats with geohash data for map
       try {
-        const stats = await getDashboardStats(orgId)
+        const stats = await getDashboardStats(orgId, params)
         // Update stats from dashboard API
         totalEvents = stats.totalEvents
         deliveredEvents = stats.approvedEvents
@@ -148,6 +168,18 @@
         return 'bg-secondary'
     }
   }
+
+  function applyFilters() {
+    loadEvents()
+  }
+
+  function clearFilters() {
+    filterStartDate = ''
+    filterEndDate = ''
+    filterStatus = 'all'
+    filterEventType = ''
+    loadEvents()
+  }
 </script>
 
 {#if !$activeOrg}
@@ -157,20 +189,98 @@
     <a href="/orgs" class="alert-link">Organizations</a>
     to continue
   </div>
-{:else if loading}
-  <div class="text-center py-5">
-    <div class="spinner-border text-theme" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-  </div>
-{:else if error}
-  <div class="alert alert-danger">
-    <i class="bi bi-exclamation-triangle me-2"></i>{error}
-    <button class="btn btn-sm btn-danger ms-2" onclick={() => loadEvents()}>Refresh</button>
-  </div>
 {:else}
-  <!-- BEGIN row -->
-  <div class="row">
+  <!-- Filter Bar -->
+  <Card class="mb-3">
+    <CardBody>
+      <div class="d-flex align-items-center mb-3">
+        <span class="flex-grow-1 fw-semibold">
+          <i class="bi bi-funnel me-2"></i>Filters
+        </span>
+        <button
+          class="btn btn-sm btn-outline-theme"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#filterCollapse"
+          aria-expanded={showFilters}
+          onclick={() => (showFilters = !showFilters)}
+        >
+          <i class="bi bi-sliders"></i>
+        </button>
+      </div>
+      <div class="collapse" class:show={showFilters} id="filterCollapse">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label small">Start Date</label>
+            <input
+              type="datetime-local"
+              class="form-control form-control-sm"
+              bind:value={filterStartDate}
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">End Date</label>
+            <input
+              type="datetime-local"
+              class="form-control form-control-sm"
+              bind:value={filterEndDate}
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">Status</label>
+            <select class="form-select form-select-sm" bind:value={filterStatus}>
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">Event Type</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Enter event type..."
+              bind:value={filterEventType}
+            />
+          </div>
+          <div class="col-12">
+            <div class="d-flex gap-2">
+              <button
+                class="btn btn-sm btn-theme"
+                type="button"
+                onclick={applyFilters}
+              >
+                <i class="bi bi-search me-1"></i>Apply Filters
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                type="button"
+                onclick={clearFilters}
+              >
+                <i class="bi bi-x-circle me-1"></i>Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </CardBody>
+  </Card>
+
+  {#if loading}
+    <div class="text-center py-5">
+      <div class="spinner-border text-theme" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  {:else if error}
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle me-2"></i>{error}
+      <button class="btn btn-sm btn-danger ms-2" onclick={() => loadEvents()}>Refresh</button>
+    </div>
+  {:else}
+    <!-- BEGIN row -->
+    <div class="row">
     <!-- Stats Cards -->
     <div class="col-xl-3 col-lg-6">
       <Card class="mb-3">
@@ -483,4 +593,5 @@
     </div>
   </div>
   <!-- END row -->
+  {/if}
 {/if}

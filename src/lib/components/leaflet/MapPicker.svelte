@@ -1,13 +1,9 @@
 <!-- src/lib/components/leaflet/MapPicker.svelte -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import L from 'leaflet'
-  import type { Marker } from 'leaflet'
-  import 'leaflet/dist/leaflet.css'
 
   // Props
   let {
-    key = '',
     lat = 13.7563, // Default: Bangkok
     lng = 100.5018,
     zoom = 13,
@@ -19,41 +15,46 @@
   } = $props()
 
   let container: HTMLDivElement
-  let map: L.Map | null = null
-  let marker: Marker | null = null
+  let map: any = null
+  let marker: any = null
   let loadingLocation = $state(false)
+  let L: any = null
 
-  // Custom pin icon for dark theme
-  const pinIcon = L.divIcon({
-    className: 'custom-map-pin',
-    html: `
-      <div style="
-        width: 24px;
-        height: 24px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: 2px solid #fff;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-      "></div>
-      <div style="
-        width: 8px;
-        height: 8px;
-        background: #fff;
-        border-radius: 50%;
-        position: absolute;
-        top: 6px;
-        left: 6px;
-      "></div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 24]
-  })
+  // Custom pin icon for dark theme - uses dynamic L
+  function createPinIcon(): any {
+    if (!L) return null
+    return L.divIcon({
+      className: 'custom-map-pin',
+      html: `
+        <div style="
+          width: 24px;
+          height: 24px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: 2px solid #fff;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+        "></div>
+        <div style="
+          width: 8px;
+          height: 8px;
+          background: #fff;
+          border-radius: 50%;
+          position: absolute;
+          top: 6px;
+          left: 6px;
+        "></div>
+      `,
+      iconSize: [24, 24],
+      iconAnchor: [12, 24]
+    })
+  }
 
   function updateMarker() {
     if (!map) return
 
     if (lat !== undefined && lng !== undefined) {
+      const pinIcon = createPinIcon()
       if (marker) {
         marker.setLatLng([lat, lng])
       } else {
@@ -62,7 +63,6 @@
           draggable: !readonly && !disabled
         })
         marker.addTo(map)
-
         if (!readonly && !disabled && marker) {
           marker.on('dragend', () => {
             const position = marker?.getLatLng()
@@ -75,7 +75,14 @@
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
+    // Load Leaflet dynamically
+    const leafletModule = await import('leaflet')
+    L = leafletModule.default
+
     // Small delay to ensure DOM is ready
     setTimeout(() => {
       if (!container || map) return
@@ -101,17 +108,6 @@
       // Add marker
       updateMarker()
 
-      // Handle map click
-      if (!readonly && !disabled && map) {
-        map.on('click', (e) => {
-          const { lat: newLat, lng: newLng } = e.latlng
-          // Normalize lng ให้อยู่ใน [-180, 180] กันปัญหา world-wrap
-          const normalizedLng = ((((newLng + 180) % 360) + 360) % 360) - 180
-          onchange(newLat, normalizedLng)
-          updateMarkerAt(newLat, normalizedLng)
-        })
-      }
-
       // Ensure proper rendering
       setTimeout(() => {
         map?.invalidateSize({ animate: false })
@@ -127,11 +123,18 @@
     marker = null
   })
 
-  // Handle prop changes - update marker and map view
+  // Handle map click - reactive effect
   $effect(() => {
-    if (map && lat !== undefined && lng !== undefined) {
-      map.setView([lat, lng], zoom)
-      updateMarkerAt(lat, lng)
+    if (!readonly && !disabled && map && L) {
+      const clickHandler = (e: { latlng: { lat: number; lng: number } }) => {
+        const { lat: newLat, lng: newLng } = e.latlng
+        // Normalize lng ให้อยู่ใน [-180, 180] กันปัญหา world-wrap
+        const normalizedLng = ((((newLng + 180) % 360) + 360) % 360) - 180
+        onchange(newLat, normalizedLng)
+        updateMarkerAt(newLat, normalizedLng)
+      }
+      map.on('click', clickHandler)
+      return () => map.off('click', clickHandler)
     }
   })
 
@@ -224,7 +227,7 @@
   .map-picker :global(.leaflet-bar a) {
     background-color: var(--panel2, #0c1629);
     color: var(--text, #d8e1ff);
-    border-color: var(--border, rgba(255, 255, 255, 0.08));
+    border-color: var(--border, rgba(255,255,255,0.08));
   }
 
   .map-picker :global(.leaflet-bar a:hover) {
