@@ -286,9 +286,19 @@
     return sortOrder === 'asc' ? 'bi-sort-up-alt' : 'bi-sort-down'
   }
 
+  // Reload members when active org changes
+  $effect(() => {
+    // Reset to default params when org changes
+    if ($activeOrgId) {
+      page = 1
+      sortField = 'role'
+      sortOrder = 'desc'
+      loadMembers()
+    }
+  })
+
   onMount(() => {
     setPageTitle(m.orgUsersTitle())
-    loadMembers()
   })
 </script>
 
@@ -531,16 +541,11 @@
 
 <!-- Invite Modal -->
 {#if showInviteModal}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
     class="modal d-block"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    onclick={(e) => {
-      if ((e.target as HTMLElement).classList.contains('modal'))
-        closeInviteModal()
-    }}
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
@@ -734,16 +739,11 @@
 
 <!-- Remove Modal -->
 {#if showRemoveModal}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
     class="modal d-block"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    onclick={(e) => {
-      if ((e.target as HTMLElement).classList.contains('modal'))
-        closeRemoveModal()
-    }}
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
@@ -804,16 +804,11 @@
 
 <!-- User Picker Modal -->
 {#if showUserPickerModal}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
     class="modal d-block"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    onclick={(e) => {
-      if ((e.target as HTMLElement).classList.contains('modal'))
-        closeUserPickerModal()
-    }}
   >
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content bg-inverse-subtle">

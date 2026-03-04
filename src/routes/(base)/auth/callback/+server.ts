@@ -47,7 +47,21 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
     const text = await res.text().catch(() => '')
     console.error(`Failed to exchange token. Status: ${res.status}`)
     console.error(`Response: ${text}`)
-    throw redirect(302, `${base}/`)
+
+    // Detect API connection errors (503, connection refused, etc.)
+    const isApiConnectionError =
+      res.status === 503 ||
+      text.includes('Connection refused') ||
+      text.includes('remote connection failure') ||
+      text.includes('transport failure')
+
+    const errorParam = isApiConnectionError
+      ? encodeURIComponent(`API Gateway Error (${res.status}): ${text.substring(0, 200)}`)
+      : encodeURIComponent(`Authentication failed (Status: ${res.status})`)
+
+    const errorType = isApiConnectionError ? 'api_connection' : 'auth_failed'
+
+    throw redirect(302, `${base}/auth/error?error=${errorParam}&type=${errorType}`)
   }
 
   // backend ส่ง format แบบ gmod.SendSuccess -> {status:true, detail:{...}}

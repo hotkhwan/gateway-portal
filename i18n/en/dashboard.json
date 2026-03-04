@@ -1,6 +1,8 @@
 {
   "_comments_dashboard": "Dashboard page labels",
   "dashboardTitle": "Dashboard",
+  "dashboardIngestSummary": "Ingest Summary",
+  "dashboardRecentEvents": "Recent Events",
   "dashboardServerStats": "Server Stats",
   "dashboardTrafficAnalytics": "Traffic Analytics",
   "dashboardTopProducts": "Top Products",
@@ -13,12 +15,18 @@
   "commonNoRecords": "No records found",
 
   "_comments_dashboard_stats": "Stat blocks",
+  "dashboardTotalEvents": "Total Events",
+  "dashboardDeliveredEvents": "Delivered Events",
+  "dashboardPendingDelivery": "Pending Delivery",
+  "dashboardFailedEvents": "Failed Events",
+  "dashboardPartialDelivery": "Partial Delivery",
   "dashboardSiteVisitors": "Site Visitors",
   "dashboardStoreSales": "Store Sales",
   "dashboardNewMembers": "New Members",
   "dashboardBandwidth": "Bandwidth",
 
   "_comments_dashboard_series": "Chart series titles",
+  "dashboardSeriesEvents": "Events",
   "dashboardSeriesVisitors": "Visitors",
   "dashboardSeriesSales": "Sales",
 
@@ -42,5 +50,20 @@
   "_comments_dashboard_products": "Products table fields",
   "dashboardQty": "QTY",
   "dashboardRevenue": "Revenue",
-  "dashboardProfit": "Profit"
+  "dashboardProfit": "Profit",
+
+  "_comments_dashboard_ingest": "Ingest dashboard",
+  "dashboardEvents24h": "Events (24h)",
+  "dashboardEventId": "Event ID",
+  "dashboardDevice": "Device",
+  "dashboardStatus": "Status",
+  "dashboardDeliveredAt": "Delivered At",
+  "dashboardTargetsDelivered": "Delivered",
+  "dashboardTargetsFailed": "Failed",
+
+  "_comments_dashboard_map": "Map section",
+  "dashboardEventMap": "Event Map",
+  "dashboardMapEvents": "events",
+  "dashboardMapNoData": "No location data available",
+  "dashboardMapCell": "Cell"
 }

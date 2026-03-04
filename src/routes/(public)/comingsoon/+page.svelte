@@ -7,7 +7,7 @@
 
   let currentDate = new Date()
   let currentYear = currentDate.getFullYear()
-  let targetDate = new Date(`March 1, ${currentYear} 23:59:59`)
+  let targetDate = new Date(`March 10, ${currentYear} 23:59:59`)
   let remainingTime = calculateRemainingTime()
   let countdownInterval: ReturnType<typeof setInterval>
 

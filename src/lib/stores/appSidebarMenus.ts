@@ -19,9 +19,13 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'events',
-		url: 'error',
+		url: 'ingest/management',
 		icon: 'bi bi-bar-chart',
-		textKey: 'navEvents'
+		textKey: 'navEvents',
+		children: [
+			{ id: 'eventsManagement', url: 'ingest/management', textKey: 'eventsManagement' },
+			{ id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' }
+		]
 	},
 
 	// ===== Tenancy =====
@@ -87,9 +91,9 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	},
 	{
 		kind: 'link',
-		id: 'helper',
-		url: 'comingsoon',
+		id: 'subscription',
+		url: 'subscription',
 		icon: 'bi bi-gem',
-		textKey: 'navHelper'
+		textKey: 'navSubscription'
 	}
 ])

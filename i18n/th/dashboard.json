@@ -1,6 +1,8 @@
 {
   "_comments_dashboard": "Dashboard page labels",
   "dashboardTitle": "แดชบอร์ด",
+  "dashboardIngestSummary": "สรุปข้อมูลนำเข้า",
+  "dashboardRecentEvents": "กิจกรรมล่าสุด",
   "dashboardServerStats": "สถิติเซิร์ฟเวอร์",
   "dashboardTrafficAnalytics": "วิเคราะห์ทราฟฟิก",
   "dashboardTopProducts": "รายการยอดนิยม",
@@ -13,12 +15,18 @@
   "commonNoRecords": "ไม่พบข้อมูล",
 
   "_comments_dashboard_stats": "Stat blocks",
+  "dashboardTotalEvents": "กิจกรรมทั้งหมด",
+  "dashboardDeliveredEvents": "กิจกรรมที่ส่งแล้ว",
+  "dashboardPendingDelivery": "รอส่ง",
+  "dashboardFailedEvents": "กิจกรรมล้มเหลว",
+  "dashboardPartialDelivery": "ส่งบางส่วน",
   "dashboardSiteVisitors": "ผู้เข้าชมเว็บไซต์",
   "dashboardStoreSales": "ยอดขาย",
   "dashboardNewMembers": "สมาชิกใหม่",
   "dashboardBandwidth": "แบนด์วิดท์",
 
   "_comments_dashboard_series": "Chart series titles",
+  "dashboardSeriesEvents": "กิจกรรม",
   "dashboardSeriesVisitors": "ผู้เข้าชม",
   "dashboardSeriesSales": "ยอดขาย",
 
@@ -42,5 +50,20 @@
   "_comments_dashboard_products": "Products table fields",
   "dashboardQty": "จำนวน",
   "dashboardRevenue": "รายได้",
-  "dashboardProfit": "กำไร"
+  "dashboardProfit": "กำไร",
+
+  "_comments_dashboard_ingest": "Ingest dashboard",
+  "dashboardEvents24h": "กิจกรรม (24 ชม.)",
+  "dashboardEventId": "รหัสกิจกรรม",
+  "dashboardDevice": "อุปกรณ์",
+  "dashboardStatus": "สถานะ",
+  "dashboardDeliveredAt": "ส่งเมื่อ",
+  "dashboardTargetsDelivered": "ส่งแล้ว",
+  "dashboardTargetsFailed": "ล้มเหลว",
+
+  "_comments_dashboard_map": "Map section",
+  "dashboardEventMap": "แผนที่กิจกรรม",
+  "dashboardMapEvents": "กิจกรรม",
+  "dashboardMapNoData": "ไม่มีข้อมูลตำแหน่ง",
+  "dashboardMapCell": "พื้นที่"
 }

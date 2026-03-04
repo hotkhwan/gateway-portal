@@ -437,16 +437,11 @@
 
 <!-- ── Create Org Modal ──────────────────────────────────────────────────────── -->
 {#if showCreateModal}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
     class="modal d-block"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    onclick={(e) => {
-      if ((e.target as HTMLElement).classList.contains('modal'))
-        closeCreateModal()
-    }}
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
@@ -532,16 +527,11 @@
 
 <!-- ── Edit Org Modal ────────────────────────────────────────────────────────── -->
 {#if showEditModal && editOrg}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
     class="modal d-block"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    onclick={(e) => {
-      if ((e.target as HTMLElement).classList.contains('modal'))
-        closeEditModal()
-    }}
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
@@ -627,16 +617,11 @@
 
 <!-- ── Delete Confirmation Modal ─────────────────────────────────────────────── -->
 {#if showDeleteConfirm && deleteOrgId}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
     class="modal d-block"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    onclick={(e) => {
-      if ((e.target as HTMLElement).classList.contains('modal'))
-        closeDeleteConfirm()
-    }}
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">

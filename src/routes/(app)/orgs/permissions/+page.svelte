@@ -317,16 +317,11 @@
 
 <!-- Create/Edit Modal -->
 {#if showModal}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
     class="modal d-block"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    onclick={(e) => {
-      if ((e.target as HTMLElement).classList.contains('modal'))
-        showModal = false
-    }}
   >
     <div
       class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"

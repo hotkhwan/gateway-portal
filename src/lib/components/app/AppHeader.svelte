@@ -187,7 +187,7 @@
         <div class="row row-grid gx-0">
           <div class="col-4">
             <a
-              href={resolve('/pos/customer-order')}
+              href="/comingsoon"
               aria-label={m.headerAriaPosSystem()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -201,19 +201,19 @@
           </div>
           <div class="col-4">
             <a
-              href={resolve('helper')}
+              href={resolve('/subscription')}
               aria-label={m.headerAriaHelper()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
               <div>
-                <i class="bi bi-terminal h2 opacity-5 d-block my-1"></i>
+                <i class="bi bi-gem h2 opacity-5 d-block my-1"></i>
               </div>
-              <div class="fw-500 fs-10px text-inverse">{m.headerHelper()}</div>
+              <div class="fw-500 fs-10px text-inverse">{m.navSubscription()}</div>
             </a>
           </div>
           <div class="col-4">
             <a
-              href={resolve('/settings')}
+              href="/comingsoon"
               aria-label={m.headerAriaSettings()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -233,7 +233,7 @@
         <div class="row row-grid gx-0">
           <div class="col-4">
             <a
-              href={resolve('/widgets')}
+              href="/comingsoon"
               aria-label={m.headerAriaWidgets()}
               class="dropdown-item text-decoration-none p-3 bg-none"
             >
@@ -276,9 +276,9 @@
                 <i class={n.icon}></i>
               </div>
               <div class="flex-1 flex-wrap ps-3">
-                <div class="mb-1 text-inverse">{m[n.titleKey]()}</div>
+                <div class="mb-1 text-inverse">{(m as any)[n.titleKey]()}</div>
                 <div class="small text-inverse text-opacity-50">
-                  {m[n.timeKey]()}
+                  {(m as any)[n.timeKey]()}
                 </div>
               </div>
               <div class="ps-2 fs-16px">
@@ -329,7 +329,7 @@
         <a
           aria-label={m.headerAriaProfile()}
           class="dropdown-item d-flex align-items-center"
-          href={resolve('/profile')}
+          href="/comingsoon"
         >
           {m.headerProfile()}
           <i class="bi bi-person-circle ms-auto text-theme fs-16px my-n1"></i>
@@ -338,7 +338,7 @@
         <a
           aria-label={m.headerAriaSettings()}
           class="dropdown-item d-flex align-items-center"
-          href={resolve('/settings')}
+          href="/comingsoon"
         >
           {m.headerSettings()}
           <i class="bi bi-gear ms-auto text-theme fs-16px my-n1"></i>
