@@ -209,26 +209,28 @@
         </button>
       </div>
       <div class="collapse" class:show={showFilters} id="filterCollapse">
-        <div class="row g-3">
-          <div class="col-md-3">
-            <label class="form-label small">Start Date</label>
+        <div class="row g-2">
+          <div class="col-md-2">
+            <label class="form-label small mb-1">Start Date</label>
             <input
               type="datetime-local"
               class="form-control form-control-sm"
+              style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
               bind:value={filterStartDate}
             />
           </div>
-          <div class="col-md-3">
-            <label class="form-label small">End Date</label>
+          <div class="col-md-2">
+            <label class="form-label small mb-1">End Date</label>
             <input
               type="datetime-local"
               class="form-control form-control-sm"
+              style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
               bind:value={filterEndDate}
             />
           </div>
-          <div class="col-md-3">
-            <label class="form-label small">Status</label>
-            <select class="form-select form-select-sm" bind:value={filterStatus}>
+          <div class="col-md-2">
+            <label class="form-label small mb-1">Status</label>
+            <select class="form-select form-select-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" bind:value={filterStatus}>
               <option value="all">All</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
@@ -236,11 +238,12 @@
             </select>
           </div>
           <div class="col-md-3">
-            <label class="form-label small">Event Type</label>
+            <label class="form-label small mb-1">Event Type</label>
             <input
               type="text"
               class="form-control form-control-sm"
               placeholder="Enter event type..."
+              style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
               bind:value={filterEventType}
             />
           </div>
