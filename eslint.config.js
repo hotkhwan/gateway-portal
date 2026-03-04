@@ -25,7 +25,10 @@ export default defineConfig(
 			"@typescript-eslint/no-empty-object-type": 'off',
 			"@typescript-eslint/no-unused-vars": 'off',
 			"svelte/require-each-key": 'off',
-			"svelte/no-navigation-without-resolve": 'off'
+			"svelte/no-navigation-without-resolve": 'off',
+			"svelte/no-unused-svelte-ignore": 'off',
+			"svelte/prefer-svelte-reactivity": 'off',
+			"svelte/no-immutable-reactive-statements": 'off'
 		}
 	},
 	{

@@ -1,0 +1,11 @@
+node_modules
+.svelte-kit
+build
+.output
+.vercel
+.netlify
+.wrangler
+dist
+src/lib/i18n/messages/
+src/lib/i18n/*.js
+messages/
