@@ -1,6 +1,16 @@
 # --- Stage 1: Build the application ---
 FROM docker.io/oven/bun:1.2-debian AS builder
 
+# Build arguments สำหรับการ build
+ARG PUBLIC_APP_BASE_PORT=3001
+ARG PUBLIC_APP_BASE_PATH=/aisom
+ARG API_BASE
+
+# Set เป็น ENV ตรงนี้ด้วยเพื่อใช้ใน build stage
+ENV PUBLIC_APP_BASE_PORT=$PUBLIC_APP_BASE_PORT
+ENV PUBLIC_APP_BASE_PATH=$PUBLIC_APP_BASE_PATH
+ENV API_BASE=$API_BASE
+
 WORKDIR /app
 
 # คัดลอกไฟล์ package.json และ bun.lock
@@ -15,6 +25,10 @@ RUN bun install --frozen-lockfile
 # คัดลอก source code ทั้งหมด
 COPY . .
 
+# Setup i18n (merge + compile)
+RUN bun run i18n:merge && \
+    bun x paraglide-js compile --project ./project.inlang --outdir ./src/lib/i18n
+
 # รันคำสั่ง Build ของ SvelteKit (ผ่าน adapter-node จะได้โฟลเดอร์ build/)
 RUN bun run build
 
@@ -25,6 +39,8 @@ WORKDIR /app
 
 # ตั้งค่า Environment Variable สำหรับ Production
 ENV NODE_ENV=production
+ENV PUBLIC_APP_BASE_PORT=3001
+ENV PUBLIC_APP_BASE_PATH=/aisom
 
 # ติดตั้ง dependencies ที่จำเป็น (เผื่อต้องใช้ native modules)
 RUN apt-get update && apt-get install -y \
