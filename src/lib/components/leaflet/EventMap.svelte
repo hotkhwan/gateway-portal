@@ -180,6 +180,7 @@
   }
 
   .event-map :global(.leaflet-container) {
+    height: 100%;
     background: var(--panel, #0f1a2e);
     font-family: var(
       --bs-font-sans-serif,

@@ -197,6 +197,7 @@
                 class:btn-outline-theme={plan.id === 'freemium'}
                 class:btn-theme={plan.id === 'pro'}
                 class:btn-dark={plan.id === 'enterprise'}
+                disabled={subscription.planId === 'enterprise'}
                 onclick={() => {
                   if (plan.id === 'enterprise') openEnterpriseModal()
                   else openUpgradeModal(plan.id)

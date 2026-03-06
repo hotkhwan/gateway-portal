@@ -1,12 +1,14 @@
 <!-- src/routes/(app)/dashboard/+page.svelte -->
 <script lang="ts">
   import { untrack } from 'svelte'
+  import { resolve } from '$app/paths'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { activeOrg } from '$lib/stores/activeOrg'
   import { listApprovedEvents, getDashboardStats } from '$lib/api/ingest'
-  import type { ApprovedEvent } from '$lib/api/ingest'
-  import type { DashboardStats } from '$lib/api/ingest'
+  import type { ApprovedEvent, DashboardStats } from '$lib/api/ingest'
+
+  type DashboardRecentEvent = NonNullable<DashboardStats['recentEvents']>[number]
   import type { ApexOptions } from 'apexcharts'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
@@ -35,7 +37,7 @@
   let totalFailedTargets = $state(0)
 
   // Recent events
-  let recentEvents = $state<ApprovedEvent[]>([])
+  let recentEvents = $state<DashboardRecentEvent[]>([])
 
   // Chart data
   let statsChartOptions = $state<ApexOptions | null>(null)
@@ -78,11 +80,14 @@
         pendingDelivery = stats.pendingEvents
         failedEvents = stats.rejectedEvents
         // Calculate partial delivery from recent events
-        const recentEventsWithPartial = stats.recentEvents.filter((e: { status: string }) => e.status === 'partial')
+        const recentEventsWithPartial = (stats.recentEvents ?? []).filter((e: { status: string }) => e.status === 'partial')
         partialDelivery = recentEventsWithPartial.length
 
         // Load geo cell data for map
         geoCells = stats.byGeoCell || []
+
+        // Load recent events from stats
+        recentEvents = stats.recentEvents ?? []
       } catch (dashboardError) {
         // Fallback to listApprovedEvents if dashboard API fails (e.g., 500 from backend)
         console.warn('Dashboard API failed, falling back to listApprovedEvents:', dashboardError)
@@ -100,8 +105,7 @@
         totalDeliveredTargets = events.reduce((sum, e) => sum + e.deliveredTargets.length, 0)
         totalFailedTargets = events.reduce((sum, e) => sum + e.failedTargets.length, 0)
 
-        // Recent events (first 10)
-        recentEvents = events.slice(0, 10)
+        // recentEvents not available from fallback (different shape from stats API)
       }
 
       // Generate chart options with theme color
@@ -186,7 +190,7 @@
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
     {m.dashboardAlertSelectOrg()}
-    <a href="/orgs" class="alert-link">{m.dashboardAlertOrgLink()}</a>
+    <a href={resolve('/orgs')} class="alert-link">{m.dashboardAlertOrgLink()}</a>
     {m.dashboardAlertContinue()}
   </div>
 {:else}
@@ -479,7 +483,7 @@
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
             <span class="flex-grow-1">{m.dashboardRecentEvents()}</span>
-            <a href="/ingest/details" class="btn btn-sm btn-outline-theme">
+            <a href={resolve('/ingest/details')} class="btn btn-sm btn-outline-theme">
               {m.actionView()}
             </a>
           </div>
@@ -500,12 +504,10 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {#each recentEvents as event (event.approvedEventId)}
+                  {#each recentEvents as event (event.id)}
                     <tr class="cursor-pointer">
-                      <td class="fw-semibold font-monospace small"
-                        >{event.originalEventId}</td
-                      >
-                      <td>{event.deviceId}</td>
+                      <td class="fw-semibold font-monospace small">{event.eventId}</td>
+                      <td>{event.eventType}</td>
                       <td>
                         <span class="badge {getStatusBadge(event.status)}">
                           {event.status.replace('_', ' ').toUpperCase()}
@@ -527,7 +529,7 @@
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
             <span class="flex-grow-1">{m.dashboardRecentEventsDetails()}</span>
-            <a href="/ingest/details" class="btn btn-sm btn-outline-theme">
+            <a href={resolve('/ingest/details')} class="btn btn-sm btn-outline-theme">
               {m.actionView()}
             </a>
           </div>
@@ -542,53 +544,25 @@
               <table class="table table-hover align-middle mb-0">
                 <thead>
                   <tr>
-                    <th>{m.dashboardOriginalEvent()}</th>
-                    <th>{m.dashboardDevice()}</th>
-                    <th>{m.dashboardDeliveredAt()}</th>
+                    <th>{m.dashboardEventId()}</th>
+                    <th>{m.dashboardEventType()}</th>
                     <th>{m.dashboardStatus()}</th>
-                    <th>{m.dashboardTargetsDelivered()}</th>
-                    <th>{m.dashboardTargetsFailed()}</th>
+                    <th>{m.dashboardCreatedAt()}</th>
+                    <th>Source IP</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {#each recentEvents as event (event.approvedEventId)}
+                  {#each recentEvents as event (event.id)}
                     <tr class="cursor-pointer">
-                      <td class="fw-semibold font-monospace small"
-                        >{event.originalEventId}</td
-                      >
-                      <td>{event.deviceId}</td>
-                      <td class="small">
-                        {#if event.deliveredAt}
-                          {formatDate(event.deliveredAt)}
-                        {:else}
-                          <span class="text-inverse text-opacity-50">-</span>
-                        {/if}
-                      </td>
+                      <td class="fw-semibold font-monospace small">{event.eventId}</td>
+                      <td>{event.eventType}</td>
                       <td>
                         <span class="badge {getStatusBadge(event.status)}">
                           {event.status.replace('_', ' ').toUpperCase()}
                         </span>
                       </td>
-                      <td>
-                        {#if event.deliveredTargets.length > 0}
-                          <span class="badge bg-success me-1">
-                            <i class="bi bi-check-lg me-1"></i
-                            >{event.deliveredTargets.length}
-                          </span>
-                        {:else}
-                          <span class="text-inverse text-opacity-50">-</span>
-                        {/if}
-                      </td>
-                      <td>
-                        {#if event.failedTargets.length > 0}
-                          <span class="badge bg-danger">
-                            <i class="bi bi-x-lg me-1"></i
-                            >{event.failedTargets.length}
-                          </span>
-                        {:else}
-                          <span class="text-inverse text-opacity-50">-</span>
-                        {/if}
-                      </td>
+                      <td class="small">{formatDate(event.createdAt)}</td>
+                      <td class="font-monospace small">{event.sourceIp ?? '-'}</td>
                     </tr>
                   {/each}
                 </tbody>

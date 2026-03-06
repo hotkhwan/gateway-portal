@@ -24,7 +24,8 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		textKey: 'navEvents',
 		children: [
 			{ id: 'eventsManagement', url: 'ingest/management', textKey: 'eventsManagement' },
-			{ id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' }
+			{ id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' },
+			{ id: 'ingestMappingTemplates', url: 'ingest/mappingTemplates', textKey: 'ingestMappingTemplatesTitle' }
 		]
 	},
 
@@ -78,8 +79,8 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'profile',
-		url: 'comingsoon',
-		icon: 'bi bi-people',
+		url: 'profile',
+		icon: 'bi bi-person-circle',
 		textKey: 'navProfile'
 	},
 	{

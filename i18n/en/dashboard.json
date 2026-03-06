@@ -55,6 +55,8 @@
   "_comments_dashboard_ingest": "Ingest dashboard",
   "dashboardEvents24h": "Events (24h)",
   "dashboardEventId": "Event ID",
+  "dashboardEventType": "Event Type",
+  "dashboardCreatedAt": "Created At",
   "dashboardDevice": "Device",
   "dashboardStatus": "Status",
   "dashboardDeliveredAt": "Delivered At",

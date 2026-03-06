@@ -1,0 +1,20 @@
+{
+  "_comments_ingest_module": "ป้ายกำกับโมดูล Ingest",
+  "ingestMappingTemplatesTitle": "เทมเพลตการแมปข้อมูล",
+  "ingestTemplateCreate": "สร้างเทมเพลต",
+  "ingestTemplateEdit": "แก้ไขเทมเพลต",
+  "ingestTemplateName": "ชื่อ",
+  "ingestTemplateMatch": "กฎการจับคู่",
+  "ingestTemplateMappings": "การแมปฟิลด์",
+  "ingestTemplateNameRequired": "กรุณาระบุชื่อเทมเพลต",
+  "ingestTemplateDeleteWarning": "การดำเนินการนี้จะลบเทมเพลตอย่างถาวร ไม่สามารถย้อนกลับได้",
+  "ingestCreateTemplateFromEvent": "สร้าง Template จาก Event นี้",
+  "ingestTemplateSaved": "สร้าง Template สำเร็จ",
+  "ingestNoTemplates": "ไม่พบเทมเพลตการแมป",
+  "ingestNoMappings": "ยังไม่มีการแมปฟิลด์",
+  "ingestSelectedCount": "เลือก {count} รายการ",
+  "ingestBulkApprove": "อนุมัติทั้งหมด",
+  "ingestBulkReject": "ปฏิเสธทั้งหมด",
+  "ingestBulkApplyTemplate": "ใช้เทมเพลต",
+  "ingestBulkDelete": "ลบทั้งหมด"
+}

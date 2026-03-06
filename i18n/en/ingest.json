@@ -1,0 +1,20 @@
+{
+  "_comments_ingest_module": "Ingest module labels",
+  "ingestMappingTemplatesTitle": "Mapping Templates",
+  "ingestTemplateCreate": "Create Template",
+  "ingestTemplateEdit": "Edit Template",
+  "ingestTemplateName": "Name",
+  "ingestTemplateMatch": "Match Rules",
+  "ingestTemplateMappings": "Field Mappings",
+  "ingestTemplateNameRequired": "Template name is required",
+  "ingestTemplateDeleteWarning": "This will permanently delete this template. This action cannot be undone.",
+  "ingestCreateTemplateFromEvent": "Create Template from this Event",
+  "ingestTemplateSaved": "Template created successfully.",
+  "ingestNoTemplates": "No mapping templates found",
+  "ingestNoMappings": "No field mappings defined",
+  "ingestSelectedCount": "{count} selected",
+  "ingestBulkApprove": "Bulk Approve",
+  "ingestBulkReject": "Bulk Reject",
+  "ingestBulkApplyTemplate": "Apply Template",
+  "ingestBulkDelete": "Bulk Delete"
+}

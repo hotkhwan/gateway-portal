@@ -55,6 +55,8 @@
   "_comments_dashboard_ingest": "Ingest dashboard",
   "dashboardEvents24h": "กิจกรรม (24 ชม.)",
   "dashboardEventId": "รหัสกิจกรรม",
+  "dashboardEventType": "ประเภทกิจกรรม",
+  "dashboardCreatedAt": "สร้างเมื่อ",
   "dashboardDevice": "อุปกรณ์",
   "dashboardStatus": "สถานะ",
   "dashboardDeliveredAt": "ส่งเมื่อ",
