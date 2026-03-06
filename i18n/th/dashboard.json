@@ -65,5 +65,37 @@
   "dashboardEventMap": "แผนที่กิจกรรม",
   "dashboardMapEvents": "กิจกรรม",
   "dashboardMapNoData": "ไม่มีข้อมูลตำแหน่ง",
-  "dashboardMapCell": "พื้นที่"
+  "dashboardMapCell": "พื้นที่",
+
+  "_comments_dashboard_filter": "ส่วนตัวกรอง",
+  "dashboardFilterToggle": "สลับการแสดงตัวกรอง",
+  "dashboardFilterLabel": "ตัวกรอง",
+  "dashboardFilterStartDate": "วันที่เริ่ม",
+  "dashboardFilterEndDate": "วันที่สิ้นสุด",
+  "dashboardFilterStatus": "สถานะ",
+  "dashboardFilterEventType": "ประเภทกิจกรรม",
+  "dashboardFilterEventTypePlaceholder": "กรอกประเภทกิจกรรม...",
+  "dashboardFilterStatusAll": "ทั้งหมด",
+  "dashboardFilterStatusPending": "รอ",
+  "dashboardFilterStatusApproved": "อนุมัติ",
+  "dashboardFilterStatusRejected": "ปฏิเสธ",
+  "dashboardFilterApply": "ใช้ตัวกรอง",
+  "dashboardFilterClear": "ล้างตัวกรอง",
+
+  "_comments_dashboard_alert": "ข้อความแจ้งเตือน",
+  "dashboardAlertSelectOrg": "กรุณาเลือกองค์กร",
+  "dashboardAlertOrgLink": "องค์กร",
+  "dashboardAlertContinue": "เพื่อดำเนินการต่อ",
+
+  "_comments_dashboard_other": "ป้ายกำกับอื่น ๆ",
+  "dashboardOriginalEvent": "กิจกรรมเดิม",
+  "dashboardRecentEventsDetails": "กิจกรรมล่าสุด - รายละเอียด",
+  "dashboardNoApprovedRecords": "ไม่พบระเบียนที่อนุมัติ",
+  "dashboardLoading": "กำลังโหลด...",
+  "dashboardTargets": "เป้าหมาย",
+  "dashboardAwaitingDelivery": "รอส่ง",
+  "dashboardFailedTargets": "เป้าหมายล้มเหลว",
+  "dashboardCheckCircle": "ไอคอนวงกลมเช็ค",
+  "dashboardXCircle": "ไอคอนวงกลมกากบาท",
+  "dashboardClock": "ไอคอนนาฬิกา"
 }

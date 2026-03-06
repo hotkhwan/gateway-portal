@@ -185,9 +185,9 @@
 {#if !$activeOrg}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    Please select an organization
-    <a href="/orgs" class="alert-link">Organizations</a>
-    to continue
+    {m.dashboardAlertSelectOrg()}
+    <a href="/orgs" class="alert-link">{m.dashboardAlertOrgLink()}</a>
+    {m.dashboardAlertContinue()}
   </div>
 {:else}
   <!-- Filter Bar -->
@@ -195,7 +195,7 @@
     <CardBody>
       <div class="d-flex align-items-center mb-3">
         <span class="flex-grow-1 fw-semibold">
-          <i class="bi bi-funnel me-2"></i>Filters
+          <i class="bi bi-funnel me-2"></i>{m.dashboardFilterLabel()}
         </span>
         <button
           class="btn btn-sm btn-outline-theme"
@@ -203,6 +203,7 @@
           data-bs-toggle="collapse"
           data-bs-target="#filterCollapse"
           aria-expanded={showFilters}
+          aria-label={m.dashboardFilterToggle()}
           onclick={() => (showFilters = !showFilters)}
         >
           <i class="bi bi-sliders"></i>
@@ -211,8 +212,9 @@
       <div class="collapse" class:show={showFilters} id="filterCollapse">
         <div class="row g-2">
           <div class="col-md-2">
-            <label class="form-label small mb-1">Start Date</label>
+            <label class="form-label small mb-1" for="filterStartDate">{m.dashboardFilterStartDate()}</label>
             <input
+              id="filterStartDate"
               type="datetime-local"
               class="form-control form-control-sm"
               style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
@@ -220,8 +222,9 @@
             />
           </div>
           <div class="col-md-2">
-            <label class="form-label small mb-1">End Date</label>
+            <label class="form-label small mb-1" for="filterEndDate">{m.dashboardFilterEndDate()}</label>
             <input
+              id="filterEndDate"
               type="datetime-local"
               class="form-control form-control-sm"
               style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
@@ -229,20 +232,21 @@
             />
           </div>
           <div class="col-md-2">
-            <label class="form-label small mb-1">Status</label>
-            <select class="form-select form-select-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" bind:value={filterStatus}>
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+            <label class="form-label small mb-1" for="filterStatus">{m.dashboardFilterStatus()}</label>
+            <select id="filterStatus" class="form-select form-select-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" bind:value={filterStatus}>
+              <option value="all">{m.dashboardFilterStatusAll()}</option>
+              <option value="pending">{m.dashboardFilterStatusPending()}</option>
+              <option value="approved">{m.dashboardFilterStatusApproved()}</option>
+              <option value="rejected">{m.dashboardFilterStatusRejected()}</option>
             </select>
           </div>
           <div class="col-md-3">
-            <label class="form-label small mb-1">Event Type</label>
+            <label class="form-label small mb-1" for="filterEventType">{m.dashboardFilterEventType()}</label>
             <input
+              id="filterEventType"
               type="text"
               class="form-control form-control-sm"
-              placeholder="Enter event type..."
+              placeholder={m.dashboardFilterEventTypePlaceholder()}
               style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
               bind:value={filterEventType}
             />
@@ -254,14 +258,14 @@
                 type="button"
                 onclick={applyFilters}
               >
-                <i class="bi bi-search me-1"></i>Apply Filters
+                <i class="bi bi-search me-1"></i>{m.dashboardFilterApply()}
               </button>
               <button
                 class="btn btn-sm btn-outline-secondary"
                 type="button"
                 onclick={clearFilters}
               >
-                <i class="bi bi-x-circle me-1"></i>Clear Filters
+                <i class="bi bi-x-circle me-1"></i>{m.dashboardFilterClear()}
               </button>
             </div>
           </div>
@@ -273,13 +277,13 @@
   {#if loading}
     <div class="text-center py-5">
       <div class="spinner-border text-theme" role="status">
-        <span class="visually-hidden">Loading...</span>
+        <span class="visually-hidden">{m.dashboardLoading()}</span>
       </div>
     </div>
   {:else if error}
     <div class="alert alert-danger">
       <i class="bi bi-exclamation-triangle me-2"></i>{error}
-      <button class="btn btn-sm btn-danger ms-2" onclick={() => loadEvents()}>Refresh</button>
+      <button class="btn btn-sm btn-danger ms-2" onclick={() => loadEvents()}>{m.actionRefresh()}</button>
     </div>
   {:else}
     <!-- BEGIN row -->
@@ -306,7 +310,7 @@
           </div>
           <div class="small text-inverse text-opacity-50">
             <div>
-              <i class="bi bi-calendar-check me-1"></i>Events (24h)
+              <i class="bi bi-calendar-check me-1"></i>{m.dashboardEvents24h()}
             </div>
           </div>
         </CardBody>
@@ -317,7 +321,7 @@
       <Card class="mb-3">
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">Delivered Events</span>
+            <span class="flex-grow-1">{m.dashboardDeliveredEvents()}</span>
             <CardExpandToggler />
           </div>
           <div class="row align-items-center mb-2">
@@ -334,7 +338,7 @@
           </div>
           <div class="small text-inverse text-opacity-50">
             <div>
-              <i class="bi bi-check-circle me-1"></i>{totalDeliveredTargets} targets
+              <i class="bi bi-check-circle me-1" aria-label={m.dashboardCheckCircle()}></i>{totalDeliveredTargets} {m.dashboardTargets()}
             </div>
           </div>
         </CardBody>
@@ -345,7 +349,7 @@
       <Card class="mb-3">
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">Pending Delivery</span>
+            <span class="flex-grow-1">{m.dashboardPendingDelivery()}</span>
             <CardExpandToggler />
           </div>
           <div class="row align-items-center mb-2">
@@ -362,7 +366,7 @@
           </div>
           <div class="small text-inverse text-opacity-50">
             <div>
-              <i class="bi bi-clock me-1"></i>Awaiting delivery
+              <i class="bi bi-clock me-1" aria-label={m.dashboardClock()}></i>{m.dashboardAwaitingDelivery()}
             </div>
           </div>
         </CardBody>
@@ -373,7 +377,7 @@
       <Card class="mb-3">
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">Failed Events</span>
+            <span class="flex-grow-1">{m.dashboardFailedEvents()}</span>
             <CardExpandToggler />
           </div>
           <div class="row align-items-center mb-2">
@@ -390,7 +394,7 @@
           </div>
           <div class="small text-inverse text-opacity-50">
             <div>
-              <i class="bi bi-x-circle me-1"></i>{totalFailedTargets} failed targets
+              <i class="bi bi-x-circle me-1" aria-label={m.dashboardXCircle()}></i>{totalFailedTargets} {m.dashboardFailedTargets()}
             </div>
           </div>
         </CardBody>
@@ -402,7 +406,7 @@
       <Card class="mb-3">
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">Ingest Summary</span>
+            <span class="flex-grow-1">{m.dashboardIngestSummary()}</span>
             <CardExpandToggler />
           </div>
 
@@ -419,22 +423,22 @@
               <div class="small">
                 <div class="d-flex align-items-center mb-2">
                   <div class="w-10px h-10px rounded-pill bg-success me-2"></div>
-                  <div class="flex-1">Delivered</div>
+                  <div class="flex-1">{m.dashboardTargetsDelivered()}</div>
                   <div class="fw-bold">{deliveredEvents}</div>
                 </div>
                 <div class="d-flex align-items-center mb-2">
                   <div class="w-10px h-10px rounded-pill bg-warning me-2"></div>
-                  <div class="flex-1">Pending</div>
+                  <div class="flex-1">{m.dashboardStatus()}</div>
                   <div class="fw-bold">{pendingDelivery}</div>
                 </div>
                 <div class="d-flex align-items-center mb-2">
                   <div class="w-10px h-10px rounded-pill bg-danger me-2"></div>
-                  <div class="flex-1">Failed</div>
+                  <div class="flex-1">{m.dashboardTargetsFailed()}</div>
                   <div class="fw-bold">{failedEvents}</div>
                 </div>
                 <div class="d-flex align-items-center">
                   <div class="w-10px h-10px rounded-pill bg-info me-2"></div>
-                  <div class="flex-1">Partial</div>
+                  <div class="flex-1">{m.dashboardPartialDelivery()}</div>
                   <div class="fw-bold">{partialDelivery}</div>
                 </div>
               </div>
@@ -449,7 +453,7 @@
       <Card class="mb-3">
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">Event Map</span>
+            <span class="flex-grow-1">{m.dashboardEventMap()}</span>
             <CardExpandToggler />
           </div>
 
@@ -462,7 +466,7 @@
           {:else}
             <div class="text-center py-5 text-inverse text-opacity-50">
               <i class="bi bi-map fs-1 mb-3 d-block"></i>
-              <p class="small">No location data available</p>
+              <p class="small">{m.dashboardMapNoData()}</p>
             </div>
           {/if}
         </CardBody>
@@ -474,25 +478,25 @@
       <Card class="mb-3">
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">Recent Events</span>
+            <span class="flex-grow-1">{m.dashboardRecentEvents()}</span>
             <a href="/ingest/details" class="btn btn-sm btn-outline-theme">
-              View
+              {m.actionView()}
             </a>
           </div>
 
           {#if recentEvents.length === 0}
             <div class="text-center py-5 text-inverse text-opacity-50">
               <i class="bi bi-bar-chart fs-1 mb-3 d-block"></i>
-              <p>No approved records found</p>
+              <p>{m.dashboardNoApprovedRecords()}</p>
             </div>
           {:else}
             <div class="table-responsive">
               <table class="table table-sm table-hover align-middle mb-0">
                 <thead>
                   <tr>
-                    <th>Event ID</th>
-                    <th>Device</th>
-                    <th>Status</th>
+                    <th>{m.dashboardEventId()}</th>
+                    <th>{m.dashboardDevice()}</th>
+                    <th>{m.dashboardStatus()}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -522,28 +526,28 @@
       <Card class="mb-3">
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">Recent Events - Details</span>
+            <span class="flex-grow-1">{m.dashboardRecentEventsDetails()}</span>
             <a href="/ingest/details" class="btn btn-sm btn-outline-theme">
-              View
+              {m.actionView()}
             </a>
           </div>
 
           {#if recentEvents.length === 0}
             <div class="text-center py-5 text-inverse text-opacity-50">
               <i class="bi bi-bar-chart fs-1 mb-3 d-block"></i>
-              <p>No approved records found</p>
+              <p>{m.dashboardNoApprovedRecords()}</p>
             </div>
           {:else}
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
                 <thead>
                   <tr>
-                    <th>Original Event</th>
-                    <th>Device</th>
-                    <th>Delivered At</th>
-                    <th>Status</th>
-                    <th>Delivered</th>
-                    <th>Failed</th>
+                    <th>{m.dashboardOriginalEvent()}</th>
+                    <th>{m.dashboardDevice()}</th>
+                    <th>{m.dashboardDeliveredAt()}</th>
+                    <th>{m.dashboardStatus()}</th>
+                    <th>{m.dashboardTargetsDelivered()}</th>
+                    <th>{m.dashboardTargetsFailed()}</th>
                   </tr>
                 </thead>
                 <tbody>

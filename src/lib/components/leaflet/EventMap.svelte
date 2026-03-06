@@ -12,16 +12,24 @@
     onCellClick = () => {}
   } = $props()
 
+  // Map ready state
+  let mapReady = $state(false)
+
   let container: HTMLDivElement
   let map: any = null
   let markers: CircleMarker[] = []
+  let L: any = null
 
   // Theme color
   const themeColor = '#0d6efd'
 
   // Create circle marker for geohash cell
-  function createCellMarker(cell: { cell: string; count: number; lat: number; lng: number }): CircleMarker {
-    const L = require('leaflet')
+  function createCellMarker(cell: {
+    cell: string
+    count: number
+    lat: number
+    lng: number
+  }): CircleMarker {
     // Size based on count
     const radius = Math.min(Math.max(Math.sqrt(cell.count) * 3, 5), 30)
     // Opacity based on count
@@ -67,8 +75,7 @@
   }
 
   function updateMarkers() {
-    const mapInstance = map
-    if (!mapInstance) return
+    if (!map || !L) return
 
     // Remove existing markers
     markers.forEach((m) => m.remove())
@@ -76,54 +83,62 @@
 
     // Add new markers
     if (geoCells.length > 0) {
-      const L = require('leaflet')
       geoCells.forEach((cell) => {
         const marker = createCellMarker(cell)
-        marker.addTo(mapInstance)
+        marker.addTo(map)
         markers.push(marker)
       })
 
       // Fit bounds to show all markers
-      const group = require('leaflet').featureGroup(markers)
-      mapInstance.fitBounds(group.getBounds(), { padding: [20, 20], maxZoom: 12 })
+      const group = L.featureGroup(markers)
+      const bounds = group.getBounds()
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [20, 20], maxZoom: 14, animate: true })
+      }
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
     // Only run on client side
     if (typeof window === 'undefined') return
+
+    // Load Leaflet dynamically (same pattern as MapPicker.svelte)
+    const leafletModule = await import('leaflet')
+    L = leafletModule.default
 
     // Small delay to ensure DOM is ready
     setTimeout(() => {
       if (!container || map) return
-
-      const L = require('leaflet')
 
       // Initialize map
       map = L.map(container, {
         center: [13.7563, 100.5018],
         zoom,
         worldCopyJump: true,
-        zoomControl: !readonly,
+        zoomControl: true,
         scrollWheelZoom: !readonly,
         doubleClickZoom: !readonly,
         dragging: !readonly
       })
 
       // Add CartoDB Dark Matter tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-      }).addTo(map)
+      L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 19
+        }
+      ).addTo(map)
 
       // Add markers
       updateMarkers()
 
-      // Ensure proper rendering
+      // Ensure proper rendering and mark as ready
       setTimeout(() => {
         map?.invalidateSize({ animate: false })
+        mapReady = true
       }, 100)
     }, 50)
   })
@@ -132,13 +147,16 @@
     if (map) {
       map.remove()
       map = null
+      mapReady = false
     }
     markers = []
   })
 
   // Handle prop changes - update markers
   $effect(() => {
-    updateMarkers()
+    if (mapReady) {
+      updateMarkers()
+    }
   })
 </script>
 
@@ -202,5 +220,46 @@
 
   .event-map :global(.leaflet-tooltip-right:before) {
     border-right-color: transparent;
+  }
+
+  /* Ensure markers are visible */
+  .event-map :global(.leaflet-interactive) {
+    cursor: pointer;
+  }
+
+  .event-map :global(.leaflet-container a) {
+    color: var(--text, #d8e1ff);
+  }
+
+  .event-map :global(.leaflet-control-zoom a) {
+    background-color: var(--panel, #0f1a2e);
+    color: var(--text, #d8e1ff);
+  }
+
+  .event-map :global(.leaflet-control-container) {
+    display: flex !important;
+  }
+
+  .event-map :global(.leaflet-control-zoom) {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .event-map :global(.leaflet-control-zoom-in) {
+    border-radius: 4px !important;
+    background-color: var(--bg, #0b1220) !important;
+    color: #fff !important;
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08)) !important;
+  }
+
+  .event-map :global(.leaflet-control-zoom-out) {
+    border-radius: 4px !important;
+    background-color: var(--bg, #0b1220) !important;
+    color: #fff !important;
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08)) !important;
+  }
+
+  .event-map :global(.leaflet-control-attribution) {
+    display: none !important;
   }
 </style>

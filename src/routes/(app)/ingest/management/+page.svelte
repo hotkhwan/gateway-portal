@@ -29,6 +29,7 @@
 
   // Edit modal
   let showEditModal = $state(false)
+  let showMap = $state(false) // delay map mount until modal is visible
   let editEvent = $state<PendingEvent | null>(null)
   let editLoading = $state(false)
   let editError = $state<string | null>(null)
@@ -59,13 +60,12 @@
       loading = false
       return
     }
-    // อ่าน perPage แบบ untrack เพื่อไม่ให้เป็น dependency
     const perPage = untrack(() => pagination.perPage)
 
     loading = true
     error = null
     try {
-      const response = await listPendingEvents(orgId, page, perPage) // ← ใช้ perPage
+      const response = await listPendingEvents(orgId, page, perPage)
       events = response.details as PendingEvent[]
       pagination = {
         page: response.page,
@@ -106,7 +106,12 @@
     editLat = event.lat
     editLng = event.lng
     editError = null
+    showMap = false // reset map first
     showEditModal = true
+    // delay mount ให้ modal DOM layout เสร็จก่อน Leaflet initialize
+    setTimeout(() => {
+      showMap = true
+    }, 100)
   }
 
   async function handleSaveEdit() {
@@ -123,7 +128,6 @@
         lat: editLat,
         lng: editLng
       })
-      // อัพเดท local state ด้วย current edit values แทนการใช้ response
       const updatedEventId = editEvent.eventId
       events = events.map((e) =>
         e.eventId === updatedEventId
@@ -138,6 +142,7 @@
           : e
       )
       showEditModal = false
+      showMap = false
     } catch (e: unknown) {
       editError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
@@ -161,13 +166,11 @@
       const updated = await rejectEvent(orgId, rejectEventId, {
         reason: rejectReason
       })
-      // Update the event in the list with the rejected status
       events = events.map((e) =>
         e.eventId === rejectEventId
           ? { ...e, status: updated.status, updatedAt: updated.updatedAt }
           : e
       )
-      // Close modal and reset form
       showRejectModal = false
       rejectEventId = null
       rejectReason = ''
@@ -276,9 +279,9 @@
 
   $effect(() => {
     const orgId = $activeOrg?.id
-    setPageTitle(m.eventsManagementTitle()) // หรือ eventsDetailsTitle
+    setPageTitle(m.eventsManagementTitle())
     if (orgId) {
-      untrack(() => loadEvents()) // ← ป้องกัน loadEvents เป็น dependency
+      untrack(() => loadEvents())
     } else {
       loading = false
     }
@@ -481,7 +484,7 @@
   {/if}
 {/if}
 
-<!-- View Modal - No click outside to close -->
+<!-- View Modal -->
 {#if showViewModal && viewEvent}
   <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
     <div
@@ -628,26 +631,35 @@
 
             {#if viewEvent.lat !== undefined && viewEvent.lng !== undefined}
               <div class="mb-3">
-                <strong>Location:</strong> {viewEvent.lat.toFixed(6)}, {viewEvent.lng.toFixed(6)}
+                <strong>Location:</strong>
+                {viewEvent.lat.toFixed(6)}, {viewEvent.lng.toFixed(6)}
               </div>
             {/if}
 
             {#if viewEvent.rawAliases}
               <hr />
               <h6 class="mb-2">Raw Aliases</h6>
-              <pre class="bg-dark text-light p-3 rounded small">{formatJson(JSON.stringify(viewEvent.rawAliases))}</pre>
+              <pre class="bg-dark text-light p-3 rounded small">{formatJson(
+                  JSON.stringify(viewEvent.rawAliases)
+                )}</pre>
             {/if}
 
             {#if viewEvent.rawBody}
               <hr />
               <h6 class="mb-2">Raw Body</h6>
-              <pre class="bg-dark text-light p-3 rounded small" style="max-height: 300px; overflow-y: auto;">{formatJson(viewEvent.rawBody)}</pre>
+              <pre
+                class="bg-dark text-light p-3 rounded small"
+                style="max-height: 300px; overflow-y: auto;">{formatJson(
+                  viewEvent.rawBody
+                )}</pre>
             {/if}
 
             <hr />
 
             <h6 class="mb-2">{m.eventsPayload()}</h6>
-            <pre class="bg-dark text-light p-3 rounded small" style="max-height: 300px; overflow-y: auto;">{JSON.stringify(
+            <pre
+              class="bg-dark text-light p-3 rounded small"
+              style="max-height: 300px; overflow-y: auto;">{JSON.stringify(
                 viewEvent.payload,
                 null,
                 2
@@ -660,7 +672,7 @@
   <div class="modal-backdrop fade show"></div>
 {/if}
 
-<!-- Edit Modal - No click outside to close -->
+<!-- Edit Modal -->
 {#if showEditModal && editEvent}
   <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -671,7 +683,10 @@
             type="button"
             class="btn-close"
             aria-label="Close"
-            onclick={() => (showEditModal = false)}
+            onclick={() => {
+              showEditModal = false
+              showMap = false
+            }}
           ></button>
         </div>
         <div class="modal-body">
@@ -781,15 +796,29 @@
                 </button>
               {/if}
             </div>
-            {#key editEvent?.eventId}
-              <MapPicker
-                lat={!editLat || !editLng ? 13.747722 : editLat}
-                lng={!editLat || !editLng ? 100.497437 : editLng}
-                height="250px"
-                disabled={editLoading}
-                onchange={handleMapChange}
-              />
-            {/key}
+
+            <!-- map เฉพาะหลัง modal layout เสร็จแล้ว -->
+            {#if showMap}
+              {#key editEvent.eventId}
+                <MapPicker
+                  lat={editLat ?? 13.747722}
+                  lng={editLng ?? 100.497437}
+                  height="250px"
+                  disabled={editLoading}
+                  onchange={handleMapChange}
+                />
+              {/key}
+            {:else}
+              <div
+                style="height: 250px; border-radius: 8px; border: 1px solid var(--border, rgba(255,255,255,0.08));"
+                class="d-flex align-items-center justify-content-center text-inverse text-opacity-25"
+              >
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="visually-hidden">{m.actionLoading()}</span>
+                </div>
+              </div>
+            {/if}
+
             <small class="text-inverse text-opacity-50">
               <i class="bi bi-info-circle me-1"></i>{m.eventsLocationHint()}
             </small>
@@ -799,7 +828,10 @@
           <button
             type="button"
             class="btn btn-secondary"
-            onclick={() => (showEditModal = false)}
+            onclick={() => {
+              showEditModal = false
+              showMap = false
+            }}
             disabled={editLoading}
           >
             {m.actionCancel()}
