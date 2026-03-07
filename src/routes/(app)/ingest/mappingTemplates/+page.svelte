@@ -4,17 +4,19 @@
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { activeOrg } from '$lib/stores/activeOrg'
+  import { page } from '$app/stores'
   import {
     listTemplates,
     createTemplate,
     getTemplate,
     updateTemplate,
-    deleteTemplate
+    deleteTemplate,
+    listSourceProfiles
   } from '$lib/api/ingest'
   import type {
-    MappingTemplate, FieldMapping, MatchRule,
+    MappingTemplate, FieldMapping, MatchRule, MatchCondition,
     TemplateDeliveryTarget, ClassificationRule, MessageTemplate,
-    DLQConfig, PayloadCondition
+    DLQConfig, PayloadCondition, SourceProfile
   } from '$lib/api/ingest'
   import { listTargets } from '$lib/api/target'
   import type { DeliveryTarget } from '$lib/types/org'
@@ -66,6 +68,15 @@
   let formDlqMaxRetries = $state(3)
   let formDlqRetryTimeout = $state(300)
 
+  // V2 fields
+  let formSourceFamily = $state('')
+  let formFinalEventType = $state('')
+  let formPriority = $state(0)
+  let formMatchAll = $state<MatchCondition[]>([])
+  let formMatchAny = $state<MatchCondition[]>([])
+  let sourceProfiles = $state<SourceProfile[]>([])
+  let showLegacyMatch = $state(false)
+
   // Available targets for binding
   let availableTargets = $state<DeliveryTarget[]>([])
 
@@ -106,7 +117,7 @@
     }
   }
 
-  async function openCreate() {
+  async function openCreate(prefill?: { sourceFamily?: string; suggestedFields?: string[]; samplePayload?: Record<string, unknown> }) {
     formMode = 'create'
     formTemplate = null
     formName = ''
@@ -121,12 +132,35 @@
     formDlqEnabled = false
     formDlqMaxRetries = 3
     formDlqRetryTimeout = 300
+    // V2 fields
+    formSourceFamily = prefill?.sourceFamily ?? ''
+    formFinalEventType = ''
+    formPriority = 0
+    formMatchAll = []
+    formMatchAny = []
+    showLegacyMatch = false
+    // Pre-fill from template review
+    if (prefill?.suggestedFields?.length && prefill?.samplePayload) {
+      formName = `${prefill.sourceFamily ?? 'template'}-${Date.now().toString(36)}`
+      formMatchAll = prefill.suggestedFields.map(field => {
+        const value = getNestedValue(prefill.samplePayload!, field)
+        return { field, operator: 'eq' as const, values: value != null ? [String(value)] : [] }
+      })
+    }
     formError = null
     showFormModal = true
     const orgId = $activeOrg?.id
-    if (orgId) {
-      try { availableTargets = await listTargets(orgId) } catch { availableTargets = [] }
-    }
+    const [targets, profiles] = await Promise.all([
+      orgId ? listTargets(orgId).catch(() => [] as DeliveryTarget[]) : Promise.resolve([] as DeliveryTarget[]),
+      listSourceProfiles().catch(() => [] as SourceProfile[])
+    ])
+    availableTargets = targets
+    sourceProfiles = profiles
+  }
+
+  function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+    const cleaned = path.startsWith('raw.') ? path.slice(4) : path
+    return cleaned.split('.').reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), obj)
   }
 
   async function openEdit(tpl: MappingTemplate) {
@@ -158,12 +192,22 @@
     formDlqEnabled = tpl.dlq?.enabled ?? false
     formDlqMaxRetries = tpl.dlq?.maxRetries ?? 3
     formDlqRetryTimeout = tpl.dlq?.retryTimeoutSeconds ?? 300
+    // V2 fields
+    formSourceFamily = tpl.sourceFamily ?? ''
+    formFinalEventType = tpl.finalEventType ?? ''
+    formPriority = tpl.priority ?? 0
+    formMatchAll = tpl.matchAll?.map(c => ({ ...c, values: [...c.values] })) ?? []
+    formMatchAny = tpl.matchAny?.map(c => ({ ...c, values: [...c.values] })) ?? []
+    showLegacyMatch = !!(tpl.match && Object.values(tpl.match).some(v => v))
     formError = null
     showFormModal = true
     const orgId = $activeOrg?.id
-    if (orgId) {
-      try { availableTargets = await listTargets(orgId) } catch { availableTargets = [] }
-    }
+    const [targets, profiles] = await Promise.all([
+      orgId ? listTargets(orgId).catch(() => [] as DeliveryTarget[]) : Promise.resolve([] as DeliveryTarget[]),
+      listSourceProfiles().catch(() => [] as SourceProfile[])
+    ])
+    availableTargets = targets
+    sourceProfiles = profiles
   }
 
   function addMapping() {
@@ -200,6 +244,20 @@
     formMessageTemplates = formMessageTemplates.filter((_, idx) => idx !== i)
   }
 
+  // V2 MatchCondition helpers
+  function addMatchAllCondition() {
+    formMatchAll = [...formMatchAll, { field: '', operator: 'eq', values: [] }]
+  }
+  function removeMatchAllCondition(i: number) {
+    formMatchAll = formMatchAll.filter((_, idx) => idx !== i)
+  }
+  function addMatchAnyCondition() {
+    formMatchAny = [...formMatchAny, { field: '', operator: 'eq', values: [] }]
+  }
+  function removeMatchAnyCondition(i: number) {
+    formMatchAny = formMatchAny.filter((_, idx) => idx !== i)
+  }
+
   async function handleSubmit() {
     const orgId = $activeOrg?.id
     if (!orgId) return
@@ -230,7 +288,13 @@
       deliveryTargets: formDeliveryTargets.filter(dt => dt.targetId),
       classificationRules: formClassificationRules.filter(cr => cr.name.trim()),
       messageTemplates: formMessageTemplates.filter(mt => mt.body.trim()),
-      dlq
+      dlq,
+      // V2 fields
+      sourceFamily: formSourceFamily || undefined,
+      finalEventType: formFinalEventType.trim() || undefined,
+      priority: formPriority,
+      matchAll: formMatchAll.filter(c => c.field.trim()),
+      matchAny: formMatchAny.filter(c => c.field.trim())
     }
 
     formLoading = true
@@ -290,7 +354,18 @@
     const orgId = $activeOrg?.id
     setPageTitle(m.ingestMappingTemplatesTitle())
     if (orgId) {
-      untrack(() => load())
+      untrack(() => {
+        load()
+        // Check for fromReview query param (navigated from Template Reviews)
+        const params = $page.url.searchParams
+        if (params.get('fromReview')) {
+          const sourceFamily = params.get('sourceFamily') ?? ''
+          const suggestedFields = params.get('suggestedFields')?.split(',').filter(Boolean) ?? []
+          let samplePayload: Record<string, unknown> = {}
+          try { samplePayload = JSON.parse(params.get('samplePayload') ?? '{}') } catch {}
+          openCreate({ sourceFamily, suggestedFields, samplePayload })
+        }
+      })
     } else {
       loading = false
     }
@@ -307,7 +382,7 @@
     {/if}
   </div>
   {#if $activeOrg}
-    <button class="btn btn-sm btn-theme" onclick={openCreate}>
+    <button class="btn btn-sm btn-theme" onclick={() => openCreate()}>
       <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateCreate()}
     </button>
   {/if}
@@ -335,7 +410,7 @@
       <div class="text-center py-5">
         <i class="bi bi-diagram-3 fs-1 text-inverse text-opacity-25 d-block mb-3"></i>
         <p class="text-inverse text-opacity-50 mb-3">{m.ingestNoTemplates()}</p>
-        <button class="btn btn-theme btn-sm" onclick={openCreate}>
+        <button class="btn btn-theme btn-sm" onclick={() => openCreate()}>
           <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateCreate()}
         </button>
       </div>
@@ -347,6 +422,8 @@
       <thead>
         <tr>
           <th>{m.ingestTemplateName()}</th>
+          <th>{m.ingestTemplateSourceFamily()}</th>
+          <th>{m.ingestTemplatePriority()}</th>
           <th>{m.ingestTemplateMatch()}</th>
           <th>{m.ingestTemplateMappings()}</th>
           <th>{m.eventsCreatedAt()}</th>
@@ -357,6 +434,20 @@
         {#each templates as tpl (tpl.templateId)}
           <tr>
             <td class="fw-semibold">{tpl.name}</td>
+            <td>
+              {#if tpl.sourceFamily}
+                <span class="badge bg-theme-subtle text-theme">{tpl.sourceFamily}</span>
+              {:else}
+                <span class="text-inverse text-opacity-50 small">-</span>
+              {/if}
+            </td>
+            <td>
+              {#if tpl.priority}
+                <span class="badge bg-info">{tpl.priority}</span>
+              {:else}
+                <span class="text-inverse text-opacity-50 small">0</span>
+              {/if}
+            </td>
             <td>
               {#if tpl.match?.deviceType}
                 <span class="badge bg-secondary me-1">deviceType: {tpl.match.deviceType}</span>
@@ -507,13 +598,118 @@
             <div class="alert alert-danger small py-2">{formError}</div>
           {/if}
 
+          <!-- V2: Source Family -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="tplSourceFamily">{m.ingestTemplateSourceFamily()}</label>
+            <select id="tplSourceFamily" class="form-select" bind:value={formSourceFamily} disabled={formLoading}>
+              <option value="">— {m.actionSelect()} —</option>
+              {#each sourceProfiles as sp}
+                <option value={sp.sourceFamily}>{sp.displayName} ({sp.sourceFamily})</option>
+              {/each}
+            </select>
+            <div class="form-text">{m.ingestTemplateSourceFamilyHint()}</div>
+          </div>
+
           <div class="mb-3">
             <label class="form-label fw-semibold" for="tplName">{m.ingestTemplateName()} <span class="text-danger">*</span></label>
             <input id="tplName" type="text" class="form-control" bind:value={formName} disabled={formLoading} placeholder="e.g. Camera Temperature Alert" />
           </div>
 
+          <!-- V2: Final Event Type -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="tplFinalEventType">{m.ingestTemplateFinalEventType()}</label>
+            <input id="tplFinalEventType" type="text" class="form-control" bind:value={formFinalEventType} disabled={formLoading} placeholder="e.g. intrusion" />
+            <div class="form-text">{m.ingestTemplateFinalEventTypeHint()}</div>
+          </div>
+
+          <!-- V2: Priority -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="tplPriority">{m.ingestTemplatePriority()}</label>
+            <input id="tplPriority" type="number" class="form-control" style="width:120px" bind:value={formPriority} disabled={formLoading} min={0} />
+            <div class="form-text">{m.ingestTemplatePriorityHint()}</div>
+          </div>
+
+          <!-- V2: matchAll (AND) -->
           <fieldset class="border rounded p-3 mb-3">
-            <legend class="float-none w-auto px-2 small fw-semibold">{m.ingestTemplateMatch()} <span class="text-inverse text-opacity-50 fw-normal">({m.eventsNoteOptional()})</span></legend>
+            <legend class="float-none w-auto px-2 small fw-semibold">{m.ingestTemplateMatchAll()}</legend>
+            <small class="text-inverse text-opacity-50 d-block mb-2">{m.ingestTemplateMatchAllHint()}</small>
+            {#if formMatchAll.length === 0}
+              <p class="text-inverse text-opacity-50 small mb-2">{m.ingestTemplateNoConditions()}</p>
+            {:else}
+              {#each formMatchAll as cond, i}
+                <div class="row g-1 mb-1 align-items-center">
+                  <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm font-monospace" placeholder={m.ingestTemplateConditionFieldPlaceholder()} bind:value={formMatchAll[i].field} disabled={formLoading} />
+                  </div>
+                  <div class="col-md-2">
+                    <select class="form-select form-select-sm" bind:value={formMatchAll[i].operator} disabled={formLoading}>
+                      <option value="eq">{m.ingestTemplateConditionOperatorEq()}</option>
+                      <option value="in">{m.ingestTemplateConditionOperatorIn()}</option>
+                      <option value="contains">{m.ingestTemplateConditionOperatorContains()}</option>
+                      <option value="prefix">{m.ingestTemplateConditionOperatorPrefix()}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-5">
+                    <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateConditionValues() + ' (comma separated)'} value={formMatchAll[i].values.join(', ')} oninput={(e) => { formMatchAll[i].values = (e.currentTarget as HTMLInputElement).value.split(',').map(s => s.trim()).filter(Boolean) }} disabled={formLoading} />
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick={() => removeMatchAllCondition(i)} disabled={formLoading} title={m.actionDelete()}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            {/if}
+            <button type="button" class="btn btn-sm btn-outline-theme" onclick={addMatchAllCondition} disabled={formLoading}>
+              <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateAddCondition()}
+            </button>
+          </fieldset>
+
+          <!-- V2: matchAny (OR) -->
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 small fw-semibold">{m.ingestTemplateMatchAny()}</legend>
+            <small class="text-inverse text-opacity-50 d-block mb-2">{m.ingestTemplateMatchAnyHint()}</small>
+            {#if formMatchAny.length === 0}
+              <p class="text-inverse text-opacity-50 small mb-2">{m.ingestTemplateNoConditions()}</p>
+            {:else}
+              {#each formMatchAny as cond, i}
+                <div class="row g-1 mb-1 align-items-center">
+                  <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm font-monospace" placeholder={m.ingestTemplateConditionFieldPlaceholder()} bind:value={formMatchAny[i].field} disabled={formLoading} />
+                  </div>
+                  <div class="col-md-2">
+                    <select class="form-select form-select-sm" bind:value={formMatchAny[i].operator} disabled={formLoading}>
+                      <option value="eq">{m.ingestTemplateConditionOperatorEq()}</option>
+                      <option value="in">{m.ingestTemplateConditionOperatorIn()}</option>
+                      <option value="contains">{m.ingestTemplateConditionOperatorContains()}</option>
+                      <option value="prefix">{m.ingestTemplateConditionOperatorPrefix()}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-5">
+                    <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateConditionValues() + ' (comma separated)'} value={formMatchAny[i].values.join(', ')} oninput={(e) => { formMatchAny[i].values = (e.currentTarget as HTMLInputElement).value.split(',').map(s => s.trim()).filter(Boolean) }} disabled={formLoading} />
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick={() => removeMatchAnyCondition(i)} disabled={formLoading} title={m.actionDelete()}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            {/if}
+            <button type="button" class="btn btn-sm btn-outline-theme" onclick={addMatchAnyCondition} disabled={formLoading}>
+              <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateAddCondition()}
+            </button>
+          </fieldset>
+
+          <!-- Legacy Match (V1) — collapsible -->
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 small fw-semibold">
+              <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" onclick={() => (showLegacyMatch = !showLegacyMatch)}>
+                <i class="bi" class:bi-chevron-right={!showLegacyMatch} class:bi-chevron-down={showLegacyMatch}></i>
+                {m.ingestTemplateLegacyMatch()} <span class="text-inverse text-opacity-50 fw-normal">({m.eventsNoteOptional()})</span>
+              </button>
+            </legend>
+            {#if showLegacyMatch}
             <div class="row g-2 align-items-end">
               <div class="col-md-5">
                 <label class="form-label small mb-1" for="matchKey">Field</label>
@@ -555,6 +751,7 @@
                 </div>
               {/if}
             </div>
+            {/if}
           </fieldset>
 
           <div class="mb-2">

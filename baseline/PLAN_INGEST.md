@@ -1,561 +1,687 @@
-# PLAN_INGEST.md — Frontend Plan: Ingest + Delivery + Subscription
+# PLAN_INGEST.md — Frontend Plan: Ingest V2 Source Family Architecture
 
-> Scope: Frontend (portal) pages สำหรับระบบ Ingest, Delivery, DLQ, Subscription
-> อ้างอิง: `baseline/DELIVERY_NOTIFY_PLAN.md`, `baseline/README.md` (BE), `portal/baseline/README.md` (FE)
-> Updated: 2026-03-07
+> Scope: Portal (FE) pages for Ingest V2 — Source Profiles, Device Management, Template Reviews, updated Mapping Templates
+> Ref: `gw/PLAN.md` (BE V2 API spec), `portal/baseline/README.md` (FE conventions)
+> Updated: 2026-03-08
 
 ---
 
-## 1) Current State (Baseline FE)
+## 1) Current State (Portal FE)
 
-### Existing Pages
+### Existing Ingest Pages
 
 | Route | Status | Description |
 |---|---|---|
-| `ingest/management` | Done | Event management: list, view, approve, reject, bulk ops, create template from event |
+| `ingest/management` | Done | Event management: list, view, approve, reject, bulk ops |
 | `ingest/details` | Done | Approved events list + detail view |
-| `ingest/mappingTemplates` | Done | Mapping template CRUD (name, match, field mappings) |
-| `subscription` | Done | Plan cards (hardcoded PLANS), enterprise activation |
-| `orgs/targets` | Done | Delivery targets CRUD (webhook, LINE, Discord, Telegram) |
+| `ingest/mappingTemplates` | Done | Mapping template CRUD (name, match, field mappings, delivery targets, DLQ, classification rules, message templates) |
+| `delivery/targets` | Done | Delivery targets CRUD (webhook, LINE, Discord, Telegram) + quota display |
+| `delivery/templates` | Done | Message templates convenience view |
+| `delivery/dlq` | Done | DLQ list + detail with retry/replay/abandon |
 
-### Existing API Libraries
+### Existing API Library (`lib/api/ingest.ts`)
 
-| File | Functions |
+| Function | Endpoint |
 |---|---|
-| `lib/api/ingest.ts` | Events CRUD, bulk ops, templates CRUD, dashboard stats |
-| `lib/api/target.ts` | Delivery targets CRUD (`/api/v1/targets`) |
-| `lib/api/subscription.ts` | bootstrap, getSubscription, changePlan, activateEnterprise (hardcoded PLANS) |
+| `getIngestConfig()` | `GET /ingest/` |
+| `rotateIngestSecret()` | `POST /ingest/rotateSecret` |
+| `getDashboardStats()` | `GET /ingest/dashboard` |
+| `listPendingEvents()` | `GET /ingest/management` |
+| `getPendingEvent()` | `GET /ingest/management/:eventId` |
+| `updatePendingEvent()` | `PATCH /ingest/management/:eventId` |
+| `approveEvent()` | `POST /ingest/management/:eventId/approve` |
+| `rejectEvent()` | `POST /ingest/management/:eventId/reject` |
+| `deletePendingEvent()` | `DELETE /ingest/management/:eventId` |
+| `bulkApprove/Reject/Delete/ApplyTemplate()` | `POST /ingest/management/bulk/*` |
+| `listTemplates()` | `GET /ingest/mappingTemplates` |
+| `createTemplate()` | `POST /ingest/mappingTemplates` |
+| `getTemplate()` | `GET /ingest/mappingTemplates/:id` |
+| `updateTemplate()` | `PATCH /ingest/mappingTemplates/:id` |
+| `deleteTemplate()` | `DELETE /ingest/mappingTemplates/:id` |
+| `listDlq()` | `GET /ingest/dlq` |
+| `getDlqStats()` | `GET /ingest/dlq/stats` |
+| `getDlqDetail()` | `GET /ingest/dlq/:id` |
+| `retryDlq/replayDlq/abandonDlq()` | `POST /ingest/dlq/:id/*` |
 
-### Existing Types
+### Existing Types (`lib/api/ingest.ts`)
 
-| File | Key Types |
-|---|---|
-| `lib/types/org.ts` | `DeliveryTarget`, `WebhookConfig`, `LineConfig`, `TelegramConfig`, `DiscordConfig` |
-| `lib/api/ingest.ts` | `PendingEvent`, `MappingTemplate`, `FieldMapping`, `MatchRule` (inline) |
-| `lib/api/subscription.ts` | `Subscription`, `PlanInfo`, `PlanId` (inline) |
-
-### Existing Backend API Endpoints
-
-| Method | Path | Controller | Status |
-|---|---|---|---|
-| GET/POST | `/api/v1/targets` | TargetController | Done |
-| GET/PATCH/DELETE | `/api/v1/targets/:id` | TargetController | Done |
-| GET | `/api/v1/subscriptions/packages` | SubscriptionController | Done |
-| GET | `/api/v1/subscriptions/current` | SubscriptionController | Done |
-| POST | `/api/v1/subscriptions/bootstrap` | SubscriptionController | Done |
-| GET | `/api/v1/subscriptions/me` | SubscriptionController | Done |
-| PATCH | `/api/v1/subscriptions/plan` | SubscriptionController | Done |
-| POST | `/api/v1/subscriptions/enterprise/activate` | SubscriptionController | Done |
-| GET/POST | `/api/v1/ingest/management` | EventManagementController | Done |
-| GET/PATCH/DELETE | `/api/v1/ingest/management/:eventId` | EventManagementController | Done |
-| POST | `/api/v1/ingest/management/:eventId/approve` | EventManagementController | Done |
-| POST | `/api/v1/ingest/management/:eventId/reject` | EventManagementController | Done |
-| POST | `/api/v1/ingest/management/bulk/*` | BulkController | Done |
-| GET/POST | `/api/v1/ingest/mappingTemplates` | TemplateController | Done |
-| GET/PATCH/DELETE | `/api/v1/ingest/mappingTemplates/:id` | TemplateController | Done |
-| GET | `/api/v1/ingest/dlq` | DLQController | Done |
-| GET | `/api/v1/ingest/dlq/stats` | DLQController | Done |
-| GET | `/api/v1/ingest/dlq/:id` | DLQController | Done |
-| POST | `/api/v1/ingest/dlq/:id/retry` | DLQController | Done |
-| POST | `/api/v1/ingest/dlq/:id/replay` | DLQController | Done |
-| POST | `/api/v1/ingest/dlq/:id/abandon` | DLQController | Done |
-| GET | `/api/v1/ingest/details` | EventDetailsController | Done |
-| GET | `/api/v1/ingest/details/:eventId` | EventDetailsController | Done |
+- `PendingEvent`, `ApprovedEvent`, `FieldMapping`, `MatchRule`
+- `PayloadCondition`, `ClassificationRule`, `ClassificationSet`
+- `TemplateDeliveryTarget`, `MessageTemplate`, `DLQConfig`
+- `MappingTemplate` (with delivery targets, classification, DLQ — already V1.5)
+- `DlqMessage`, `DlqStats`
 
 ---
 
-## 2) Target State
+## 2) V2 Changes — What's New from Backend
 
-### New/Updated Pages
+### New BE Endpoints (V2 Source Family)
 
-| Route | Action | Description |
+| Method | Path | Description |
 |---|---|---|
-| `ingest/mappingTemplates` | **Update** | Add delivery targets binding, messageTemplates, classificationRules, DLQ config, defaultLocale |
-| `ingest/management` | **Update** | When event has template match -> link to edit existing template (not always create new) |
-| `delivery/targets` | **New** | Delivery target management with quota display from subscription |
-| `delivery/templates` | **New** | Message template management (per-channel, per-locale, preview) |
-| `delivery/dlq` | **New** | DLQ list with filters (status, stage, channel, date range) |
-| `delivery/dlq/[id]` | **New** | DLQ detail: payload view, error stack, retry/replay/abandon actions |
-| `subscriptions/packages` | **New** | Subscription packages from API (replace hardcoded PLANS) |
-| `subscriptions/current` | **New** | Current subscription + usage/quota overview |
+| `GET` | `/ingest/sourceProfiles` | List all source profiles |
+| `POST` | `/ingest/sourceProfiles` | Create source profile |
+| `GET` | `/ingest/sourceProfiles/:sourceFamily` | Get source profile |
+| `PATCH` | `/ingest/sourceProfiles/:sourceFamily` | Update source profile |
+| `GET` | `/ingest/deviceManagement?page=1&perPages=20` | List device management records |
+| `POST` | `/ingest/deviceManagement` | Create device management record |
+| `GET` | `/ingest/deviceManagement/:id` | Get device management record |
+| `PATCH` | `/ingest/deviceManagement/:id` | Update device management record |
+| `GET` | `/ingest/templateReviews?page=1&perPages=10` | List template reviews |
+| `GET` | `/ingest/templateReviews/:id` | Get template review |
+| `POST` | `/ingest/templateReviews/:id/archive` | Archive template review |
 
-### Empty directories already created (from prior session):
+### Updated MappingTemplate — New V2 Fields
 
-```
-src/routes/(app)/delivery/targets/        (empty)
-src/routes/(app)/delivery/templates/      (empty)
-src/routes/(app)/delivery/dlq/            (empty)
-src/routes/(app)/delivery/dlq/[id]/       (empty)
-src/routes/(app)/subscriptions/packages/  (empty)
-src/routes/(app)/subscriptions/current/   (empty)
+| Field | Type | Description |
+|---|---|---|
+| `sourceFamily` | `string` | Which source family this template belongs to (e.g. "aibox") |
+| `finalEventType` | `string` | Canonical event type override |
+| `matchAll` | `MatchCondition[]` | V2 AND conditions — all must pass |
+| `matchAny` | `MatchCondition[]` | V2 OR conditions — at least one must pass |
+| `priority` | `number` | Higher = evaluated first (default 0) |
+
+### New V2 Data Models
+
+```typescript
+// MatchCondition — V2 template matching
+interface MatchCondition {
+  field: string              // e.g. "raw.type", "raw.channel"
+  operator: "eq" | "in" | "contains" | "prefix"
+  values: string[]
+}
+
+interface SourceProfile {
+  sourceFamily: string
+  displayName: string
+  multiRef: boolean
+  refRules: {
+    primaryRefFields?: string[]
+    secondaryRefFields?: string[]
+    siteFields?: string[]
+  }
+  suggestedMatchFields?: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+interface DeviceManagement {
+  deviceMgmtId: string
+  tenantId: string
+  orgId: string
+  sourceFamily: string
+  entityType: "channel" | "device" | "sourceSerial"
+  entityId: string
+  deviceId?: string
+  lat?: number
+  lng?: number
+  site?: string
+  zone?: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface TemplateReview {
+  reviewId: string
+  tenantId: string
+  orgId: string
+  sourceFamily: string
+  fingerprint: string          // SHA256 of sorted top-level keys
+  samplePayload: Record<string, any>
+  suggestedMatchFields?: string[]
+  status: "pending" | "archived"
+  createdAt: string
+  updatedAt: string
+}
 ```
 
 ---
 
-## 3) Implementation Plan (PRs)
+## 3) Target State — Pages
 
-### PR-FE-1: Types + API Libraries + i18n + Sidebar
+### New Pages
 
-**Files to create:**
-
-| File | Description |
+| Route | Description |
 |---|---|
-| `i18n/en/delivery.json` | Delivery i18n keys (targets, templates, DLQ, channels, filters, quota) |
-| `i18n/th/delivery.json` | Thai translations |
-| `i18n/en/subscription.json` | Subscription i18n keys (packages, current, usage, plans) |
-| `i18n/th/subscription.json` | Thai translations |
+| `ingest/sourceProfiles` | Source profile CRUD — define source families (aibox, ailpr, etc.) |
+| `ingest/deviceManagement` | Device management CRUD — entity enrichment (lat/lng/site/zone) |
+| `ingest/templateReviews` | Template review queue — unmatched payloads waiting for template creation |
+
+### Updated Pages
+
+| Route | Changes |
+|---|---|
+| `ingest/mappingTemplates` | Add V2 fields: `sourceFamily` dropdown, `finalEventType`, `priority`, `matchAll`/`matchAny` condition builder |
+| `ingest/management` | When event has `templateId` -> "Edit Template" link. Template reviews replace pending approval flow. |
+| Sidebar | Add 3 new menu items under Events section |
+
+---
+
+## 4) Implementation Plan (PRs)
+
+### PR-FE-V2-1: Types + API Library + i18n + Sidebar
 
 **Files to update:**
 
 | File | Changes |
 |---|---|
-| `lib/types/org.ts` | Update `LineConfig.to` from `string` to `string[]`, add `channelAccessToken` field |
-| `lib/api/ingest.ts` | Update `MappingTemplate` type: add `deliveryTargets`, `messageTemplates`, `classificationRules`, `dlq`, `defaultLocale` fields. Update `updateTemplate()` to accept new fields. |
-| `lib/api/ingest.ts` | Add DLQ API functions: `listDlq()`, `getDlqStats()`, `getDlqDetail()`, `retryDlq()`, `replayDlq()`, `abandonDlq()` |
-| `lib/api/subscription.ts` | Add `listPackages()` to call `GET /subscriptions/packages`. Replace hardcoded `PLANS` with API-driven data. Add `getCurrentSubscription()` for effective subscription. |
-| `lib/api/target.ts` | Update API path from `/targets` to `/v1/targets` if needed. No major changes — existing CRUD is correct. |
-| `lib/stores/appSidebarMenus.ts` | Add "Delivery" section (Targets, Templates, DLQ) and update Subscription entry |
-
-**Sidebar structure (target):**
-
-```
-Events (existing)
-  - Management
-  - Details
-  - Mapping Templates
-
-Delivery (new section)
-  - Targets
-  - Message Templates
-  - Dead Letter Queue
-
-Tenancy (existing)
-  - Users
-  - Units
-  - Targets            <-- rename to "Org Targets" or keep but clarify
-  - Permissions
-  - Access
-
-Subscription (existing → update)
-  - Packages           <-- from API, not hardcoded
-  - Current Plan       <-- effective subscription
-```
-
-**Note:** `orgs/targets` page already exists for delivery target CRUD. Decision: keep `orgs/targets` as the primary target management page, OR move to `delivery/targets`. Recommend: move all delivery-related pages under `delivery/` for clearer grouping. The `delivery/targets` page replaces `orgs/targets` and adds quota display.
-
----
-
-### PR-FE-2: Mapping Template Enhancement
-
-**Update `ingest/mappingTemplates/+page.svelte`:**
-
-Current template form has: name, match rule, field mappings only.
-
-Add to template edit/create form:
-
-1. **`defaultLocale`** — Select: `th`, `en`, etc.
-
-2. **`deliveryTargets[]`** — Section to bind delivery targets
-   - Select target from existing targets (loaded via `listTargets()`)
-   - Per-target config:
-     - `filter[]` — PayloadCondition array (field, operator, values)
-     - `eventClasses[]` — Whitelist (checkboxes/tags)
-     - `eventSeverities[]` — Whitelist (checkboxes/tags)
-     - `messageTemplateKey` — Select from messageTemplates keys
-
-3. **`classificationRules[]`** — Ordered rules
-   - Each rule: name, order, when (PayloadCondition[]), set (eventClass, eventSeverity)
-   - Visual: drag-to-reorder or numeric order input
-   - "First match wins" indicator
-
-4. **`messageTemplates[]`** — Message template definitions
-   - Each: key, channelType, locale, title, body, extras
-   - Key is a string identifier used by deliveryTargets.messageTemplateKey
-   - Channel types: line, discord, telegram
-   - Body: textarea with placeholder reference panel
-
-5. **`dlq`** config — DLQ settings
-   - `enabled` — Toggle
-   - `maxRetries` — Number input
-   - `retryTimeoutSeconds` — Number input
+| `lib/api/ingest.ts` | Add `MatchCondition`, `SourceProfile`, `DeviceManagement`, `TemplateReview` types. Add API functions: `listSourceProfiles()`, `getSourceProfile()`, `createSourceProfile()`, `updateSourceProfile()`, `listDeviceManagement()`, `getDeviceManagement()`, `createDeviceManagement()`, `updateDeviceManagement()`, `listTemplateReviews()`, `getTemplateReview()`, `archiveTemplateReview()`. Update `MappingTemplate` type with V2 fields. Update `createTemplate()`/`updateTemplate()` to accept V2 fields. |
+| `i18n/en/ingest.json` | Add keys for source profiles, device management, template reviews, V2 match conditions |
+| `i18n/th/ingest.json` | Thai translations for all new keys |
+| `lib/stores/appSidebarMenus.ts` | Add children under Events: Source Profiles, Device Management, Template Reviews |
 
 **New types to add to `lib/api/ingest.ts`:**
 
 ```typescript
-interface PayloadCondition {
+// V2 Match Condition
+export interface MatchCondition {
   field: string
-  operator: 'eq' | 'in'
+  operator: 'eq' | 'in' | 'contains' | 'prefix'
   values: string[]
 }
 
-interface ClassificationSet {
-  eventClass?: string
-  eventSeverity?: string
-}
-
-interface ClassificationRule {
-  name: string
-  when: PayloadCondition[]
-  set: ClassificationSet
-  order?: number
-}
-
-interface TemplateDeliveryTarget {
-  targetId: string
-  filter?: PayloadCondition[]
-  eventClasses?: string[]
-  eventSeverities?: string[]
-  messageTemplateKey?: string
-}
-
-interface MessageTemplate {
-  key?: string
-  channelType: string
-  locale: string
-  title: string
-  body: string
-  extras?: Record<string, string>
-}
-
-interface DLQConfig {
-  enabled: boolean
-  maxRetries: number
-  retryTimeoutSeconds: number
-}
-
-// Updated MappingTemplate
-interface MappingTemplate {
-  templateId: string
-  orgId?: string
-  name: string
-  match?: MatchRule
-  mappings: FieldMapping[]
-  defaultLocale?: string
-  deliveryTargets?: TemplateDeliveryTarget[]
-  classificationRules?: ClassificationRule[]
-  messageTemplates?: MessageTemplate[]
-  dlq?: DLQConfig
+// Source Profile
+export interface SourceProfile {
+  sourceFamily: string
+  displayName: string
+  multiRef: boolean
+  refRules: {
+    primaryRefFields?: string[]
+    secondaryRefFields?: string[]
+    siteFields?: string[]
+  }
+  suggestedMatchFields?: string[]
   createdAt: string
   updatedAt: string
 }
-```
 
----
-
-### PR-FE-3: Event Management Enhancement
-
-**Update `ingest/management/+page.svelte`:**
-
-Current: When viewing an event, user can "Create Template from Event" (always creates new).
-
-Change: When an event already has `templateId` (matched via fingerprint), show:
-- **"Edit Template"** button instead of "Create Template"
-- Links to the existing template in mappingTemplates page
-- Shows template name if available
-
-Flow:
-1. Event view modal checks `viewEvent.templateId` (from rawBody or meta)
-2. If `templateId` exists:
-   - Show "Linked Template: {name}" with edit link
-   - "Edit Template" button opens mappingTemplates page or inline editor
-3. If no template:
-   - Show existing "Create Template from Event" flow (unchanged)
-
-**API change needed:**
-- `PendingEvent` type needs `templateId?: string` and `templateName?: string` fields
-- Backend should return these if the event was template-matched
-
----
-
-### PR-FE-4: Delivery Targets Page
-
-**Create `delivery/targets/+page.svelte`:**
-
-This replaces/enhances `orgs/targets`. Key additions:
-
-1. **Quota display** at top:
-   ```
-   Webhook: 1/2 used | LINE: 0/1 | Discord: 0/1 | Telegram: 0/1
-   Message channels total: 0/3
-   ```
-   - Load from `GET /subscriptions/current` for limits
-   - Count from `listTargets()` for usage
-
-2. **Target list table:**
-   - Columns: Name, Type (badge), Status (active/inactive toggle), Endpoint, Created
-   - Actions: Edit, Delete, Test
-
-3. **Create/Edit modal:**
-   - Name
-   - Type (webhook/line/discord/telegram) — disabled channels show "Not available on current plan"
-   - Config fields based on type:
-     - Webhook: URL, headers, signing secret, timeout
-     - LINE: channelAccessToken/Ref, to[] (broadcast/push/multicast toggle)
-     - Discord: webhook URL
-     - Telegram: bot token, chat ID
-   - Enabled toggle
-
-4. **Test button:** Sends test delivery to target via `POST /targets/:id/test` (if endpoint exists)
-
-**Reuse:** Migrate logic from existing `orgs/targets/+page.svelte`.
-
----
-
-### PR-FE-5: DLQ Page
-
-**Create `delivery/dlq/+page.svelte`:**
-
-1. **Stats bar** at top: pending count, retrying count, resolved count, abandoned count
-   - Load from `GET /ingest/dlq/stats`
-
-2. **Filter bar:**
-   - Status: all | pending | retrying | resolved | abandoned
-   - Stage: all | deliver | normalize
-   - Channel: all | webhook | line | discord | telegram
-   - Date range: from/to
-   - Event ID search
-
-3. **Table:**
-   - Columns: Event ID (truncated), Stage, Target, Channel, Status (badge), Retry Count, Created
-   - Click row -> navigate to detail page
-
-4. **Bulk actions:** (future, not in baseline)
-
-**Create `delivery/dlq/[id]/+page.svelte`:**
-
-1. **Header:** Event ID, Status badge, Stage badge
-2. **Info table:** eventId, stage, target name, channel, reason, retry count/max, created/updated
-3. **Payload panel:** JSON viewer (collapsible, syntax highlighted)
-4. **Error stack:** preformatted error text
-5. **Action buttons:**
-   - **Retry** — `POST /ingest/dlq/:id/retry` — confirm dialog
-   - **Replay** — `POST /ingest/dlq/:id/replay` — confirm with warning ("restarts full pipeline")
-   - **Abandon** — `POST /ingest/dlq/:id/abandon` — confirm with reason input
-6. **Status is resolved/abandoned?** — Show read-only, hide action buttons
-
----
-
-### PR-FE-6: Subscription Pages (API-driven)
-
-**Create `subscriptions/packages/+page.svelte`:**
-
-1. Load packages from `GET /subscriptions/packages` (no more hardcoded `PLANS`)
-2. Display cards with:
-   - Plan name, description, price (from `billing.price.display`)
-   - Feature list (from `ui.featureList`)
-   - Limits summary (orgs, members, events, webhooks, channels)
-   - Current plan badge (compare with current subscription)
-   - Highlight/theme from `ui.highlight` + `ui.theme`
-3. Upgrade button (calls `PATCH /subscriptions/plan`)
-
-**Create `subscriptions/current/+page.svelte`:**
-
-1. Load effective subscription from `GET /subscriptions/current`
-2. Display:
-   - Current plan name + status badge
-   - Billing cycle
-   - Period start/end
-   - Limits vs usage table:
-     ```
-     Resource        | Used  | Limit
-     Organizations   | 2     | 5
-     Team Members    | 12    | 25
-     Events/Month    | 5,230 | 100,000
-     Webhooks/Org    | 1     | 2
-     LINE/Org        | 1     | 1
-     Discord/Org     | 0     | 1
-     Msg Channels    | 1     | 3
-     ```
-   - Link to packages page for upgrade
-
-**Update `subscription/+page.svelte`:**
-- Redirect to `subscriptions/packages` OR refactor to use API-driven data
-
----
-
-## 4) i18n Keys Plan
-
-### `i18n/en/delivery.json` (~100 keys)
-
-Groups:
-- `delivery*` — General delivery section
-- `deliveryTargets*` — Target CRUD, quota, test, config fields
-- `deliveryTemplates*` — Message template CRUD, preview, placeholders
-- `deliveryDlq*` — DLQ list, detail, retry/replay/abandon, statuses, stages
-- `deliveryChannel*` — Channel name labels
-- `deliveryFilter*` — Filter operator labels
-- `deliveryQuota*` — Quota display labels
-
-### `i18n/en/subscription.json` (~40 keys)
-
-Groups:
-- `subscription*` — General subscription section
-- `subscriptionPackages*` — Package cards, features, limits
-- `subscriptionCurrent*` — Current plan, usage, billing
-- `subscriptionPlan*` — Plan names (if not from API)
-
-### Existing keys to update:
-- `i18n/en/nav.json` — Add nav keys for Delivery section, update Subscription
-- `i18n/en/ingest.json` — Add keys for classification rules, delivery target binding, DLQ config in template
-
----
-
-## 5) Type System Changes
-
-### `lib/types/org.ts` — Update `LineConfig`
-
-```typescript
-// Before
-export interface LineConfig {
-  channelAccessTokenRef: string
-  to: string
-}
-
-// After
-export interface LineConfig {
-  channelAccessToken?: string
-  channelAccessTokenRef?: string
-  to: string[]  // [] = broadcast, ['U...'] = push, ['U...','U...'] = multicast
-}
-```
-
-### `lib/api/ingest.ts` — Extend `MappingTemplate`
-
-Add fields: `deliveryTargets`, `messageTemplates`, `classificationRules`, `dlq`, `defaultLocale`
-
-### `lib/api/ingest.ts` — Add DLQ types and API functions
-
-```typescript
-interface DlqMessage {
-  messageId: string
-  eventId: string
+// Device Management
+export interface DeviceManagement {
+  deviceMgmtId: string
   tenantId: string
   orgId: string
-  templateId: string
-  topic: string
-  stage: string  // 'deliver' | 'normalize'
-  reason: string
-  payload: Record<string, unknown>
-  retryCount: number
-  maxRetries: number
-  retryTimeoutSeconds: number
-  status: string  // 'pending' | 'retrying' | 'resolved' | 'abandoned'
-  lastErrorAt: string
+  sourceFamily: string
+  entityType: 'channel' | 'device' | 'sourceSerial'
+  entityId: string
+  deviceId?: string
+  lat?: number
+  lng?: number
+  site?: string
+  zone?: string
   createdAt: string
   updatedAt: string
 }
 
-interface DlqStats {
-  pending: number
-  retrying: number
-  resolved: number
-  abandoned: number
-  total: number
+// Template Review
+export interface TemplateReview {
+  reviewId: string
+  tenantId: string
+  orgId: string
+  sourceFamily: string
+  fingerprint: string
+  samplePayload: Record<string, unknown>
+  suggestedMatchFields?: string[]
+  status: 'pending' | 'archived'
+  createdAt: string
+  updatedAt: string
+}
+
+// Updated MappingTemplate — add V2 fields
+export interface MappingTemplate {
+  // ... existing fields ...
+  sourceFamily?: string
+  finalEventType?: string
+  matchAll?: MatchCondition[]
+  matchAny?: MatchCondition[]
+  priority?: number
 }
 ```
 
----
-
-## 6) Sidebar Menu Changes
+**New API functions to add:**
 
 ```typescript
-// appSidebarMenus.ts — add after Events section
+// Source Profiles (no orgId — global scope)
+export async function listSourceProfiles(): Promise<SourceProfile[]>
+export async function getSourceProfile(sourceFamily: string): Promise<SourceProfile>
+export async function createSourceProfile(data: { sourceFamily: string; displayName: string; multiRef?: boolean; refRules?: ...; suggestedMatchFields?: string[] }): Promise<SourceProfile>
+export async function updateSourceProfile(sourceFamily: string, data: Partial<...>): Promise<void>
+
+// Device Management (org-scoped)
+export async function listDeviceManagement(orgId: string, page?: number, perPage?: number): Promise<{ details: DeviceManagement[]; ... }>
+export async function getDeviceManagement(orgId: string, id: string): Promise<DeviceManagement>
+export async function createDeviceManagement(orgId: string, data: { sourceFamily: string; entityType: string; entityId: string; ... }): Promise<DeviceManagement>
+export async function updateDeviceManagement(orgId: string, id: string, data: { deviceId?: string; lat?: number; lng?: number; site?: string; zone?: string }): Promise<void>
+
+// Template Reviews (org-scoped)
+export async function listTemplateReviews(orgId: string, page?: number, perPage?: number): Promise<{ details: TemplateReview[]; ... }>
+export async function getTemplateReview(orgId: string, id: string): Promise<TemplateReview>
+export async function archiveTemplateReview(orgId: string, id: string): Promise<void>
+```
+
+**Sidebar update:**
+
+```typescript
+// Current Events section
 {
   kind: 'link',
-  id: 'delivery',
-  icon: 'bi bi-send',
-  textKey: 'navDelivery',
+  id: 'events',
+  url: 'ingest/management',
+  icon: 'bi bi-bar-chart',
+  textKey: 'navEvents',
   children: [
-    { id: 'deliveryTargets', url: 'delivery/targets', textKey: 'deliveryTargetsTitle' },
-    { id: 'deliveryTemplates', url: 'delivery/templates', textKey: 'deliveryTemplatesTitle' },
-    { id: 'deliveryDlq', url: 'delivery/dlq', textKey: 'deliveryDlqTitle' }
+    { id: 'eventsManagement', url: 'ingest/management', textKey: 'eventsManagement' },
+    { id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' },
+    { id: 'ingestMappingTemplates', url: 'ingest/mappingTemplates', textKey: 'ingestMappingTemplatesTitle' },
+    // NEW V2 items:
+    { id: 'ingestSourceProfiles', url: 'ingest/sourceProfiles', textKey: 'ingestSourceProfilesTitle' },
+    { id: 'ingestDeviceManagement', url: 'ingest/deviceManagement', textKey: 'ingestDeviceManagementTitle' },
+    { id: 'ingestTemplateReviews', url: 'ingest/templateReviews', textKey: 'ingestTemplateReviewsTitle' }
   ]
 }
+```
 
-// Update subscription entry → expand to children
+**i18n keys to add (`i18n/en/ingest.json`):**
+
+```json
 {
-  kind: 'link',
-  id: 'subscription',
-  icon: 'bi bi-gem',
-  textKey: 'navSubscription',
-  children: [
-    { id: 'subscriptionPackages', url: 'subscriptions/packages', textKey: 'subscriptionPackagesTitle' },
-    { id: 'subscriptionCurrent', url: 'subscriptions/current', textKey: 'subscriptionCurrentTitle' }
-  ]
+  "ingestSourceProfilesTitle": "Source Profiles",
+  "ingestSourceProfilesSubtitle": "Define source family behavior and reference extraction rules",
+  "ingestSourceProfileCreate": "New Source Profile",
+  "ingestSourceProfileEdit": "Edit Source Profile",
+  "ingestSourceProfileFamily": "Source Family",
+  "ingestSourceProfileFamilyPlaceholder": "e.g. aibox, ailpr, xconnector",
+  "ingestSourceProfileDisplayName": "Display Name",
+  "ingestSourceProfileMultiRef": "Multi-Reference",
+  "ingestSourceProfileMultiRefHint": "Enable multi-reference extraction from payload",
+  "ingestSourceProfileRefRules": "Reference Extraction Rules",
+  "ingestSourceProfilePrimaryRefFields": "Primary Ref Fields",
+  "ingestSourceProfileSecondaryRefFields": "Secondary Ref Fields",
+  "ingestSourceProfileSiteFields": "Site Fields",
+  "ingestSourceProfileSuggestedMatchFields": "Suggested Match Fields",
+  "ingestSourceProfileSuggestedMatchFieldsHint": "Fields suggested for template matching (e.g. raw.type)",
+  "ingestSourceProfileNoRecords": "No source profiles found",
+  "ingestSourceProfileDeleteWarning": "This will delete this source profile.",
+  "ingestSourceProfileSaved": "Source profile saved successfully",
+
+  "ingestDeviceManagementTitle": "Device Management",
+  "ingestDeviceManagementSubtitle": "Manage device/entity enrichment (location, site, zone)",
+  "ingestDeviceManagementCreate": "New Device Record",
+  "ingestDeviceManagementEdit": "Edit Device Record",
+  "ingestDeviceManagementSourceFamily": "Source Family",
+  "ingestDeviceManagementEntityType": "Entity Type",
+  "ingestDeviceManagementEntityId": "Entity ID",
+  "ingestDeviceManagementDeviceId": "Device ID Override",
+  "ingestDeviceManagementLat": "Latitude",
+  "ingestDeviceManagementLng": "Longitude",
+  "ingestDeviceManagementSite": "Site",
+  "ingestDeviceManagementZone": "Zone",
+  "ingestDeviceManagementEntityTypeChannel": "Channel",
+  "ingestDeviceManagementEntityTypeDevice": "Device",
+  "ingestDeviceManagementEntityTypeSerial": "Source Serial",
+  "ingestDeviceManagementNoRecords": "No device management records found",
+  "ingestDeviceManagementSaved": "Device management record saved",
+
+  "ingestTemplateReviewsTitle": "Template Reviews",
+  "ingestTemplateReviewsSubtitle": "Unmatched payload samples awaiting template creation",
+  "ingestTemplateReviewSourceFamily": "Source Family",
+  "ingestTemplateReviewFingerprint": "Fingerprint",
+  "ingestTemplateReviewSamplePayload": "Sample Payload",
+  "ingestTemplateReviewSuggestedFields": "Suggested Match Fields",
+  "ingestTemplateReviewStatus": "Status",
+  "ingestTemplateReviewStatusPending": "Pending",
+  "ingestTemplateReviewStatusArchived": "Archived",
+  "ingestTemplateReviewArchive": "Archive",
+  "ingestTemplateReviewArchiveConfirm": "Archive this review?",
+  "ingestTemplateReviewArchived": "Template review archived",
+  "ingestTemplateReviewCreateTemplate": "Create Template from Review",
+  "ingestTemplateReviewNoRecords": "No template reviews found",
+
+  "ingestTemplateSourceFamily": "Source Family",
+  "ingestTemplateSourceFamilyHint": "Select source family for this template",
+  "ingestTemplateFinalEventType": "Final Event Type",
+  "ingestTemplateFinalEventTypeHint": "Override canonical event type (optional)",
+  "ingestTemplatePriority": "Priority",
+  "ingestTemplatePriorityHint": "Higher value = evaluated first (default 0)",
+  "ingestTemplateMatchAll": "Match All (AND)",
+  "ingestTemplateMatchAllHint": "All conditions must pass",
+  "ingestTemplateMatchAny": "Match Any (OR)",
+  "ingestTemplateMatchAnyHint": "At least one condition must pass",
+  "ingestTemplateAddCondition": "Add Condition",
+  "ingestTemplateConditionField": "Field",
+  "ingestTemplateConditionFieldPlaceholder": "e.g. raw.type",
+  "ingestTemplateConditionOperator": "Operator",
+  "ingestTemplateConditionValues": "Values",
+  "ingestTemplateConditionOperatorEq": "equals",
+  "ingestTemplateConditionOperatorIn": "in list",
+  "ingestTemplateConditionOperatorContains": "contains",
+  "ingestTemplateConditionOperatorPrefix": "starts with",
+  "ingestTemplateNoConditions": "No conditions defined"
 }
 ```
 
 ---
 
-## 7) Implementation Order
+### PR-FE-V2-2: Source Profiles Page
+
+**Create `src/routes/(app)/ingest/sourceProfiles/+page.svelte`**
+
+Layout:
+1. **Header:** Title + "New Source Profile" button
+2. **Table:**
+   - Columns: Source Family, Display Name, Multi-Ref (badge), Suggested Match Fields (tags), Created
+   - Click row -> open edit modal
+3. **Create/Edit Modal:**
+   - `sourceFamily` — text input (readonly on edit, it's the unique key)
+   - `displayName` — text input (required)
+   - `multiRef` — toggle switch
+   - `refRules` — expandable section:
+     - Primary Ref Fields — tag input
+     - Secondary Ref Fields — tag input
+     - Site Fields — tag input
+   - `suggestedMatchFields` — tag input (e.g. "raw.type", "raw.typeValue")
+4. **Note:** Source profiles are global (not per-org). The API does not require `x-active-org`.
+
+---
+
+### PR-FE-V2-3: Device Management Page
+
+**Create `src/routes/(app)/ingest/deviceManagement/+page.svelte`**
+
+Layout:
+1. **Header:** Title + "New Device Record" button
+2. **Table (paginated):**
+   - Columns: Source Family, Entity Type (badge), Entity ID, Device ID, Site, Zone, Lat/Lng, Created
+   - Click row -> open edit modal
+3. **Create Modal:**
+   - `sourceFamily` — dropdown populated from source profiles (call `listSourceProfiles()`)
+   - `entityType` — select: "channel" | "device" | "sourceSerial"
+   - `entityId` — text input (required)
+   - `deviceId` — text input (optional override)
+   - `lat` / `lng` — number inputs + optional map picker (reuse `MapPicker.svelte` if available)
+   - `site` — text input
+   - `zone` — text input
+4. **Edit Modal:** Same fields, but `sourceFamily`, `entityType`, `entityId` are readonly.
+   - Updatable: `deviceId`, `lat`, `lng`, `site`, `zone`
+
+---
+
+### PR-FE-V2-4: Template Reviews Page
+
+**Create `src/routes/(app)/ingest/templateReviews/+page.svelte`**
+
+Layout:
+1. **Header:** Title + subtitle
+2. **Table (paginated):**
+   - Columns: Source Family (badge), Fingerprint (truncated), Status (badge), Suggested Fields (tags), Created
+   - Click row -> expand/modal showing `samplePayload` as JSON viewer
+3. **Detail view / modal:**
+   - Source Family, Fingerprint (full), Status
+   - Sample Payload — collapsible JSON viewer (syntax highlighted)
+   - Suggested Match Fields — tag list
+   - Created / Updated timestamps
+4. **Actions per review:**
+   - **"Create Template"** — opens mapping template create form pre-filled:
+     - `sourceFamily` = review's sourceFamily
+     - `matchAll` = auto-generate conditions from suggestedMatchFields using sample payload values
+     - `name` = auto-generate from sourceFamily + fingerprint prefix
+   - **"Archive"** — calls `POST /ingest/templateReviews/:id/archive` with confirm dialog
+5. **Filters:**
+   - Status: all | pending | archived (default: pending)
+
+**Workflow flow:**
+```
+Template Reviews list
+  -> user clicks "Create Template"
+  -> navigate to ingest/mappingTemplates with pre-filled data (query params or store)
+  -> user completes template (add field mappings, delivery targets, etc.)
+  -> saves template
+  -> future events with same fingerprint auto-match
+  -> user archives the review
+```
+
+---
+
+### PR-FE-V2-5: Mapping Template V2 Enhancement
+
+**Update `src/routes/(app)/ingest/mappingTemplates/+page.svelte`**
+
+Add to template create/edit form:
+
+1. **`sourceFamily`** — Dropdown populated from `listSourceProfiles()`
+   - Show displayName, store sourceFamily value
+   - Position: at top of form, before name
+
+2. **`finalEventType`** — Text input
+   - Hint: "Override canonical event type (optional)"
+   - Position: after name
+
+3. **`priority`** — Number input (default 0)
+   - Hint: "Higher = evaluated first"
+   - Position: after finalEventType
+
+4. **`matchAll` (AND conditions)** — Condition builder section
+   - Each condition row: `field` (text) + `operator` (select) + `values` (tag input)
+   - Operators: eq, in, contains, prefix
+   - "Add Condition" button
+   - Visual indicator: "All must match (AND)"
+
+5. **`matchAny` (OR conditions)** — Same UI as matchAll
+   - Visual indicator: "At least one must match (OR)"
+
+6. **Legacy `match` (V1)** — Keep existing match rule section but mark as "Legacy (V1)"
+   - Show collapsed by default for new templates
+   - Show expanded for existing templates that use V1 match
+
+**Form layout order:**
+```
+Source Family (dropdown)    [NEW]
+Name (text)                 [existing]
+Final Event Type (text)     [NEW]
+Priority (number)           [NEW]
+--- V2 Match Conditions --- [NEW]
+  matchAll (AND builder)
+  matchAny (OR builder)
+--- Legacy Match (V1) ---   [existing, collapsed]
+  match rule fields
+--- Field Mappings ---      [existing]
+--- Classification Rules --- [existing]
+--- Delivery Targets ---    [existing]
+--- Message Templates ---   [existing]
+--- DLQ Config ---          [existing]
+```
+
+---
+
+## 5) V2 Workflow Overview (for FE context)
+
+### Old flow (V1):
+```
+Event arrives -> device fingerprint check -> approved?
+  -> yes: apply template -> Kafka
+  -> no:  insert to event_management (pending queue)
+       -> admin approves via FE -> device approved cache set
+```
+
+### New flow (V2):
+```
+Event arrives (with sourceFamily in URL)
+  -> V2 template matching (matchAll/matchAny by priority)
+  -> matched?
+    -> deviceManagement enrichment (lat/lng/site/zone)
+    -> apply field mappings -> Kafka -> delivery
+  -> not matched?
+    -> create templateReview (deduplicated by fingerprint)
+    -> admin sees in Template Reviews page
+    -> admin clicks "Create Template" (pre-fills from review)
+    -> future events auto-match
+    -> admin archives review
+```
+
+**Key FE impact:**
+- `ingest/management` (pending events) is still useful for V1 events
+- `ingest/templateReviews` is the new V2 equivalent for "unmatched events"
+- Mapping templates now drive the V2 matching engine
+- Device management replaces inline device normalization
+
+---
+
+## 6) Implementation Order
 
 | Order | PR | Scope | Dependencies |
 |---|---|---|---|
-| 1 | PR-FE-1 | Types, API libs, i18n, sidebar | None |
-| 2 | PR-FE-2 | Mapping template enhancement | PR-FE-1 |
-| 3 | PR-FE-3 | Event management enhancement | PR-FE-1, PR-FE-2 |
-| 4 | PR-FE-4 | Delivery targets page | PR-FE-1 |
-| 5 | PR-FE-5 | DLQ page + detail | PR-FE-1 |
-| 6 | PR-FE-6 | Subscription pages (API-driven) | PR-FE-1 |
+| 1 | PR-FE-V2-1 | Types, API lib, i18n, sidebar | None (API ready on BE) |
+| 2 | PR-FE-V2-2 | Source Profiles page | PR-FE-V2-1 |
+| 3 | PR-FE-V2-3 | Device Management page | PR-FE-V2-1 (+ source profiles dropdown) |
+| 4 | PR-FE-V2-4 | Template Reviews page | PR-FE-V2-1 |
+| 5 | PR-FE-V2-5 | Mapping Template V2 form | PR-FE-V2-1 (+ source profiles for dropdown) |
 
-PR-FE-4, FE-5, FE-6 can be done in parallel after PR-FE-1.
-
----
-
-## 8) Key Design Decisions
-
-### 8.1 Keep existing `orgs/targets` or move to `delivery/targets`?
-
-**Decision:** Create `delivery/targets` as the primary page. Update sidebar to point there. Mark `orgs/targets` as deprecated or redirect. Delivery targets are part of the delivery pipeline, not org administration.
-
-### 8.2 Template edit: separate pages vs inline in mapping template?
-
-**Decision:** `messageTemplates` and `classificationRules` live inside the `MappingTemplate` document (as arrays). Edit them inline in the mapping template form. No separate CRUD pages for these. The `delivery/templates` page can be a convenience view that lists all templates across all mapping templates, linking back to the parent template for editing.
-
-### 8.3 Subscription: hardcoded vs API-driven?
-
-**Decision:** Move to API-driven (`GET /subscriptions/packages`). Delete hardcoded `PLANS` constant from `subscription.ts`. The API returns localized names, feature lists, limits, and UI hints.
-
-### 8.4 DLQ: under ingest or delivery?
-
-**Decision:** DLQ API is under `/api/v1/ingest/dlq` (existing backend). FE pages are under `delivery/dlq` for user-facing organization. API lib functions go in `lib/api/ingest.ts` (matching backend path).
-
-### 8.5 Event management: create vs edit template?
-
-**Decision:** When event has `templateId` (already matched), show "Edit Template" linking to the existing template. Only show "Create Template from Event" when no template is matched. This prevents duplicate templates and guides operators to maintain existing ones.
+PR-FE-V2-2, V2-3, V2-4 can be done in parallel after PR-FE-V2-1.
+PR-FE-V2-5 can also start in parallel but the "Create Template from Review" flow in V2-4 depends on V2-5's form.
 
 ---
 
-## 9) Acceptance Criteria
+## 7) API Response Shapes (Quick Reference)
 
-### PR-FE-1
-- [ ] i18n keys compiled without errors
-- [ ] Sidebar shows Delivery section with 3 children
-- [ ] Sidebar shows Subscription with 2 children
-- [ ] `bun run check` passes with 0 errors
+### Source Profiles
 
-### PR-FE-2
-- [ ] Template form shows deliveryTargets, classificationRules, messageTemplates, DLQ config
-- [ ] PATCH template with all new fields works
-- [ ] Classification rule order is visual and editable
+```json
+// GET /ingest/sourceProfiles
+{
+  "code": "SUCCESS",
+  "message": "source profiles fetched successfully",
+  "status": true,
+  "details": [
+    {
+      "sourceFamily": "aibox",
+      "displayName": "AI Box Camera",
+      "multiRef": true,
+      "refRules": {
+        "primaryRefFields": ["channelId"],
+        "secondaryRefFields": ["sourceSerial"],
+        "siteFields": ["siteName"]
+      },
+      "suggestedMatchFields": ["raw.type", "raw.typeValue"],
+      "createdAt": "2026-03-08T10:00:00Z",
+      "updatedAt": "2026-03-08T10:00:00Z"
+    }
+  ]
+}
+```
 
-### PR-FE-3
-- [ ] Template-matched events show "Edit Template" with link
-- [ ] Unmatched events show "Create Template" (existing flow)
+### Device Management
 
-### PR-FE-4
-- [ ] Target list loads from API
-- [ ] Quota display shows used/limit per channel
-- [ ] Create target blocked when quota reached (visual + API error)
-- [ ] LINE target supports to[] array + broadcast mode
+```json
+// GET /ingest/deviceManagement?page=1&perPages=20
+{
+  "code": "SUCCESS",
+  "status": true,
+  "details": [
+    {
+      "deviceMgmtId": "dm_abc123",
+      "tenantId": "tenant1",
+      "orgId": "org1",
+      "sourceFamily": "aibox",
+      "entityType": "channel",
+      "entityId": "31",
+      "deviceId": "CAM-EAST-31",
+      "lat": 13.7563,
+      "lng": 100.5018,
+      "site": "HQ-East",
+      "zone": "Parking-A",
+      "createdAt": "2026-03-08T10:00:00Z",
+      "updatedAt": "2026-03-08T10:00:00Z"
+    }
+  ],
+  "pagination": { "page": 1, "perPages": 20, "totalRecords": 5, "totalPages": 1 }
+}
+```
 
-### PR-FE-5
-- [ ] DLQ list with stats bar and filters
-- [ ] DLQ detail shows payload, error, actions
-- [ ] Retry/Replay/Abandon with confirmation
-- [ ] Resolved/Abandoned records are read-only
+### Template Reviews
 
-### PR-FE-6
-- [ ] Package cards render from API (not hardcoded)
-- [ ] Current subscription shows effective limits vs usage
-- [ ] Upgrade flow works via API
+```json
+// GET /ingest/templateReviews?page=1&perPages=10
+{
+  "code": "SUCCESS",
+  "status": true,
+  "details": [
+    {
+      "reviewId": "rev_abc123",
+      "tenantId": "tenant1",
+      "orgId": "org1",
+      "sourceFamily": "aibox",
+      "fingerprint": "a1b2c3d4e5f6...",
+      "samplePayload": { "type": "intrusion", "channel": "31", "confidence": 0.95 },
+      "suggestedMatchFields": ["raw.type", "raw.typeValue"],
+      "status": "pending",
+      "createdAt": "2026-03-08T10:00:00Z",
+      "updatedAt": "2026-03-08T10:00:00Z"
+    }
+  ],
+  "pagination": { "page": 1, "perPages": 10, "totalRecords": 42, "totalPages": 5 }
+}
+```
+
+### Create/Update Requests
+
+```json
+// POST /ingest/sourceProfiles
+{ "sourceFamily": "aibox", "displayName": "AI Box Camera", "multiRef": true,
+  "refRules": { "primaryRefFields": ["channelId"] },
+  "suggestedMatchFields": ["raw.type"] }
+
+// PATCH /ingest/sourceProfiles/:sourceFamily
+{ "displayName": "AI Box v2", "suggestedMatchFields": ["raw.type", "raw.channel"] }
+
+// POST /ingest/deviceManagement
+{ "sourceFamily": "aibox", "entityType": "channel", "entityId": "31",
+  "deviceId": "CAM-31", "lat": 13.75, "lng": 100.50, "site": "HQ", "zone": "A" }
+
+// PATCH /ingest/deviceManagement/:id
+{ "deviceId": "CAM-31-NEW", "lat": 13.76 }
+
+// POST /ingest/templateReviews/:id/archive  (no body)
+
+// POST /ingest/mappingTemplates (V2 template)
+{ "name": "AIBox Intrusion", "sourceFamily": "aibox", "finalEventType": "intrusion",
+  "priority": 10,
+  "matchAll": [{ "field": "raw.type", "operator": "eq", "values": ["intrusion"] }],
+  "matchAny": [],
+  "mappings": [...], "deliveryTargets": [...], "dlq": { "enabled": true, "maxRetries": 3, "retryTimeoutSeconds": 60 } }
+```
+
+---
+
+## 8) Acceptance Criteria
+
+### PR-FE-V2-1
+- [ ] New types compile without errors (`bun run check`)
+- [ ] API functions callable from browser (BFF proxy passes through)
+- [ ] i18n keys render in both EN and TH
+- [ ] Sidebar shows 3 new items under Events
+
+### PR-FE-V2-2 (Source Profiles)
+- [ ] List source profiles with table
+- [ ] Create source profile with validation (sourceFamily + displayName required)
+- [ ] Edit source profile (sourceFamily readonly)
+- [ ] Tag input works for refRules fields and suggestedMatchFields
+
+### PR-FE-V2-3 (Device Management)
+- [ ] List with pagination
+- [ ] Create with source family dropdown (from source profiles)
+- [ ] Edit with restricted updatable fields
+- [ ] Lat/Lng display (map picker optional)
+
+### PR-FE-V2-4 (Template Reviews)
+- [ ] List with pagination, default filter: status=pending
+- [ ] Detail view with JSON viewer for samplePayload
+- [ ] "Create Template" navigates to mapping template form with pre-filled data
+- [ ] "Archive" with confirmation dialog
+- [ ] Archived reviews shown as read-only
+
+### PR-FE-V2-5 (Mapping Template V2)
+- [ ] Source family dropdown at top of form
+- [ ] finalEventType and priority inputs
+- [ ] matchAll / matchAny condition builder (add/remove conditions)
+- [ ] Operators: eq, in, contains, prefix
+- [ ] Legacy match section collapsed by default for new templates
+- [ ] Existing V1 templates still editable (backwards compatible)

@@ -25,7 +25,10 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		children: [
 			{ id: 'eventsManagement', url: 'ingest/management', textKey: 'eventsManagement' },
 			{ id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' },
-			{ id: 'ingestMappingTemplates', url: 'ingest/mappingTemplates', textKey: 'ingestMappingTemplatesTitle' }
+			{ id: 'ingestMappingTemplates', url: 'ingest/mappingTemplates', textKey: 'ingestMappingTemplatesTitle' },
+			{ id: 'ingestSourceProfiles', url: 'ingest/sourceProfiles', textKey: 'ingestSourceProfilesTitle' },
+			{ id: 'ingestDeviceManagement', url: 'ingest/deviceManagement', textKey: 'ingestDeviceManagementTitle' },
+			{ id: 'ingestTemplateReviews', url: 'ingest/templateReviews', textKey: 'ingestTemplateReviewsTitle' }
 		]
 	},
 
@@ -58,7 +61,6 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		children: [
 			{ id: 'orgUsers', url: 'orgs/users', textKey: 'orgUsersTitle' },
 			{ id: 'orgUnits', url: 'orgs/units', textKey: 'navOrgUnits' },
-			{ id: 'orgTargets', url: 'orgs/targets', textKey: 'navOrgTargets' },
 			{ id: 'orgPermissions', url: 'orgs/permissions', textKey: 'navOrgPermissions' },
 			{ id: 'orgAccess', url: 'orgs/access', textKey: 'navOrgAccess' }
 		]

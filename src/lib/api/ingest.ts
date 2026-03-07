@@ -1,6 +1,55 @@
 // src/lib/api/ingest.ts
 import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, IngestConfig } from '$lib/types/org'
+import type {
+	PendingEvent,
+	ApprovedEvent,
+	MappingTemplate,
+	FieldMapping,
+	MatchRule,
+	TemplateDeliveryTarget,
+	ClassificationRule,
+	MessageTemplate,
+	DLQConfig,
+	MatchCondition,
+	BulkResult,
+	EventListResponse,
+	TemplateListResponse,
+	DashboardStats,
+	DlqMessage,
+	DlqStats,
+	DlqStatus,
+	DlqStage,
+	SourceProfile,
+	DeviceManagement,
+	TemplateReview
+} from '$lib/types/ingest'
+
+// Re-export types for consumers
+export type {
+	PendingEvent,
+	ApprovedEvent,
+	MappingTemplate,
+	FieldMapping,
+	MatchRule,
+	TemplateDeliveryTarget,
+	ClassificationRule,
+	MessageTemplate,
+	DLQConfig,
+	MatchCondition,
+	BulkResult,
+	EventListResponse,
+	TemplateListResponse,
+	DashboardStats,
+	DlqMessage,
+	DlqStats,
+	DlqStatus,
+	DlqStage,
+	SourceProfile,
+	DeviceManagement,
+	TemplateReview
+}
+export type { EventStatusName, PayloadCondition, ClassificationSet } from '$lib/types/ingest'
 
 const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
@@ -22,139 +71,20 @@ async function apiFetch<T>(
 	return json as ApiResponse<T>
 }
 
-// ────────────────────────────────────────────
-// Types
-// ────────────────────────────────────────────
-
-export type EventStatusName = 'pending' | 'mapped' | 'approved' | 'rejected'
-
-export interface PendingEvent {
-	eventId: string
-	orgId?: string
-	name?: string
-	eventType?: string
-	statusName: EventStatusName
-	lat?: number
-	lng?: number
-	sourceIp?: string
-	deviceKey?: string
-	rawBody?: Record<string, unknown>
-	note?: string
-	templateId?: string
-	templateName?: string
-	createdAt: string
-	updatedAt: string
-	approvedAt?: string
-	approvedBy?: string
-}
-
-export interface ApprovedEvent {
-	approvedEventId: string
-	originalEventId: string
-	deviceId: string
-	normalizedData: Record<string, unknown>
-	deliveredTargets: string[]
-	failedTargets: string[]
-	deliveredAt: string | null
-	status: 'pending_delivery' | 'delivered' | 'partial_delivery' | 'failed'
-	createdAt: string
-	updatedAt: string
-}
-
-export interface FieldMapping {
-	sourcePath: string
-	targetPath: string
-	required: boolean
-	confidence?: number
-	transform?: string
-}
-
-export interface MatchRule {
-	deviceId?: string
-	deviceType?: string
-	vendor?: string
-	protocol?: string
-	subType?: string
-	eventType?: string
-	rawSchemaVersion?: string
-	rawBodyKeyHash?: string
-}
-
-export interface PayloadCondition {
-	field: string
-	operator: 'eq' | 'in'
-	values: string[]
-}
-
-export interface ClassificationSet {
-	eventClass?: string
-	eventSeverity?: string
-}
-
-export interface ClassificationRule {
-	name: string
-	when: PayloadCondition[]
-	set: ClassificationSet
-	order?: number
-}
-
-export interface TemplateDeliveryTarget {
-	targetId: string
-	filter?: PayloadCondition[]
-	eventClasses?: string[]
-	eventSeverities?: string[]
-	messageTemplateKey?: string
-}
-
-export interface MessageTemplate {
-	key?: string
-	channelType: string
-	locale: string
-	title: string
-	body: string
-	extras?: Record<string, string>
-}
-
-export interface DLQConfig {
-	enabled: boolean
-	maxRetries: number
-	retryTimeoutSeconds: number
-}
-
-export interface MappingTemplate {
-	templateId: string
-	orgId?: string
-	name: string
-	match?: MatchRule
-	mappings: FieldMapping[]
-	defaultLocale?: string
-	deliveryTargets?: TemplateDeliveryTarget[]
-	classificationRules?: ClassificationRule[]
-	messageTemplates?: MessageTemplate[]
-	dlq?: DLQConfig
-	createdAt: string
-	updatedAt: string
-}
-
-export interface BulkResult {
-	succeeded: string[]
-	failed: { id: string; reason: string }[]
-}
-
-export interface EventListResponse {
-	details: PendingEvent[]
-	page: number
-	perPage: number
-	total: number
-	totalPages: number
-}
-
-export interface TemplateListResponse {
-	details: MappingTemplate[]
-	page: number
-	perPage: number
-	total: number
-	totalPages: number
+async function apiFetchNoOrg<T>(
+	path: string,
+	init?: RequestInit
+): Promise<ApiResponse<T>> {
+	const res = await fetch(`${BASE}${path}`, {
+		headers: {
+			'content-type': 'application/json',
+			...init?.headers
+		},
+		...init
+	})
+	const json = await res.json()
+	if (!res.ok) throw json
+	return json as ApiResponse<T>
 }
 
 // ────────────────────────────────────────────
@@ -180,27 +110,6 @@ export async function rotateIngestSecret(orgId: string): Promise<IngestConfig> {
 // ────────────────────────────────────────────
 // Dashboard
 // ────────────────────────────────────────────
-
-export interface DashboardStats {
-	pendingEvents: number
-	approvedEvents: number
-	rejectedEvents: number
-	totalEvents: number
-	byEventType?: Record<string, number>
-	byAdminArea1?: Record<string, number>
-	byGeoCell?: Array<{ cell: string; count: number; lat: number; lng: number }>
-	recentEvents?: Array<{
-		id: string
-		eventId: string
-		name: string
-		eventType: string
-		status: string
-		createdAt: string
-		sourceIp?: string
-		lat?: number
-		lng?: number
-	}>
-}
 
 export async function getDashboardStats(
 	orgId: string,
@@ -389,6 +298,12 @@ export async function createTemplate(
 		classificationRules?: ClassificationRule[]
 		messageTemplates?: MessageTemplate[]
 		dlq?: DLQConfig
+		// V2 fields
+		sourceFamily?: string
+		finalEventType?: string
+		matchAll?: MatchCondition[]
+		matchAny?: MatchCondition[]
+		priority?: number
 	}
 ): Promise<MappingTemplate> {
 	const r = await apiFetch<MappingTemplate>('/ingest/mappingTemplates', orgId, {
@@ -419,6 +334,12 @@ export async function updateTemplate(
 		classificationRules?: ClassificationRule[]
 		messageTemplates?: MessageTemplate[]
 		dlq?: DLQConfig
+		// V2 fields
+		sourceFamily?: string
+		finalEventType?: string
+		matchAll?: MatchCondition[]
+		matchAny?: MatchCondition[]
+		priority?: number
 	}
 ): Promise<void> {
 	await apiFetch<unknown>(`/ingest/mappingTemplates/${templateId}`, orgId, {
@@ -509,36 +430,6 @@ export async function getApprovedEvent(orgId: string, approvedEventId: string): 
 // DLQ (Dead Letter Queue)
 // ────────────────────────────────────────────
 
-export type DlqStatus = 'pending' | 'retrying' | 'resolved' | 'abandoned'
-export type DlqStage = 'deliver' | 'normalize'
-
-export interface DlqMessage {
-	messageId: string
-	eventId: string
-	tenantId: string
-	orgId: string
-	templateId: string
-	topic: string
-	stage: DlqStage
-	reason: string
-	payload: Record<string, unknown>
-	retryCount: number
-	maxRetries: number
-	retryTimeoutSeconds: number
-	status: DlqStatus
-	lastErrorAt: string
-	createdAt: string
-	updatedAt: string
-}
-
-export interface DlqStats {
-	pending: number
-	retrying: number
-	resolved: number
-	abandoned: number
-	total: number
-}
-
 export async function listDlq(
 	orgId: string,
 	page = 1,
@@ -609,4 +500,179 @@ export async function abandonDlq(orgId: string, messageId: string, reason?: stri
 		method: 'POST',
 		body: JSON.stringify({ reason: reason ?? '' })
 	})
+}
+
+// ────────────────────────────────────────────
+// V2 Source Profiles (global — no orgId)
+// ────────────────────────────────────────────
+
+export async function listSourceProfiles(): Promise<SourceProfile[]> {
+	const r = await apiFetchNoOrg<SourceProfile[]>('/ingest/sourceProfiles')
+	return (r.details as unknown as SourceProfile[]) ?? []
+}
+
+export async function getSourceProfile(sourceFamily: string): Promise<SourceProfile> {
+	const r = await apiFetchNoOrg<SourceProfile>(`/ingest/sourceProfiles/${sourceFamily}`)
+	const result = (r.details as unknown as SourceProfile) ?? r.detail
+	if (!result) throw new Error('source profile not found')
+	return result
+}
+
+export async function createSourceProfile(data: {
+	sourceFamily: string
+	displayName: string
+	multiRef?: boolean
+	refRules?: {
+		primaryRefFields?: string[]
+		secondaryRefFields?: string[]
+		siteFields?: string[]
+	}
+	suggestedMatchFields?: string[]
+}): Promise<SourceProfile> {
+	const r = await apiFetchNoOrg<SourceProfile>('/ingest/sourceProfiles', {
+		method: 'POST',
+		body: JSON.stringify(data)
+	})
+	const result = (r.details as unknown as SourceProfile) ?? r.detail
+	if (!result) throw new Error('source profile not found in response')
+	return result
+}
+
+export async function updateSourceProfile(
+	sourceFamily: string,
+	data: {
+		displayName?: string
+		multiRef?: boolean
+		refRules?: {
+			primaryRefFields?: string[]
+			secondaryRefFields?: string[]
+			siteFields?: string[]
+		}
+		suggestedMatchFields?: string[]
+	}
+): Promise<void> {
+	await apiFetchNoOrg<unknown>(`/ingest/sourceProfiles/${sourceFamily}`, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	})
+}
+
+// ────────────────────────────────────────────
+// V2 Device Management (org-scoped)
+// ────────────────────────────────────────────
+
+export async function listDeviceManagement(
+	orgId: string,
+	page = 1,
+	perPage = 20
+): Promise<{ details: DeviceManagement[]; page: number; perPage: number; total: number; totalPages: number }> {
+	const q = new URLSearchParams({
+		page: String(page),
+		perPages: String(perPage)
+	})
+	const res = await fetch(`${BASE}/ingest/deviceManagement?${q}`, {
+		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+	})
+	const json = await res.json() as {
+		details: DeviceManagement[]
+		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+	}
+	if (!res.ok) throw json
+	return {
+		details: json.details ?? [],
+		page: json.pagination?.page ?? page,
+		perPage: json.pagination?.perPages ?? perPage,
+		total: json.pagination?.totalRecords ?? 0,
+		totalPages: json.pagination?.totalPages ?? 0
+	}
+}
+
+export async function getDeviceManagement(orgId: string, id: string): Promise<DeviceManagement> {
+	const r = await apiFetch<DeviceManagement>(`/ingest/deviceManagement/${id}`, orgId)
+	const result = (r.details as unknown as DeviceManagement) ?? r.detail
+	if (!result) throw new Error('device management record not found')
+	return result
+}
+
+export async function createDeviceManagement(
+	orgId: string,
+	data: {
+		sourceFamily: string
+		entityType: string
+		entityId: string
+		deviceId?: string
+		lat?: number
+		lng?: number
+		site?: string
+		zone?: string
+	}
+): Promise<DeviceManagement> {
+	const r = await apiFetch<DeviceManagement>('/ingest/deviceManagement', orgId, {
+		method: 'POST',
+		body: JSON.stringify(data)
+	})
+	const result = (r.details as unknown as DeviceManagement) ?? r.detail
+	if (!result) throw new Error('device management record not found in response')
+	return result
+}
+
+export async function updateDeviceManagement(
+	orgId: string,
+	id: string,
+	data: {
+		deviceId?: string
+		lat?: number
+		lng?: number
+		site?: string
+		zone?: string
+	}
+): Promise<void> {
+	await apiFetch<unknown>(`/ingest/deviceManagement/${id}`, orgId, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	})
+}
+
+// ────────────────────────────────────────────
+// V2 Template Reviews (org-scoped)
+// ────────────────────────────────────────────
+
+export async function listTemplateReviews(
+	orgId: string,
+	page = 1,
+	perPage = 10,
+	params?: { status?: string }
+): Promise<{ details: TemplateReview[]; page: number; perPage: number; total: number; totalPages: number }> {
+	const q = new URLSearchParams({
+		page: String(page),
+		perPages: String(perPage)
+	})
+	if (params?.status) q.set('status', params.status)
+
+	const res = await fetch(`${BASE}/ingest/templateReviews?${q}`, {
+		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+	})
+	const json = await res.json() as {
+		details: TemplateReview[]
+		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+	}
+	if (!res.ok) throw json
+	return {
+		details: json.details ?? [],
+		page: json.pagination?.page ?? page,
+		perPage: json.pagination?.perPages ?? perPage,
+		total: json.pagination?.totalRecords ?? 0,
+		totalPages: json.pagination?.totalPages ?? 0
+	}
+}
+
+export async function getTemplateReview(orgId: string, id: string): Promise<TemplateReview> {
+	const r = await apiFetch<TemplateReview>(`/ingest/templateReviews/${id}`, orgId)
+	const result = (r.details as unknown as TemplateReview) ?? r.detail
+	if (!result) throw new Error('template review not found')
+	return result
+}
+
+export async function archiveTemplateReview(orgId: string, id: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/templateReviews/${id}/archive`, orgId, { method: 'POST' })
 }
