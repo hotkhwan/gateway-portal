@@ -229,7 +229,72 @@ export async function activateEnterprise(licenseKey: string): Promise<Subscripti
 }
 
 // ────────────────────────────────────────────
-// Plan Info (static)
+// Packages (API-driven)
+// ────────────────────────────────────────────
+
+export interface PackagePlan {
+	id: string
+	planId: PlanId
+	name: string
+	description: string
+	billing: {
+		price: { amount: number; currency: string; display: string }
+		cycle: BillingCycle
+	}
+	limits: {
+		orgs: number
+		members: number
+		eventsPerMonth: number
+		webhooksPerOrg: number
+		linePerOrg: number
+		discordPerOrg: number
+		telegramPerOrg: number
+		msgChannelsPerOrg: number
+	}
+	ui: {
+		featureList: string[]
+		highlight: boolean
+		theme: string
+	}
+}
+
+export interface EffectiveSubscription {
+	subscription: Subscription
+	plan: PackagePlan
+	usage?: {
+		orgs: number
+		members: number
+		eventsThisMonth: number
+		webhooks: number
+		lineTargets: number
+		discordTargets: number
+		telegramTargets: number
+		msgChannels: number
+	}
+}
+
+export async function listPackages(): Promise<PackagePlan[]> {
+	const res = await fetch(`${BASE}/subscriptions/packages`, {
+		headers: { 'content-type': 'application/json' }
+	})
+	const json = await res.json()
+	if (!res.ok) throw json
+	return json.details ?? json.detail ?? []
+}
+
+export async function getCurrentSubscription(): Promise<EffectiveSubscription> {
+	const res = await fetch(`${BASE}/subscriptions/current`, {
+		headers: { 'content-type': 'application/json' }
+	})
+	const json = await res.json()
+	if (!res.ok) throw json
+	const result = json.details ?? json.detail
+	if (!result) throw new Error('Current subscription not found')
+	return result as EffectiveSubscription
+}
+
+// ────────────────────────────────────────────
+// Plan Info (static fallback)
 // ────────────────────────────────────────────
 export const PLANS: Record<PlanId, PlanInfo> = {
 	freemium: {

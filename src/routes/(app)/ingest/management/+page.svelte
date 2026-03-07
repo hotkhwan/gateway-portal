@@ -816,10 +816,21 @@
           {/if}
         </div>
         <div class="modal-footer">
-          {#if viewEvent && viewEvent.rawBody && !showCreateTplPanel}
-            <button class="btn btn-sm btn-outline-theme me-auto" onclick={openCreateTemplate}>
-              <i class="bi bi-diagram-3 me-1"></i>{m.ingestCreateTemplateFromEvent()}
-            </button>
+          {#if viewEvent && !showCreateTplPanel}
+            {#if viewEvent.templateId}
+              <div class="me-auto d-flex align-items-center gap-2">
+                <span class="badge bg-theme-subtle text-theme">
+                  <i class="bi bi-link-45deg me-1"></i>{m.ingestTemplateLinkedTemplate()}: {viewEvent.templateName ?? viewEvent.templateId.slice(0, 8)}
+                </span>
+                <a href={resolve('/ingest/mappingTemplates')} class="btn btn-sm btn-outline-theme">
+                  <i class="bi bi-pencil-square me-1"></i>{m.ingestTemplateEditExisting()}
+                </a>
+              </div>
+            {:else if viewEvent.rawBody}
+              <button class="btn btn-sm btn-outline-theme me-auto" onclick={openCreateTemplate}>
+                <i class="bi bi-diagram-3 me-1"></i>{m.ingestCreateTemplateFromEvent()}
+              </button>
+            {/if}
           {/if}
           <button type="button" class="btn btn-secondary btn-sm" onclick={() => { showViewModal = false; showCreateTplPanel = false }}>{m.actionClose()}</button>
         </div>

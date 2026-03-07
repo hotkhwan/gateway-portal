@@ -66,8 +66,9 @@ export interface WebhookConfig {
 }
 
 export interface LineConfig {
-  channelAccessTokenRef: string
-  to: string
+  channelAccessToken?: string
+  channelAccessTokenRef?: string
+  to: string[]
 }
 
 export interface TelegramConfig {

@@ -29,6 +29,19 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		]
 	},
 
+	// ===== Delivery =====
+	{
+		kind: 'link',
+		id: 'delivery',
+		icon: 'bi bi-send',
+		textKey: 'navDelivery',
+		children: [
+			{ id: 'deliveryTargets', url: 'delivery/targets', textKey: 'deliveryTargetsTitle' },
+			{ id: 'deliveryTemplates', url: 'delivery/templates', textKey: 'deliveryTemplatesTitle' },
+			{ id: 'deliveryDlq', url: 'delivery/dlq', textKey: 'deliveryDlqTitle' }
+		]
+	},
+
 	// ===== Tenancy =====
 	{
 		kind: 'link',
@@ -93,8 +106,11 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'subscription',
-		url: 'subscription',
 		icon: 'bi bi-gem',
-		textKey: 'navSubscription'
+		textKey: 'navSubscription',
+		children: [
+			{ id: 'subscriptionPackages', url: 'subscriptions/packages', textKey: 'subscriptionPackagesTitle' },
+			{ id: 'subscriptionCurrent', url: 'subscriptions/current', textKey: 'subscriptionCurrentTitle' }
+		]
 	}
 ])

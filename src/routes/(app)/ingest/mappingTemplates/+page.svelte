@@ -11,7 +11,13 @@
     updateTemplate,
     deleteTemplate
   } from '$lib/api/ingest'
-  import type { MappingTemplate, FieldMapping, MatchRule } from '$lib/api/ingest'
+  import type {
+    MappingTemplate, FieldMapping, MatchRule,
+    TemplateDeliveryTarget, ClassificationRule, MessageTemplate,
+    DLQConfig, PayloadCondition
+  } from '$lib/api/ingest'
+  import { listTargets } from '$lib/api/target'
+  import type { DeliveryTarget } from '$lib/types/org'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
 
@@ -51,6 +57,18 @@
   let formMatchValue = $state('')
   let formMappings = $state<FieldMapping[]>([])
 
+  // New template fields
+  let formDefaultLocale = $state('en')
+  let formDeliveryTargets = $state<TemplateDeliveryTarget[]>([])
+  let formClassificationRules = $state<ClassificationRule[]>([])
+  let formMessageTemplates = $state<MessageTemplate[]>([])
+  let formDlqEnabled = $state(false)
+  let formDlqMaxRetries = $state(3)
+  let formDlqRetryTimeout = $state(300)
+
+  // Available targets for binding
+  let availableTargets = $state<DeliveryTarget[]>([])
+
   // Delete modal
   let showDeleteModal = $state(false)
   let deleteTemplateId = $state<string | null>(null)
@@ -88,7 +106,7 @@
     }
   }
 
-  function openCreate() {
+  async function openCreate() {
     formMode = 'create'
     formTemplate = null
     formName = ''
@@ -96,15 +114,25 @@
     formMatchValue = ''
     formMappings = [{ sourcePath: '', targetPath: '', required: true }]
     customTargetPaths = {}
+    formDefaultLocale = 'en'
+    formDeliveryTargets = []
+    formClassificationRules = []
+    formMessageTemplates = []
+    formDlqEnabled = false
+    formDlqMaxRetries = 3
+    formDlqRetryTimeout = 300
     formError = null
     showFormModal = true
+    const orgId = $activeOrg?.id
+    if (orgId) {
+      try { availableTargets = await listTargets(orgId) } catch { availableTargets = [] }
+    }
   }
 
-  function openEdit(tpl: MappingTemplate) {
+  async function openEdit(tpl: MappingTemplate) {
     formMode = 'edit'
     formTemplate = tpl
     formName = tpl.name
-    // detect which match key was set
     const matchEntry = tpl.match
       ? Object.entries(tpl.match).find(([, v]) => v !== undefined && v !== '')
       : undefined
@@ -113,7 +141,6 @@
     formMappings = tpl.mappings?.length
       ? tpl.mappings.map(m => ({ ...m }))
       : [{ sourcePath: '', targetPath: '', required: true }]
-    // restore custom target state for rows whose targetPath is not in canonical list
     const allPaths = TARGET_PATHS.flatMap(g => g.paths)
     const custom: Record<number, string> = {}
     formMappings.forEach((mp, i) => {
@@ -123,8 +150,20 @@
       }
     })
     customTargetPaths = custom
+    // New fields
+    formDefaultLocale = tpl.defaultLocale ?? 'en'
+    formDeliveryTargets = tpl.deliveryTargets?.map(dt => ({ ...dt })) ?? []
+    formClassificationRules = tpl.classificationRules?.map(cr => ({ ...cr, when: cr.when.map(w => ({ ...w })), set: { ...cr.set } })) ?? []
+    formMessageTemplates = tpl.messageTemplates?.map(mt => ({ ...mt })) ?? []
+    formDlqEnabled = tpl.dlq?.enabled ?? false
+    formDlqMaxRetries = tpl.dlq?.maxRetries ?? 3
+    formDlqRetryTimeout = tpl.dlq?.retryTimeoutSeconds ?? 300
     formError = null
     showFormModal = true
+    const orgId = $activeOrg?.id
+    if (orgId) {
+      try { availableTargets = await listTargets(orgId) } catch { availableTargets = [] }
+    }
   }
 
   function addMapping() {
@@ -133,6 +172,32 @@
 
   function removeMapping(i: number) {
     formMappings = formMappings.filter((_, idx) => idx !== i)
+  }
+
+  // Delivery Targets helpers
+  function addDeliveryTarget() {
+    formDeliveryTargets = [...formDeliveryTargets, { targetId: '' }]
+  }
+  function removeDeliveryTarget(i: number) {
+    formDeliveryTargets = formDeliveryTargets.filter((_, idx) => idx !== i)
+  }
+
+  // Classification Rules helpers
+  function addClassificationRule() {
+    formClassificationRules = [...formClassificationRules, {
+      name: '', when: [{ field: '', operator: 'eq', values: [] }], set: {}, order: formClassificationRules.length + 1
+    }]
+  }
+  function removeClassificationRule(i: number) {
+    formClassificationRules = formClassificationRules.filter((_, idx) => idx !== i)
+  }
+
+  // Message Templates helpers
+  function addMessageTemplate() {
+    formMessageTemplates = [...formMessageTemplates, { channelType: 'webhook', locale: formDefaultLocale, title: '', body: '' }]
+  }
+  function removeMessageTemplate(i: number) {
+    formMessageTemplates = formMessageTemplates.filter((_, idx) => idx !== i)
   }
 
   async function handleSubmit() {
@@ -156,17 +221,29 @@
       }))
       .filter(mp => mp.sourcePath.trim() && mp.targetPath.trim())
 
+    const dlq: DLQConfig = { enabled: formDlqEnabled, maxRetries: formDlqMaxRetries, retryTimeoutSeconds: formDlqRetryTimeout }
+    const payload = {
+      name: formName.trim(),
+      match,
+      mappings,
+      defaultLocale: formDefaultLocale,
+      deliveryTargets: formDeliveryTargets.filter(dt => dt.targetId),
+      classificationRules: formClassificationRules.filter(cr => cr.name.trim()),
+      messageTemplates: formMessageTemplates.filter(mt => mt.body.trim()),
+      dlq
+    }
+
     formLoading = true
     formError = null
     try {
       if (formMode === 'create') {
-        const tpl = await createTemplate(orgId, { name: formName.trim(), match, mappings })
+        const tpl = await createTemplate(orgId, payload)
         templates = [tpl, ...templates]
       } else if (formTemplate) {
-        await updateTemplate(orgId, formTemplate.templateId, { name: formName.trim(), match, mappings })
+        await updateTemplate(orgId, formTemplate.templateId, payload)
         templates = templates.map(t =>
           t.templateId === formTemplate!.templateId
-            ? { ...t, name: formName.trim(), match, mappings }
+            ? { ...t, ...payload }
             : t
         )
       }
@@ -570,6 +647,178 @@
               </table>
             {/if}
           </div>
+
+          <hr />
+
+          <!-- Default Locale -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="tplLocale">{m.ingestTemplateDefaultLocale()}</label>
+            <select id="tplLocale" class="form-select form-select-sm" style="width:auto" bind:value={formDefaultLocale} disabled={formLoading}>
+              <option value="en">English</option>
+              <option value="th">Thai</option>
+            </select>
+          </div>
+
+          <!-- Delivery Targets binding -->
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 small fw-semibold">{m.ingestTemplateDeliveryTargets()}</legend>
+            <small class="text-inverse text-opacity-50 d-block mb-2">{m.ingestTemplateDeliveryTargetsHint()}</small>
+            {#if formDeliveryTargets.length === 0}
+              <p class="text-inverse text-opacity-50 small mb-2">{m.ingestTemplateNoDeliveryTargets()}</p>
+            {:else}
+              {#each formDeliveryTargets as dt, i}
+                <div class="border rounded p-2 mb-2 bg-inverse bg-opacity-5">
+                  <div class="d-flex gap-2 align-items-start">
+                    <div class="flex-grow-1">
+                      <select class="form-select form-select-sm mb-1" bind:value={formDeliveryTargets[i].targetId} disabled={formLoading}>
+                        <option value="">{m.ingestTemplateSelectTarget()}</option>
+                        {#each availableTargets as at}
+                          <option value={at.id}>{at.name} ({at.type})</option>
+                        {/each}
+                      </select>
+                      <div class="row g-1">
+                        <div class="col-md-6">
+                          <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateEventClasses() + ' (comma separated)'} value={(formDeliveryTargets[i].eventClasses ?? []).join(', ')} oninput={(e) => { formDeliveryTargets[i].eventClasses = (e.currentTarget as HTMLInputElement).value.split(',').map(s => s.trim()).filter(Boolean) }} disabled={formLoading} />
+                        </div>
+                        <div class="col-md-6">
+                          <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateEventSeverities() + ' (comma separated)'} value={(formDeliveryTargets[i].eventSeverities ?? []).join(', ')} oninput={(e) => { formDeliveryTargets[i].eventSeverities = (e.currentTarget as HTMLInputElement).value.split(',').map(s => s.trim()).filter(Boolean) }} disabled={formLoading} />
+                        </div>
+                      </div>
+                      <input type="text" class="form-control form-control-sm mt-1" placeholder={m.ingestTemplateMessageTemplateKey()} bind:value={formDeliveryTargets[i].messageTemplateKey} disabled={formLoading} />
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" title={m.actionDelete()} onclick={() => removeDeliveryTarget(i)} disabled={formLoading}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            {/if}
+            <button type="button" class="btn btn-sm btn-outline-theme" onclick={addDeliveryTarget} disabled={formLoading}>
+              <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateAddDeliveryTarget()}
+            </button>
+          </fieldset>
+
+          <!-- Classification Rules -->
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 small fw-semibold">{m.ingestTemplateClassificationRules()}</legend>
+            <small class="text-inverse text-opacity-50 d-block mb-2">{m.ingestTemplateClassificationRulesHint()}</small>
+            {#if formClassificationRules.length === 0}
+              <p class="text-inverse text-opacity-50 small mb-2">{m.ingestTemplateNoClassificationRules()}</p>
+            {:else}
+              {#each formClassificationRules as rule, i}
+                <div class="border rounded p-2 mb-2 bg-inverse bg-opacity-5">
+                  <div class="d-flex gap-2 align-items-start">
+                    <div class="flex-grow-1">
+                      <div class="row g-1 mb-1">
+                        <div class="col-md-1">
+                          <input type="number" class="form-control form-control-sm" bind:value={formClassificationRules[i].order} min={1} title={m.ingestTemplateRuleOrder()} disabled={formLoading} />
+                        </div>
+                        <div class="col-md-5">
+                          <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateRuleName()} bind:value={formClassificationRules[i].name} disabled={formLoading} />
+                        </div>
+                        <div class="col-md-3">
+                          <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateRuleSetClass()} bind:value={formClassificationRules[i].set.eventClass} disabled={formLoading} />
+                        </div>
+                        <div class="col-md-3">
+                          <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateRuleSetSeverity()} bind:value={formClassificationRules[i].set.eventSeverity} disabled={formLoading} />
+                        </div>
+                      </div>
+                      <small class="text-inverse text-opacity-50">{m.ingestTemplateRuleWhen()}</small>
+                      {#each rule.when as cond, ci}
+                        <div class="row g-1 mt-1">
+                          <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm font-monospace" placeholder={m.ingestTemplateFilterField()} bind:value={formClassificationRules[i].when[ci].field} disabled={formLoading} />
+                          </div>
+                          <div class="col-md-2">
+                            <select class="form-select form-select-sm" bind:value={formClassificationRules[i].when[ci].operator} disabled={formLoading}>
+                              <option value="eq">eq</option>
+                              <option value="in">in</option>
+                            </select>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateFilterValues() + ' (comma separated)'} value={formClassificationRules[i].when[ci].values.join(', ')} oninput={(e) => { formClassificationRules[i].when[ci].values = (e.currentTarget as HTMLInputElement).value.split(',').map(s => s.trim()).filter(Boolean) }} disabled={formLoading} />
+                          </div>
+                        </div>
+                      {/each}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" title={m.actionDelete()} onclick={() => removeClassificationRule(i)} disabled={formLoading}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            {/if}
+            <button type="button" class="btn btn-sm btn-outline-theme" onclick={addClassificationRule} disabled={formLoading}>
+              <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateAddClassificationRule()}
+            </button>
+          </fieldset>
+
+          <!-- Message Templates -->
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 small fw-semibold">{m.ingestTemplateMessageTemplates()}</legend>
+            {#if formMessageTemplates.length === 0}
+              <p class="text-inverse text-opacity-50 small mb-2">{m.ingestTemplateNoMessageTemplates()}</p>
+            {:else}
+              {#each formMessageTemplates as mt, i}
+                <div class="border rounded p-2 mb-2 bg-inverse bg-opacity-5">
+                  <div class="d-flex gap-2 align-items-start">
+                    <div class="flex-grow-1">
+                      <div class="row g-1 mb-1">
+                        <div class="col-md-3">
+                          <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateMessageKey()} bind:value={formMessageTemplates[i].key} disabled={formLoading} />
+                        </div>
+                        <div class="col-md-3">
+                          <select class="form-select form-select-sm" bind:value={formMessageTemplates[i].channelType} disabled={formLoading}>
+                            <option value="webhook">Webhook</option>
+                            <option value="line">LINE</option>
+                            <option value="discord">Discord</option>
+                            <option value="telegram">Telegram</option>
+                          </select>
+                        </div>
+                        <div class="col-md-2">
+                          <select class="form-select form-select-sm" bind:value={formMessageTemplates[i].locale} disabled={formLoading}>
+                            <option value="en">EN</option>
+                            <option value="th">TH</option>
+                          </select>
+                        </div>
+                        <div class="col-md-4">
+                          <input type="text" class="form-control form-control-sm" placeholder={m.ingestTemplateMessageTitle()} bind:value={formMessageTemplates[i].title} disabled={formLoading} />
+                        </div>
+                      </div>
+                      <textarea class="form-control form-control-sm" rows="2" placeholder={m.ingestTemplateMessageBody()} bind:value={formMessageTemplates[i].body} disabled={formLoading}></textarea>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" title={m.actionDelete()} onclick={() => removeMessageTemplate(i)} disabled={formLoading}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            {/if}
+            <button type="button" class="btn btn-sm btn-outline-theme" onclick={addMessageTemplate} disabled={formLoading}>
+              <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateAddMessageTemplate()}
+            </button>
+          </fieldset>
+
+          <!-- DLQ Config -->
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 small fw-semibold">{m.ingestTemplateDlqConfig()}</legend>
+            <div class="form-check form-switch mb-2">
+              <input id="dlqEnabled" type="checkbox" class="form-check-input" bind:checked={formDlqEnabled} disabled={formLoading} />
+              <label class="form-check-label" for="dlqEnabled">{m.ingestTemplateDlqEnabled()}</label>
+            </div>
+            {#if formDlqEnabled}
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="form-label small mb-1" for="dlqMaxRetries">{m.ingestTemplateDlqMaxRetries()}</label>
+                  <input id="dlqMaxRetries" type="number" class="form-control form-control-sm" bind:value={formDlqMaxRetries} min={0} max={100} disabled={formLoading} />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small mb-1" for="dlqTimeout">{m.ingestTemplateDlqRetryTimeout()}</label>
+                  <input id="dlqTimeout" type="number" class="form-control form-control-sm" bind:value={formDlqRetryTimeout} min={0} step={60} disabled={formLoading} />
+                </div>
+              </div>
+            {/if}
+          </fieldset>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick={() => (showFormModal = false)} disabled={formLoading}>{m.actionCancel()}</button>

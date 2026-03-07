@@ -40,6 +40,8 @@ export interface PendingEvent {
 	deviceKey?: string
 	rawBody?: Record<string, unknown>
 	note?: string
+	templateId?: string
+	templateName?: string
 	createdAt: string
 	updatedAt: string
 	approvedAt?: string
@@ -78,12 +80,58 @@ export interface MatchRule {
 	rawBodyKeyHash?: string
 }
 
+export interface PayloadCondition {
+	field: string
+	operator: 'eq' | 'in'
+	values: string[]
+}
+
+export interface ClassificationSet {
+	eventClass?: string
+	eventSeverity?: string
+}
+
+export interface ClassificationRule {
+	name: string
+	when: PayloadCondition[]
+	set: ClassificationSet
+	order?: number
+}
+
+export interface TemplateDeliveryTarget {
+	targetId: string
+	filter?: PayloadCondition[]
+	eventClasses?: string[]
+	eventSeverities?: string[]
+	messageTemplateKey?: string
+}
+
+export interface MessageTemplate {
+	key?: string
+	channelType: string
+	locale: string
+	title: string
+	body: string
+	extras?: Record<string, string>
+}
+
+export interface DLQConfig {
+	enabled: boolean
+	maxRetries: number
+	retryTimeoutSeconds: number
+}
+
 export interface MappingTemplate {
 	templateId: string
 	orgId?: string
 	name: string
 	match?: MatchRule
 	mappings: FieldMapping[]
+	defaultLocale?: string
+	deliveryTargets?: TemplateDeliveryTarget[]
+	classificationRules?: ClassificationRule[]
+	messageTemplates?: MessageTemplate[]
+	dlq?: DLQConfig
 	createdAt: string
 	updatedAt: string
 }
@@ -332,7 +380,16 @@ export async function listTemplates(
 
 export async function createTemplate(
 	orgId: string,
-	data: { name: string; match?: MatchRule; mappings?: FieldMapping[] }
+	data: {
+		name: string
+		match?: MatchRule
+		mappings?: FieldMapping[]
+		defaultLocale?: string
+		deliveryTargets?: TemplateDeliveryTarget[]
+		classificationRules?: ClassificationRule[]
+		messageTemplates?: MessageTemplate[]
+		dlq?: DLQConfig
+	}
 ): Promise<MappingTemplate> {
 	const r = await apiFetch<MappingTemplate>('/ingest/mappingTemplates', orgId, {
 		method: 'POST',
@@ -353,7 +410,16 @@ export async function getTemplate(orgId: string, templateId: string): Promise<Ma
 export async function updateTemplate(
 	orgId: string,
 	templateId: string,
-	data: { name?: string; match?: MatchRule; mappings?: FieldMapping[] }
+	data: {
+		name?: string
+		match?: MatchRule
+		mappings?: FieldMapping[]
+		defaultLocale?: string
+		deliveryTargets?: TemplateDeliveryTarget[]
+		classificationRules?: ClassificationRule[]
+		messageTemplates?: MessageTemplate[]
+		dlq?: DLQConfig
+	}
 ): Promise<void> {
 	await apiFetch<unknown>(`/ingest/mappingTemplates/${templateId}`, orgId, {
 		method: 'PATCH',
@@ -437,4 +503,110 @@ export async function getApprovedEvent(orgId: string, approvedEventId: string): 
 	const raw = (Array.isArray(json.details) ? json.details[0] : json.details) ?? json.detail
 	if (!raw) throw new Error('approved event not found')
 	return transformApprovedEvent(raw)
+}
+
+// ────────────────────────────────────────────
+// DLQ (Dead Letter Queue)
+// ────────────────────────────────────────────
+
+export type DlqStatus = 'pending' | 'retrying' | 'resolved' | 'abandoned'
+export type DlqStage = 'deliver' | 'normalize'
+
+export interface DlqMessage {
+	messageId: string
+	eventId: string
+	tenantId: string
+	orgId: string
+	templateId: string
+	topic: string
+	stage: DlqStage
+	reason: string
+	payload: Record<string, unknown>
+	retryCount: number
+	maxRetries: number
+	retryTimeoutSeconds: number
+	status: DlqStatus
+	lastErrorAt: string
+	createdAt: string
+	updatedAt: string
+}
+
+export interface DlqStats {
+	pending: number
+	retrying: number
+	resolved: number
+	abandoned: number
+	total: number
+}
+
+export async function listDlq(
+	orgId: string,
+	page = 1,
+	perPage = 20,
+	params?: {
+		status?: DlqStatus
+		stage?: DlqStage
+		channel?: string
+		eventId?: string
+		from?: string
+		to?: string
+	}
+): Promise<{ details: DlqMessage[]; page: number; perPage: number; total: number; totalPages: number }> {
+	const q = new URLSearchParams({
+		page: String(page),
+		perPages: String(perPage),
+		sortField: 'createdAt',
+		sortOrder: 'desc'
+	})
+	if (params?.status) q.set('status', params.status)
+	if (params?.stage) q.set('stage', params.stage)
+	if (params?.channel) q.set('channel', params.channel)
+	if (params?.eventId) q.set('eventId', params.eventId)
+	if (params?.from) q.set('from', params.from)
+	if (params?.to) q.set('to', params.to)
+
+	const res = await fetch(`${BASE}/ingest/dlq?${q}`, {
+		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+	})
+	const json = await res.json() as {
+		details: DlqMessage[]
+		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+	}
+	if (!res.ok) throw json
+	return {
+		details: json.details ?? [],
+		page: json.pagination?.page ?? page,
+		perPage: json.pagination?.perPages ?? perPage,
+		total: json.pagination?.totalRecords ?? 0,
+		totalPages: json.pagination?.totalPages ?? 0
+	}
+}
+
+export async function getDlqStats(orgId: string): Promise<DlqStats> {
+	const r = await apiFetch<DlqStats>('/ingest/dlq/stats', orgId)
+	const result = (r.details as unknown as DlqStats) ?? r.detail
+	if (!result) throw new Error('DLQ stats not found')
+	return result
+}
+
+export async function getDlqDetail(orgId: string, messageId: string): Promise<DlqMessage> {
+	const r = await apiFetch<DlqMessage>(`/ingest/dlq/${messageId}`, orgId)
+	const result = (r.details as unknown as DlqMessage) ?? r.detail
+	if (!result) throw new Error('DLQ message not found')
+	return result
+}
+
+export async function retryDlq(orgId: string, messageId: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/dlq/${messageId}/retry`, orgId, { method: 'POST' })
+}
+
+export async function replayDlq(orgId: string, messageId: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/dlq/${messageId}/replay`, orgId, { method: 'POST' })
+}
+
+export async function abandonDlq(orgId: string, messageId: string, reason?: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/dlq/${messageId}/abandon`, orgId, {
+		method: 'POST',
+		body: JSON.stringify({ reason: reason ?? '' })
+	})
 }

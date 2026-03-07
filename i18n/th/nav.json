@@ -65,6 +65,7 @@
   "navSettings": "การตั้งค่า",
   "navHelper": "ตัวช่วย",
   "navSubscription": "การสมัครสมาชิก",
+  "navDelivery": "การส่งข้อมูล",
   "navLogout": "ออกจากระบบ",
 
   "_comments_subscription": "ป้ายกำกับการจัดการการสมัครสมาชิก",
