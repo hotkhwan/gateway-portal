@@ -143,6 +143,16 @@
   "eventsNormalizedData": "ข้อมูลที่ปรับมาตรฐาน",
   "eventsCreatedAt": "สร้างเมื่อ",
   "eventsViewApprovedTitle": "รายละเอียดกิจกรรมที่อนุมัติ",
+  "eventsStatusDelivered": "ส่งสำเร็จ",
+  "eventsStatusPendingDelivery": "รอส่ง",
+  "eventsStatusPartialDelivery": "ส่งบางส่วน",
+  "eventsStatusFailed": "ล้มเหลว",
+  "eventsSourceIp": "IP ต้นทาง",
+  "eventsLatLng": "ละติจูด / ลองจิจูด",
+  "eventsUpdatedAt": "อัปเดตเมื่อ",
+  "eventsApprovedAt": "อนุมัติเมื่อ",
+  "eventsApprovedBy": "อนุมัติโดย",
+  "eventsRawBody": "ข้อมูลดิบ",
 
   "navDocumentation": "เอกสาร",
 

@@ -347,7 +347,7 @@
       <div class="modal-content bg-inverse-subtle">
         <div class="modal-header">
           <h5 class="modal-title">{m.ingestMappingTemplatesTitle()}</h5>
-          <button type="button" class="btn-close" onclick={() => (showViewModal = false)}></button>
+          <button type="button" class="btn-close" aria-label={m.actionClose()} onclick={() => (showViewModal = false)}></button>
         </div>
         <div class="modal-body">
           {#if viewLoading}
@@ -380,9 +380,9 @@
               <table class="table table-sm">
                 <thead>
                   <tr>
-                    <th>Source Path</th>
-                    <th>Target Path</th>
-                    <th>Required</th>
+                    <th>{m.ingestMappingSourcePath()}</th>
+                    <th>{m.ingestMappingTargetPath()}</th>
+                    <th>{m.ingestMappingRequired()}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -423,7 +423,7 @@
           <h5 class="modal-title">
             {formMode === 'create' ? m.ingestTemplateCreate() : m.ingestTemplateEdit()}
           </h5>
-          <button type="button" class="btn-close" onclick={() => (showFormModal = false)}></button>
+          <button type="button" class="btn-close" aria-label={m.actionClose()} onclick={() => (showFormModal = false)}></button>
         </div>
         <div class="modal-body">
           {#if formError}
@@ -496,7 +496,7 @@
                   <tr>
                     <th>Source Path</th>
                     <th>Target Path</th>
-                    <th style="width:90px">Required</th>
+                    <th style="width:90px">{m.ingestMappingRequired()}</th>
                     <th style="width:40px"></th>
                   </tr>
                 </thead>
@@ -534,7 +534,7 @@
                               {/each}
                             </optgroup>
                           {/each}
-                          <option value={CUSTOM_TARGET}>custom…</option>
+                          <option value={CUSTOM_TARGET}>{m.ingestMappingTargetCustom()}</option>
                         </select>
                         {#if formMappings[i].targetPath === CUSTOM_TARGET}
                           <input
@@ -559,6 +559,7 @@
                         <button
                           type="button"
                           class="btn btn-sm btn-outline-danger"
+                          title={m.actionDelete()}
                           onclick={() => removeMapping(i)}
                           disabled={formLoading || formMappings.length <= 1}
                         ><i class="bi bi-trash"></i></button>

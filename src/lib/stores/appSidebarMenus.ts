@@ -86,7 +86,7 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'settings',
-		url: 'comingsoon',
+		url: 'settings',
 		icon: 'bi bi-gear',
 		textKey: 'navSettings'
 	},

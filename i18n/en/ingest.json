@@ -16,5 +16,10 @@
   "ingestBulkApprove": "Bulk Approve",
   "ingestBulkReject": "Bulk Reject",
   "ingestBulkApplyTemplate": "Apply Template",
-  "ingestBulkDelete": "Bulk Delete"
+  "ingestBulkDelete": "Bulk Delete",
+  "ingestMappingSourcePath": "Source Path",
+  "ingestMappingTargetPath": "Target Path",
+  "ingestMappingRequired": "Required",
+  "ingestMappingTargetCustom": "custom…",
+  "ingestEventId": "Event ID"
 }

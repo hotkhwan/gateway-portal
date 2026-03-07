@@ -238,7 +238,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={() => (showUpgradeModal = false)}
           ></button>
         </div>
@@ -340,7 +340,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={() => (showEnterpriseModal = false)}
           ></button>
         </div>

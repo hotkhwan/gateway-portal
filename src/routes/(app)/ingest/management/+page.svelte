@@ -506,7 +506,7 @@
           <th style="width:40px">
             <input type="checkbox" class="form-check-input" checked={allChecked} onchange={toggleAll} />
           </th>
-          <th>Event ID</th>
+          <th>{m.ingestEventId()}</th>
           <th>{m.eventsType()}</th>
           <th>{m.eventsNotes()}</th>
           <th>{m.eventsStatus()}</th>
@@ -631,7 +631,7 @@
           {:else if viewEvent}
             <table class="table table-sm">
               <tbody>
-                <tr><th style="width:30%">Event ID</th><td><code class="small">{viewEvent.eventId}</code></td></tr>
+                <tr><th style="width:30%">{m.ingestEventId()}</th><td><code class="small">{viewEvent.eventId}</code></td></tr>
                 {#if viewEvent.eventType}
                   <tr><th>{m.eventsType()}</th><td>{viewEvent.eventType}</td></tr>
                 {/if}
@@ -643,28 +643,28 @@
                   <td><span class="badge {getStatusBadge(viewEvent.statusName)}">{viewEvent.statusName.toUpperCase()}</span></td>
                 </tr>
                 {#if viewEvent.sourceIp}
-                  <tr><th>Source IP</th><td><code class="small">{viewEvent.sourceIp}</code></td></tr>
+                  <tr><th>{m.eventsSourceIp()}</th><td><code class="small">{viewEvent.sourceIp}</code></td></tr>
                 {/if}
                 {#if viewEvent.lat !== undefined}
-                  <tr><th>Lat / Lng</th><td class="font-monospace small">{viewEvent.lat}, {viewEvent.lng}</td></tr>
+                  <tr><th>{m.eventsLatLng()}</th><td class="font-monospace small">{viewEvent.lat}, {viewEvent.lng}</td></tr>
                 {/if}
                 {#if viewEvent.note}
                   <tr><th>{m.eventsNotes()}</th><td>{viewEvent.note}</td></tr>
                 {/if}
                 <tr><th>{m.eventsCreatedAt()}</th><td>{formatDate(viewEvent.createdAt)}</td></tr>
-                <tr><th>Updated At</th><td>{formatDate(viewEvent.updatedAt)}</td></tr>
+                <tr><th>{m.eventsUpdatedAt()}</th><td>{formatDate(viewEvent.updatedAt)}</td></tr>
                 {#if viewEvent.approvedAt}
-                  <tr><th>Approved At</th><td>{formatDate(viewEvent.approvedAt)}</td></tr>
+                  <tr><th>{m.eventsApprovedAt()}</th><td>{formatDate(viewEvent.approvedAt)}</td></tr>
                 {/if}
                 {#if viewEvent.approvedBy}
-                  <tr><th>Approved By</th><td><code class="small">{viewEvent.approvedBy}</code></td></tr>
+                  <tr><th>{m.eventsApprovedBy()}</th><td><code class="small">{viewEvent.approvedBy}</code></td></tr>
                 {/if}
               </tbody>
             </table>
 
             {#if viewEvent.rawBody}
               <hr />
-              <h6 class="mb-2">Raw Body</h6>
+              <h6 class="mb-2">{m.eventsRawBody()}</h6>
               <pre class="bg-dark text-light p-3 rounded small" style="max-height:250px;overflow-y:auto">{JSON.stringify(viewEvent.rawBody, null, 2)}</pre>
             {/if}
 
@@ -706,7 +706,7 @@
                   </select>
                   <span class="text-inverse text-opacity-50 small">=</span>
                   <input type="text" class="form-control form-control-sm" bind:value={tmplMatchValue} disabled={tmplLoading} placeholder="value" />
-                  <button class="btn btn-sm btn-outline-secondary" type="button" onclick={() => { tmplMatchValue = '' }} disabled={tmplLoading} title="Clear">
+                  <button class="btn btn-sm btn-outline-secondary" type="button" onclick={() => { tmplMatchValue = '' }} disabled={tmplLoading} title={m.actionClear()}>
                     <i class="bi bi-x"></i>
                   </button>
                 </div>
@@ -717,7 +717,7 @@
                 <div class="d-flex align-items-center mb-2">
                   <span class="form-label fw-semibold small mb-0 flex-grow-1">{m.ingestTemplateMappings()}</span>
                   <button class="btn btn-sm btn-outline-theme" type="button" onclick={() => { tmplMappings = [...tmplMappings, { sourcePath: '', targetPath: '', required: false }] }} disabled={tmplLoading}>
-                    <i class="bi bi-plus-lg me-1"></i>Add
+                    <i class="bi bi-plus-lg me-1"></i>{m.actionAdd()}
                   </button>
                 </div>
                 {#if tmplMappings.length === 0}
@@ -734,9 +734,9 @@
                     <table class="table table-sm align-middle mb-0">
                       <thead>
                         <tr>
-                          <th style="width:35%">Source Path</th>
-                          <th>Target Path</th>
-                          <th style="width:80px" class="text-center">Required</th>
+                          <th style="width:35%">{m.ingestMappingSourcePath()}</th>
+                          <th>{m.ingestMappingTargetPath()}</th>
+                          <th style="width:80px" class="text-center">{m.ingestMappingRequired()}</th>
                           <th style="width:40px"></th>
                         </tr>
                       </thead>
@@ -761,7 +761,7 @@
                                 onchange={(e) => { tmplMappings[i] = { ...tmplMappings[i], targetPath: e.currentTarget.value } }}
                                 disabled={tmplLoading}
                               >
-                                <option value="">— select —</option>
+                                <option value="">— {m.actionSelect()} —</option>
                                 {#each TARGET_PATHS as grp}
                                   <optgroup label={grp.group}>
                                     {#each grp.paths as p}
@@ -769,7 +769,7 @@
                                     {/each}
                                   </optgroup>
                                 {/each}
-                                <option value={CUSTOM_TARGET}>custom…</option>
+                                <option value={CUSTOM_TARGET}>{m.ingestMappingTargetCustom()}</option>
                               </select>
                               {#if row.targetPath === CUSTOM_TARGET}
                                 <input

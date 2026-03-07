@@ -16,5 +16,10 @@
   "ingestBulkApprove": "อนุมัติทั้งหมด",
   "ingestBulkReject": "ปฏิเสธทั้งหมด",
   "ingestBulkApplyTemplate": "ใช้เทมเพลต",
-  "ingestBulkDelete": "ลบทั้งหมด"
+  "ingestBulkDelete": "ลบทั้งหมด",
+  "ingestMappingSourcePath": "พาธต้นทาง",
+  "ingestMappingTargetPath": "พาธปลายทาง",
+  "ingestMappingRequired": "จำเป็น",
+  "ingestMappingTargetCustom": "กำหนดเอง…",
+  "ingestEventId": "Event ID"
 }

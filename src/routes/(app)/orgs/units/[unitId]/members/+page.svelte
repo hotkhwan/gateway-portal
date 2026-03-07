@@ -313,7 +313,7 @@
             </th>
             <th>{m.unitMembersTableName()}</th>
             <th>{m.unitMembersTableRoles()}</th>
-            <th>Status</th>
+            <th>{m.orgUsersTableStatus()}</th>
           </tr>
         </thead>
         <tbody>
@@ -422,7 +422,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeRemoveModal}
           ></button>
         </div>
@@ -487,7 +487,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeAssignModal}
           ></button>
         </div>

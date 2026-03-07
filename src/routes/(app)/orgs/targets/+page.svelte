@@ -327,7 +327,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={() => (showModal = false)}
           ></button>
         </div>

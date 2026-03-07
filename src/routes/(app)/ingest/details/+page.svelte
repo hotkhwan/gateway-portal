@@ -169,7 +169,7 @@
             </td>
             <td>
               <span class="badge {getStatusBadge(event.status)}">
-                {event.status.replace('_', ' ').toUpperCase()}
+                {event.status === 'delivered' ? m.eventsStatusDelivered() : event.status === 'pending_delivery' ? m.eventsStatusPendingDelivery() : event.status === 'partial_delivery' ? m.eventsStatusPartialDelivery() : event.status === 'failed' ? m.eventsStatusFailed() : event.status}
               </span>
             </td>
             <td>
@@ -264,7 +264,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={() => (showViewModal = false)}
           ></button>
         </div>

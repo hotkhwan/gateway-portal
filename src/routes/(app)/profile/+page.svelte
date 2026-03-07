@@ -234,7 +234,7 @@
                 class="form-control"
                 bind:value={email}
                 disabled={profileLoading}
-                placeholder="user@example.com"
+                placeholder={m.profileEmailPlaceholder()}
               />
             </div>
             <div class="col-12">
@@ -358,7 +358,7 @@
 
           <div class="row g-3 mb-3">
             <div class="col-sm-4">
-              <label class="form-label fw-semibold" for="mapLat">Latitude</label>
+              <label class="form-label fw-semibold" for="mapLat">{m.profileLatitude()}</label>
               <input
                 id="mapLat"
                 type="number"
@@ -369,7 +369,7 @@
               />
             </div>
             <div class="col-sm-4">
-              <label class="form-label fw-semibold" for="mapLng">Longitude</label>
+              <label class="form-label fw-semibold" for="mapLng">{m.profileLongitude()}</label>
               <input
                 id="mapLng"
                 type="number"
@@ -402,9 +402,9 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">
+            <div class="form-label fw-semibold">
               <i class="bi bi-map me-1"></i>{m.profileMapLocation()}
-            </label>
+            </div>
             <small class="text-inverse text-opacity-50 ms-2">{m.eventsLocationHint()}</small>
             {#if showMap}
               {#key `${mapLat},${mapLng}`}
