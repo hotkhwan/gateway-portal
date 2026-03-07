@@ -32,5 +32,7 @@
   "of": " จาก ",
   "usersSelected": "ผู้ใช้ที่เลือก",
   "actionPrevPage": "หน้าก่อนหน้า",
-  "actionNextPage": "หน้าถัดไป"
+  "actionNextPage": "หน้าถัดไป",
+  "actionSelect": "เลือก",
+  "actionApply": "ใช้งาน"
 }

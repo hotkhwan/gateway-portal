@@ -674,7 +674,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={() => (showModal = false)}
           ></button>
         </div>
@@ -801,7 +801,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={() => (showRemoveModal = false)}
           ></button>
         </div>
@@ -870,7 +870,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeAssignModal}
           ></button>
         </div>

@@ -141,7 +141,7 @@
         // Validate all rows have userId
         const invalidRow = inviteUsers.find((u) => !u.userId.trim())
         if (invalidRow) {
-          inviteError = 'Please fill in all User IDs'
+          inviteError = m.orgUsersInviteUserIdsRequired()
           return
         }
         await inviteOrgUsers($activeOrgId, inviteUsers)
@@ -149,7 +149,7 @@
         // Validate all rows have email
         const invalidRow = emailInvites.find((u) => !u.email.trim())
         if (invalidRow) {
-          inviteError = 'Please fill in all Email addresses'
+          inviteError = m.orgUsersInviteEmailsRequired()
           return
         }
         // Invite each email separately
@@ -554,7 +554,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeInviteModal}
           ></button>
         </div>
@@ -578,7 +578,7 @@
                 aria-selected={inviteMode === 'email'}
               >
                 <i class="bi bi-envelope me-1"></i>
-                New User (Email)
+                {m.orgUsersInviteTabEmail()}
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -591,21 +591,21 @@
                 aria-selected={inviteMode === 'existing'}
               >
                 <i class="bi bi-person-video2 me-1"></i>
-                Existing Users
+                {m.orgUsersInviteTabExisting()}
               </button>
             </li>
           </ul>
 
           <!-- Email Invite Tab -->
           {#if inviteMode === 'email'}
-            <h6 class="mb-3 fw-semibold">Invite by Email</h6>
+            <h6 class="mb-3 fw-semibold">{m.orgUsersInviteByEmail()}</h6>
             <div class="vstack gap-2" role="group" aria-label="Email invites">
               {#each emailInvites as invite, index}
                 <div class="input-group">
                   <input
                     type="email"
                     class="form-control"
-                    placeholder="user@example.com"
+                    placeholder={m.orgUsersInviteEmailPlaceholder()}
                     bind:value={invite.email}
                     disabled={inviteLoading}
                   />
@@ -637,12 +637,12 @@
                 disabled={inviteLoading}
               >
                 <i class="bi bi-plus-lg me-1"></i>
-                Add Email
+                {m.orgUsersInviteAddEmail()}
               </button>
             </div>
           {:else}
             <!-- Existing Users Tab -->
-            <h6 class="mb-3 fw-semibold">Select Existing Users</h6>
+            <h6 class="mb-3 fw-semibold">{m.orgUsersInviteSelectExisting()}</h6>
             <div
               class="vstack gap-2"
               role="group"
@@ -663,7 +663,7 @@
                     type="button"
                     onclick={() => openUserPicker(index)}
                     disabled={inviteLoading}
-                    title="Select User"
+                    title={m.orgUsersInviteSelectUser()}
                   >
                     <i class="bi bi-person-video2"></i>
                   </button>
@@ -752,7 +752,7 @@
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeRemoveModal}
           ></button>
         </div>
@@ -813,11 +813,11 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content bg-inverse-subtle">
         <div class="modal-header">
-          <h5 class="modal-title">Select User</h5>
+          <h5 class="modal-title">{m.orgUsersPickerTitle()}</h5>
           <button
             type="button"
             class="btn-close"
-            aria-label="Close"
+            aria-label={m.actionClose()}
             onclick={closeUserPickerModal}
           ></button>
         </div>
@@ -836,7 +836,7 @@
               <input
                 type="text"
                 class="form-control"
-                placeholder="Search users..."
+                placeholder={m.orgUsersPickerSearchPlaceholder()}
                 bind:value={userSearch}
                 onkeydown={(e) => {
                   if (e.key === 'Enter') handleUserSearch()
@@ -866,7 +866,7 @@
                 </div>
               </div>
             {:else if allUsers.length === 0}
-              <div class="text-center py-3 text-muted">No users found</div>
+              <div class="text-center py-3 text-muted">{m.orgUsersPickerNoResults()}</div>
             {:else}
               {#each allUsers as user (user.id)}
                 <button

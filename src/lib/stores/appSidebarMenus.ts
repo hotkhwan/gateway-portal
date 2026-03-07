@@ -24,7 +24,21 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		textKey: 'navEvents',
 		children: [
 			{ id: 'eventsManagement', url: 'ingest/management', textKey: 'eventsManagement' },
-			{ id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' }
+			{ id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' },
+			{ id: 'ingestMappingTemplates', url: 'ingest/mappingTemplates', textKey: 'ingestMappingTemplatesTitle' }
+		]
+	},
+
+	// ===== Delivery =====
+	{
+		kind: 'link',
+		id: 'delivery',
+		icon: 'bi bi-send',
+		textKey: 'navDelivery',
+		children: [
+			{ id: 'deliveryTargets', url: 'delivery/targets', textKey: 'deliveryTargetsTitle' },
+			{ id: 'deliveryTemplates', url: 'delivery/templates', textKey: 'deliveryTemplatesTitle' },
+			{ id: 'deliveryDlq', url: 'delivery/dlq', textKey: 'deliveryDlqTitle' }
 		]
 	},
 
@@ -78,22 +92,25 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	{
 		kind: 'link',
 		id: 'profile',
-		url: 'comingsoon',
-		icon: 'bi bi-people',
+		url: 'profile',
+		icon: 'bi bi-person-circle',
 		textKey: 'navProfile'
 	},
 	{
 		kind: 'link',
 		id: 'settings',
-		url: 'comingsoon',
+		url: 'settings',
 		icon: 'bi bi-gear',
 		textKey: 'navSettings'
 	},
 	{
 		kind: 'link',
 		id: 'subscription',
-		url: 'subscription',
 		icon: 'bi bi-gem',
-		textKey: 'navSubscription'
+		textKey: 'navSubscription',
+		children: [
+			{ id: 'subscriptionPackages', url: 'subscriptions/packages', textKey: 'subscriptionPackagesTitle' },
+			{ id: 'subscriptionCurrent', url: 'subscriptions/current', textKey: 'subscriptionCurrentTitle' }
+		]
 	}
 ])

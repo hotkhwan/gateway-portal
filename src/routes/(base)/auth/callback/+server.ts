@@ -1,41 +1,51 @@
-// src/routes/auth/callback/+server.ts
+// src/routes/(base)/auth/callback/+server.ts
 import type { RequestHandler } from './$types'
 import { redirect } from '@sveltejs/kit'
 
-const publicAppBasePath = process.env.PUBLIC_APP_BASE_PATH || ''
+const PUBLIC_APP_BASE_PATH = process.env.PUBLIC_APP_BASE_PATH || ''
 
 function normalizeBase(v?: string) {
   if (!v || v === '/') return ''
   return '/' + v.replace(/^\/+|\/+$/g, '')
 }
 
-function cookieSecurity(url: URL) {
-  const isHttps = url.protocol === 'https:'
-  if (!isHttps) return { sameSite: 'lax' as const, secure: false }
-  return { sameSite: 'lax' as const, secure: true }
-}
-
 export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
+  const base = normalizeBase(PUBLIC_APP_BASE_PATH)
   const code = url.searchParams.get('code')
-  const state = url.searchParams.get('state')
-  if (!code || !state) throw redirect(302, '/')
+  const stateParam = url.searchParams.get('state')
 
-  const base = normalizeBase(publicAppBasePath)
-  const cookiePath = '/'
-
-  const savedState = cookies.get('kc_state')
-  if (savedState !== state) {
-    console.error(`Auth state mismatch. Cookie: ${savedState}, Param: ${state}`)
-    throw redirect(302, `${base}/`)
+  if (!code || !stateParam) {
+    console.error('[auth/callback] missing code or state param')
+    throw redirect(302, `${base}/auth/error?error=${encodeURIComponent('Missing auth params')}&type=auth_failed`)
   }
 
-  const redirectUri = `${url.origin}${base}/auth/callback`
+  // ── 1. verify state (CSRF protection)
+  const savedState = cookies.get('kc_state')
 
-  // ✅ FIX: route ต้องตรงกับไฟล์ (base)/api/auth/oauth
-  const bffUrl = new URL(`${base}/api/auth/oauth`, url.origin)
+  if (!savedState) {
+    // Cookie missing — likely caused by cross-origin redirect (IP vs hostname mismatch)
+    // or browser privacy settings dropping cookies across external redirect
+    console.error(`[auth/callback] kc_state cookie missing. state_param=${stateParam} origin=${url.origin}`)
+    console.error('[auth/callback] Tip: register this redirect_uri in Keycloak client:',
+      `${url.origin}${base}/auth/callback`)
+    throw redirect(302,
+      `${base}/auth/error?error=${encodeURIComponent('Session expired or origin mismatch. Please try again.')}&type=state_missing`
+    )
+  }
 
-  console.log('Exchanging token with code:', code)
-  console.log('BFF endpoint:', bffUrl.toString())
+  if (savedState !== stateParam) {
+    console.error(`[auth/callback] state mismatch. cookie=${savedState} param=${stateParam}`)
+    throw redirect(302,
+      `${base}/auth/error?error=${encodeURIComponent('Invalid auth state. Please try again.')}&type=state_mismatch`
+    )
+  }
+
+  // ── 2. reconstruct redirect_uri using saved origin (so it matches what was sent to Keycloak)
+  const savedOrigin = cookies.get('kc_origin') || `${url.protocol}//${url.host}`
+  const redirectUri = `${savedOrigin}${base}/auth/callback`
+
+  // ── 3. exchange code for tokens via BFF
+  const bffUrl = new URL(`${url.origin}${base}/api/auth/oauth`)
 
   const res = await fetch(bffUrl, {
     method: 'POST',
@@ -45,51 +55,53 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    console.error(`Failed to exchange token. Status: ${res.status}`)
-    console.error(`Response: ${text}`)
+    console.error(`[auth/callback] token exchange failed. status=${res.status} body=${text}`)
 
-    // Detect API connection errors (503, connection refused, etc.)
-    const isApiConnectionError =
+    const isConnectionError =
       res.status === 503 ||
       text.includes('Connection refused') ||
-      text.includes('remote connection failure') ||
-      text.includes('transport failure')
+      text.includes('remote connection failure')
 
-    const errorParam = isApiConnectionError
-      ? encodeURIComponent(`API Gateway Error (${res.status}): ${text.substring(0, 200)}`)
-      : encodeURIComponent(`Authentication failed (Status: ${res.status})`)
+    const errorMsg = isConnectionError
+      ? `API Gateway Error (${res.status}): ${text.substring(0, 200)}`
+      : `Authentication failed (Status: ${res.status})`
 
-    const errorType = isApiConnectionError ? 'api_connection' : 'auth_failed'
+    const errorType = isConnectionError ? 'api_connection' : 'auth_failed'
 
-    throw redirect(302, `${base}/auth/error?error=${errorParam}&type=${errorType}`)
+    throw redirect(302,
+      `${base}/auth/error?error=${encodeURIComponent(errorMsg)}&type=${errorType}`
+    )
   }
 
-  // backend ส่ง format แบบ gmod.SendSuccess -> {status:true, detail:{...}}
   const wrapped = await res.json() as any
   const detail = wrapped?.detail ?? wrapped
 
-  const sec = cookieSecurity(url)
+  // ── 4. set session cookies
+  const sec = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: url.protocol === 'https:',
+    path: '/'
+  }
 
   cookies.set('session_token', detail.access_token, {
-    httpOnly: true,
     ...sec,
-    path: cookiePath,
-    maxAge: 3600
+    maxAge: detail.expires_in ?? 3600
   })
 
   if (detail.refresh_token) {
     cookies.set('session_refresh', detail.refresh_token, {
-      httpOnly: true,
       ...sec,
-      path: cookiePath,
-      maxAge: 3600 * 24 * 30
+      maxAge: detail.refresh_expires_in ?? 86400
     })
   }
 
-  cookies.delete('kc_state', { path: cookiePath })
+  // ── 5. cleanup temp cookies
+  cookies.delete('kc_state', { path: '/' })
+  cookies.delete('kc_origin', { path: '/' })
 
   const returnTo = cookies.get('return_to') || `${base}/dashboard`
-  cookies.delete('return_to', { path: cookiePath })
+  cookies.delete('return_to', { path: '/' })
 
   throw redirect(302, returnTo)
 }
