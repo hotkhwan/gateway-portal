@@ -1,28 +1,61 @@
-# AISOM Web Portal
+# AISOM Gateway Portal
 
-SvelteKit + Vite + Bun + Paraglide (inlang) New
-รองรับ Multi-language (i18n) แบบ production-grade
-
----
-
-## 🚀 Tech Stack
-
-* **SvelteKit**
-* **Vite**
-* **Bun**
-* **Paraglide (inlang) – i18n**
-* **TypeScript**
+> Internal admin web portal for the AISOM platform
+> Stack: SvelteKit 2 · Svelte 5 · TypeScript · Bootstrap 5 · Paraglide i18n · Bun
 
 ---
 
-## 📦 Prerequisites
+## What This Is
 
-ต้องมี:
+Gateway Portal is the operator-facing frontend for managing the AISOM event ingestion platform. It connects to **gateway-api** (Go backend) via a BFF proxy and Keycloak for authentication.
 
-* **Bun** ≥ 1.1
-  👉 [https://bun.sh](https://bun.sh)
+**Key modules:**
+- **Ingest Management** — review, map, approve/reject device events
+- **Mapping Templates** — configure field-mapping rules and fingerprint auto-matching
+- **Canonical Event Viewer** — browse normalized events
+- **Dashboard** — pipeline stats, approval rates, DLQ monitoring
+- **User/Org Admin** — tenant, role, and Keycloak user management
+- **Device Management** — ATA, KControl, KWatch, KLive, iWown devices
 
-ตรวจสอบ:
+---
+
+## Tech Stack
+
+| | |
+|---|---|
+| Framework | SvelteKit 2 (adapter-node) |
+| UI | Svelte 5 (runes syntax) |
+| Language | TypeScript |
+| CSS | Bootstrap 5 |
+| i18n | Paraglide (inlang) — Thai + English |
+| Runtime | Bun ≥ 1.1 |
+| Auth | Keycloak (OIDC) |
+| Authorization | Permify (via backend) |
+
+---
+
+## Architecture
+
+```
+Browser
+  → SvelteKit BFF (/api/[...path] proxy)
+    → gateway-api (Go backend)
+      → MongoDB · Redis · Kafka · Keycloak · Permify
+```
+
+Route groups:
+
+| Group | Purpose | Auth |
+|---|---|---|
+| `(app)/` | Protected admin pages | JWT + X-Active-Org |
+| `(base)/` | BFF proxy + auth handlers | Server-only |
+| `(public)/` | Public pages | None |
+
+---
+
+## Prerequisites
+
+- **Bun** ≥ 1.1 → [bun.sh](https://bun.sh)
 
 ```bash
 bun --version
@@ -30,196 +63,153 @@ bun --version
 
 ---
 
-## 📥 Installation
-
-### 1. Clone repository
+## Installation
 
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
-```
-
----
-
-### 2. Install dependencies
-
-```bash
+git clone <repo-url>
+cd gateway-portal
 bun install
 ```
 
 ---
 
-## 🌐 i18n (Paraglide / inlang)
-
-### ▶️ Init ครั้งแรก (จำเป็น)
-
-```bash
-bunx @inlang/paraglide-js@latest init
-```
-
-จะสร้าง:
-
-* `project.inlang/`
-* config พื้นฐานสำหรับ multi-language
-
----
-
-### 📝 Messages
-
-ไฟล์ข้อความอยู่ที่:
-
-```
-messages/
-├─ en.json
-├─ th.json
-```
-
-แก้ข้อความที่นี่เท่านั้น
-**ห้ามแก้ไฟล์ที่ generate แล้ว**
-
----
-
-### 🔧 Compile i18n (manual)
-
-```bash
-bunx @inlang/paraglide-js@latest compile
-```
-
-> output จะอยู่ที่:
-
-```
-src/paraglide/
-```
-
-> ❗ directory นี้เป็น **source artifact**
-> ห้าม import ตรง
-
----
-
-### ⚡ Dev mode (auto sync)
-
-ตอน `bun dev`:
-
-* `paraglideVitePlugin`
-* จะ copy + sync ไฟล์ไปที่:
-
-```
-src/lib/i18n/
-```
-
-ดังนั้นใน code ให้ import แบบนี้เสมอ:
-
-```ts
-import { m } from '$lib/i18n/messages'
-```
-
----
-
-## ▶️ Run (Development)
+## Dev Server
 
 ```bash
 bun dev
 ```
 
-* URL: [http://localhost:5173](http://localhost:5173)
-* รองรับ HMR
-* i18n sync อัตโนมัติ
+URL: http://localhost:5173 (or `PUBLIC_APP_BASE_PORT`)
+Supports HMR + auto i18n sync.
 
 ---
 
-## 🏗 Build (Production)
-
-### 1. Compile i18n
+## Build
 
 ```bash
-bunx @inlang/paraglide-js@latest compile
-```
+# 1. compile i18n (or use bun dev which does it automatically)
+bun run i18n:merge
 
-### 2. Build app
-
-```bash
+# 2. build
 bun run build
-```
 
----
-
-## ▶️ Preview (Production-like)
-
-```bash
+# 3. preview
 bun run preview
 ```
 
-หรือ
+---
+
+## ENV Variables
+
+Copy `.env.example` → `.env.local` and fill in:
+
+| Var | Side | Purpose |
+|---|---|---|
+| `PUBLIC_APP_BASE_PATH` | both | Base path (e.g. `/aisom`) |
+| `PUBLIC_APP_BASE_PORT` | server | HTTP port |
+| `API_BASE` | server | Backend URL (e.g. `https://gateway.aisom.cloud`) |
+| `PUBLIC_KC_ISSUER_URI` | server | Keycloak issuer URL |
+| `PUBLIC_KC_REALM` | server | Keycloak realm |
+| `PUBLIC_KC_CLIENT_FE_ID` | server | Keycloak FE client ID |
+| `AUTH_REFRESH_SKEW_SEC` | server | Token refresh lead time in seconds (default: 45) |
+| `COOKIE_SECURE` | server | `true` in production |
+| `PUBLIC_APP_ORIGIN` | server | Override origin for redirect_uri (optional) |
+| `AUTH_LOGOUT_PATH` | server | Backend logout path (default: `/auth/signout`) |
+
+`PUBLIC_*` vars are safe for the browser. Others are server-only.
+
+---
+
+## i18n (Paraglide)
+
+**Edit source files only:**
+```
+i18n/
+  en/<domain>.json    ← edit here
+  th/<domain>.json    ← edit here
+```
+
+**Never edit generated files:**
+```
+src/lib/i18n/         ← generated — do not edit
+src/paraglide/        ← generated — do not edit
+```
 
 ```bash
-bun run start
+# after editing i18n source files
+bun run i18n:merge
+
+# in code
+import { m } from '$lib/i18n/messages'
+{m.ingestManagementTitle()}
 ```
 
----
-
-## 🌍 Language Strategy
-
-ตั้งค่าใน `vite.config.ts`:
-
-```ts
-paraglideVitePlugin({
-  project: './project.inlang',
-  outdir: './src/lib/i18n',
-  strategy: ['url', 'cookie', 'baseLocale']
-})
-```
-
-รองรับ:
-
-* URL (`/th`, `/en`)
-* Cookie
-* Base locale fallback
+Language strategy: `localStorage → cookie → baseLocale`
 
 ---
 
-## 🔠 Font & Thai Language Note
-
-ภาษาไทยควรใช้ font เฉพาะ
-แนะนำ:
-
-* **Noto Sans Thai**
-* **Sarabun**
-
-และเพิ่ม `line-height` ให้เหมาะสม
-เพื่อให้การอ่านสบายตา
-
----
-
-## 📁 Project Structure (สำคัญ)
+## Project Structure
 
 ```
 src/
-├─ lib/
-│  └─ i18n/        # ← ใช้ import จากตรงนี้เท่านั้น
-├─ paraglide/     # ← auto generated (DO NOT EDIT)
-├─ routes/
+  routes/
+    (app)/          ← protected pages
+    (base)/         ← BFF proxy + auth handlers
+    (public)/       ← public pages
+  lib/
+    api/            ← API call functions (one per domain)
+    components/     ← shared Svelte components
+    types/          ← TypeScript interfaces
+    stores/         ← Svelte stores
+    server/         ← server-only helpers
+    utils/          ← shared client utilities
+    i18n/           ← generated by paraglide (do not edit)
+i18n/
+  en/               ← source translations (edit here)
+  th/               ← Thai translations (edit here)
 ```
 
 ---
 
-## ⚠️ Important Notes
+## Scripts
 
-* ❌ ห้ามแก้ไฟล์ใน `src/paraglide`
-* ✅ แก้เฉพาะ `messages/*.json`
-* ✅ import i18n ผ่าน `$lib/i18n/*` เท่านั้น
-* ✅ run `compile` ก่อน build เสมอ
-
----
-
-## 📌 Next Steps (Optional)
-
-* Locale switcher (dropdown)
-* Bind locale กับ user profile / Keycloak
-* SEO-aware `/th /en` routing
-* Theme per language (TH / EN)
+```bash
+bun dev             # dev server + auto i18n
+bun run build       # production build
+bun run start       # start production server
+bun run i18n:merge  # compile i18n
+bun run check       # TypeScript + Svelte check
+bun run lint        # ESLint
+```
 
 ---
 
-## 📄 License
+## Development Rules
+
+See `.claude/` for full baseline rules:
+
+- [CLAUDE.md](.claude/CLAUDE.md) — project overview and key conventions
+- [rule/code-style.md](.claude/rule/code-style.md) — architecture, patterns, component conventions
+- [rule/security.md](.claude/rule/security.md) — auth, cookies, XSS, secret handling
+- [rule/test.md](.claude/rule/test.md) — testing guidelines and CI checklist
+
+**Quick rules:**
+- Svelte 5 runes only (`$state`, `$derived`, `$effect`) — no Svelte 4 syntax
+- All API calls through `src/lib/api/` — never fetch from `+page.svelte`
+- BFF injects `Authorization` — never set manually from client
+- All timestamps are RFC3339 UTC strings — convert to `Date` only in display layer
+- Always use `r.details` (never `r.detail`) from API responses
+
+---
+
+## Fonts — Thai Language
+
+Thai UI should use:
+- **Noto Sans Thai** or **Sarabun**
+- Add appropriate `line-height` for readability
+
+---
+
+## License
 
 Private / Internal use
