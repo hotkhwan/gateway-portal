@@ -2,18 +2,14 @@
 import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, IngestConfig } from '$lib/types/org'
 import type {
-	PendingEvent,
-	ApprovedEvent,
 	MappingTemplate,
 	FieldMapping,
-	MatchRule,
+	MatchCondition,
 	TemplateDeliveryTarget,
 	ClassificationRule,
 	MessageTemplate,
 	DLQConfig,
-	MatchCondition,
-	BulkResult,
-	EventListResponse,
+	PayloadCondition,
 	TemplateListResponse,
 	DashboardStats,
 	DlqMessage,
@@ -22,23 +18,21 @@ import type {
 	DlqStage,
 	SourceProfile,
 	DeviceManagement,
-	TemplateReview
+	UnknownPayloadReview,
+	RejectedPayloadPattern,
+	MappingSuggestion
 } from '$lib/types/ingest'
 
 // Re-export types for consumers
 export type {
-	PendingEvent,
-	ApprovedEvent,
 	MappingTemplate,
 	FieldMapping,
-	MatchRule,
+	MatchCondition,
 	TemplateDeliveryTarget,
 	ClassificationRule,
 	MessageTemplate,
 	DLQConfig,
-	MatchCondition,
-	BulkResult,
-	EventListResponse,
+	PayloadCondition,
 	TemplateListResponse,
 	DashboardStats,
 	DlqMessage,
@@ -47,9 +41,11 @@ export type {
 	DlqStage,
 	SourceProfile,
 	DeviceManagement,
-	TemplateReview
+	UnknownPayloadReview,
+	RejectedPayloadPattern,
+	MappingSuggestion
 }
-export type { EventStatusName, PayloadCondition, ClassificationSet } from '$lib/types/ingest'
+export type { ClassificationSet } from '$lib/types/ingest'
 
 const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
@@ -93,18 +89,14 @@ async function apiFetchNoOrg<T>(
 
 export async function getIngestConfig(orgId: string): Promise<IngestConfig> {
 	const r = await apiFetch<IngestConfig>('/ingest/', orgId)
-	const result = r.details ?? r.detail
-	if (!result) throw new Error('ingest config not found')
-	return result
+	if (!r.details) throw new Error('ingest config not found')
+	return r.details
 }
 
 export async function rotateIngestSecret(orgId: string): Promise<IngestConfig> {
-	const r = await apiFetch<IngestConfig>('/ingest/rotateSecret', orgId, {
-		method: 'POST'
-	})
-	const result = r.details ?? r.detail
-	if (!result) throw new Error('ingest config not found')
-	return result
+	const r = await apiFetch<IngestConfig>('/ingest/rotateSecret', orgId, { method: 'POST' })
+	if (!r.details) throw new Error('ingest config not found')
+	return r.details
 }
 
 // ────────────────────────────────────────────
@@ -126,143 +118,21 @@ export async function getDashboardStats(
 	}
 	if (params?.status) q.set('status', params.status)
 	if (params?.eventType) q.set('eventType', params.eventType)
-
 	const url = `/ingest/dashboard${q.toString() ? `?${q}` : ''}`
 	const r = await apiFetch<DashboardStats>(url, orgId)
-	const result = r.details ?? r.detail
-	if (!result) throw new Error('dashboard stats not found')
-	return result
+	if (!r.details) throw new Error('dashboard stats not found')
+	return r.details
 }
 
 // ────────────────────────────────────────────
-// Event Management (Pending)
-// ────────────────────────────────────────────
-
-export async function listPendingEvents(
-	orgId: string,
-	page = 1,
-	perPage = 20,
-	params?: { search?: string; eventType?: string; status?: string; sortField?: string; sortOrder?: string }
-): Promise<EventListResponse> {
-	const q = new URLSearchParams({
-		page: String(page),
-		perPages: String(perPage),
-		sortField: params?.sortField ?? 'createdAt',
-		sortOrder: params?.sortOrder ?? 'desc'
-	})
-	if (params?.search) q.set('search', params.search)
-	if (params?.eventType) q.set('eventType', params.eventType)
-	if (params?.status) q.set('status', params.status)
-
-	const res = await fetch(`${BASE}/ingest/management?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
-	})
-	const json = await res.json() as {
-		details: PendingEvent[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
-	}
-	if (!res.ok) throw json
-	return {
-		details: json.details ?? [],
-		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
-		total: json.pagination?.totalRecords ?? 0,
-		totalPages: json.pagination?.totalPages ?? 0
-	}
-}
-
-export async function getPendingEvent(orgId: string, eventId: string): Promise<PendingEvent> {
-	const r = await apiFetch<PendingEvent>(`/ingest/management/${eventId}`, orgId)
-	const result = (r.details as unknown as PendingEvent) ?? r.detail
-	if (!result) throw new Error('pending event not found')
-	return result
-}
-
-export async function updatePendingEvent(
-	orgId: string,
-	eventId: string,
-	data: { eventType?: string; name?: string; lat?: number; lng?: number; note?: string }
-): Promise<void> {
-	await apiFetch<unknown>(`/ingest/management/${eventId}`, orgId, {
-		method: 'PATCH',
-		body: JSON.stringify(data)
-	})
-}
-
-export async function approveEvent(
-	orgId: string,
-	eventId: string,
-	note?: string
-): Promise<void> {
-	await apiFetch<unknown>(`/ingest/management/${eventId}/approve`, orgId, {
-		method: 'POST',
-		body: JSON.stringify({ note: note ?? '' })
-	})
-}
-
-export async function rejectEvent(
-	orgId: string,
-	eventId: string,
-	note: string
-): Promise<void> {
-	await apiFetch<unknown>(`/ingest/management/${eventId}/reject`, orgId, {
-		method: 'POST',
-		body: JSON.stringify({ note })
-	})
-}
-
-export async function deletePendingEvent(orgId: string, eventId: string): Promise<void> {
-	await apiFetch<unknown>(`/ingest/management/${eventId}`, orgId, { method: 'DELETE' })
-}
-
-// ────────────────────────────────────────────
-// Bulk Operations
-// ────────────────────────────────────────────
-
-export async function bulkApprove(orgId: string, eventIds: string[]): Promise<BulkResult> {
-	const r = await apiFetch<BulkResult>('/ingest/management/bulk/approve', orgId, {
-		method: 'POST',
-		body: JSON.stringify({ eventIds })
-	})
-	return (r.details as unknown as BulkResult) ?? r.detail ?? { succeeded: [], failed: [] }
-}
-
-export async function bulkReject(orgId: string, eventIds: string[]): Promise<BulkResult> {
-	const r = await apiFetch<BulkResult>('/ingest/management/bulk/reject', orgId, {
-		method: 'POST',
-		body: JSON.stringify({ eventIds })
-	})
-	return (r.details as unknown as BulkResult) ?? r.detail ?? { succeeded: [], failed: [] }
-}
-
-export async function bulkDelete(orgId: string, eventIds: string[]): Promise<BulkResult> {
-	const r = await apiFetch<BulkResult>('/ingest/management/bulk/delete', orgId, {
-		method: 'POST',
-		body: JSON.stringify({ eventIds })
-	})
-	return (r.details as unknown as BulkResult) ?? r.detail ?? { succeeded: [], failed: [] }
-}
-
-export async function bulkApplyTemplate(
-	orgId: string,
-	templateId: string,
-	eventIds: string[]
-): Promise<BulkResult> {
-	const r = await apiFetch<BulkResult>('/ingest/management/bulk/applyTemplate', orgId, {
-		method: 'POST',
-		body: JSON.stringify({ templateId, eventIds })
-	})
-	return (r.details as unknown as BulkResult) ?? r.detail ?? { succeeded: [], failed: [] }
-}
-
-// ────────────────────────────────────────────
-// Mapping Templates
+// Mapping Templates (V3 — endpoint: /ingest/templates)
 // ────────────────────────────────────────────
 
 export async function listTemplates(
 	orgId: string,
 	page = 1,
-	perPage = 20
+	perPage = 20,
+	params?: { search?: string; sourceFamily?: string; enabled?: boolean }
 ): Promise<TemplateListResponse> {
 	const q = new URLSearchParams({
 		page: String(page),
@@ -270,7 +140,11 @@ export async function listTemplates(
 		sortField: 'createdAt',
 		sortOrder: 'desc'
 	})
-	const res = await fetch(`${BASE}/ingest/mappingTemplates?${q}`, {
+	if (params?.search) q.set('search', params.search)
+	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
+	if (params?.enabled !== undefined) q.set('enabled', String(params.enabled))
+
+	const res = await fetch(`${BASE}/ingest/templates?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
 	const json = await res.json() as {
@@ -291,35 +165,32 @@ export async function createTemplate(
 	orgId: string,
 	data: {
 		name: string
-		match?: MatchRule
+		enabled?: boolean
+		sourceFamily?: string
+		finalEventType?: string
+		matchAll?: MatchCondition[]
+		matchAny?: MatchCondition[]
+		priority?: number
 		mappings?: FieldMapping[]
 		defaultLocale?: string
 		deliveryTargets?: TemplateDeliveryTarget[]
 		classificationRules?: ClassificationRule[]
 		messageTemplates?: MessageTemplate[]
 		dlq?: DLQConfig
-		// V2 fields
-		sourceFamily?: string
-		finalEventType?: string
-		matchAll?: MatchCondition[]
-		matchAny?: MatchCondition[]
-		priority?: number
 	}
 ): Promise<MappingTemplate> {
-	const r = await apiFetch<MappingTemplate>('/ingest/mappingTemplates', orgId, {
+	const r = await apiFetch<MappingTemplate>('/ingest/templates', orgId, {
 		method: 'POST',
 		body: JSON.stringify(data)
 	})
-	const result = (r.details as unknown as MappingTemplate) ?? r.detail
-	if (!result) throw new Error('template not found in response')
-	return result
+	if (!r.details) throw new Error('template not found in response')
+	return r.details
 }
 
 export async function getTemplate(orgId: string, templateId: string): Promise<MappingTemplate> {
-	const r = await apiFetch<MappingTemplate>(`/ingest/mappingTemplates/${templateId}`, orgId)
-	const result = (r.details as unknown as MappingTemplate) ?? r.detail
-	if (!result) throw new Error('template not found')
-	return result
+	const r = await apiFetch<MappingTemplate>(`/ingest/templates/${templateId}`, orgId)
+	if (!r.details) throw new Error('template not found')
+	return r.details
 }
 
 export async function updateTemplate(
@@ -327,107 +198,32 @@ export async function updateTemplate(
 	templateId: string,
 	data: {
 		name?: string
-		match?: MatchRule
+		enabled?: boolean
+		sourceFamily?: string
+		finalEventType?: string
+		matchAll?: MatchCondition[]
+		matchAny?: MatchCondition[]
+		priority?: number
 		mappings?: FieldMapping[]
 		defaultLocale?: string
 		deliveryTargets?: TemplateDeliveryTarget[]
 		classificationRules?: ClassificationRule[]
 		messageTemplates?: MessageTemplate[]
 		dlq?: DLQConfig
-		// V2 fields
-		sourceFamily?: string
-		finalEventType?: string
-		matchAll?: MatchCondition[]
-		matchAny?: MatchCondition[]
-		priority?: number
 	}
 ): Promise<void> {
-	await apiFetch<unknown>(`/ingest/mappingTemplates/${templateId}`, orgId, {
-		method: 'PATCH',
+	await apiFetch<unknown>(`/ingest/templates/${templateId}`, orgId, {
+		method: 'PUT',
 		body: JSON.stringify(data)
 	})
 }
 
 export async function deleteTemplate(orgId: string, templateId: string): Promise<void> {
-	await apiFetch<unknown>(`/ingest/mappingTemplates/${templateId}`, orgId, { method: 'DELETE' })
+	await apiFetch<unknown>(`/ingest/templates/${templateId}`, orgId, { method: 'DELETE' })
 }
 
 // ────────────────────────────────────────────
-// Event Details (Approved)
-// ────────────────────────────────────────────
-
-interface BackendApprovedEvent {
-	id: string
-	eventId: string
-	name?: string
-	normalizedData: Record<string, unknown>
-	sourceIp?: string
-	ingestedAt?: string
-	approvedAt?: string
-	pendingEventId?: string
-	createdAt: string
-	updatedAt: string
-}
-
-function transformApprovedEvent(e: BackendApprovedEvent): ApprovedEvent {
-	return {
-		approvedEventId: e.id,
-		originalEventId: e.eventId,
-		deviceId: (e.normalizedData as { deviceId?: string })?.deviceId ?? '',
-		normalizedData: e.normalizedData ?? {},
-		deliveredTargets: [],
-		failedTargets: [],
-		deliveredAt: e.ingestedAt ?? e.approvedAt ?? null,
-		status: 'delivered',
-		createdAt: e.createdAt,
-		updatedAt: e.updatedAt
-	}
-}
-
-export async function listApprovedEvents(
-	orgId: string,
-	page = 1,
-	perPage = 20
-): Promise<{ details: ApprovedEvent[]; page: number; perPage: number; total: number; totalPages: number }> {
-	const q = new URLSearchParams({
-		page: String(page),
-		perPage: String(perPage),
-		sortField: 'approvedAt',
-		sortOrder: 'desc'
-	})
-	const res = await fetch(`${BASE}/ingest/details?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
-	})
-	const json = await res.json() as {
-		details: BackendApprovedEvent[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
-	}
-	if (!res.ok) throw json
-	return {
-		details: (json.details ?? []).map(transformApprovedEvent),
-		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
-		total: json.pagination?.totalRecords ?? 0,
-		totalPages: json.pagination?.totalPages ?? 0
-	}
-}
-
-export async function getApprovedEvent(orgId: string, approvedEventId: string): Promise<ApprovedEvent> {
-	const res = await fetch(`${BASE}/ingest/details/${approvedEventId}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
-	})
-	const json = await res.json() as {
-		details?: BackendApprovedEvent | BackendApprovedEvent[]
-		detail?: BackendApprovedEvent
-	}
-	if (!res.ok) throw json
-	const raw = (Array.isArray(json.details) ? json.details[0] : json.details) ?? json.detail
-	if (!raw) throw new Error('approved event not found')
-	return transformApprovedEvent(raw)
-}
-
-// ────────────────────────────────────────────
-// DLQ (Dead Letter Queue)
+// DLQ (Dead Letter Queue) — used by delivery/dlq pages
 // ────────────────────────────────────────────
 
 export async function listDlq(
@@ -475,16 +271,14 @@ export async function listDlq(
 
 export async function getDlqStats(orgId: string): Promise<DlqStats> {
 	const r = await apiFetch<DlqStats>('/ingest/dlq/stats', orgId)
-	const result = (r.details as unknown as DlqStats) ?? r.detail
-	if (!result) throw new Error('DLQ stats not found')
-	return result
+	if (!r.details) throw new Error('DLQ stats not found')
+	return r.details
 }
 
 export async function getDlqDetail(orgId: string, messageId: string): Promise<DlqMessage> {
 	const r = await apiFetch<DlqMessage>(`/ingest/dlq/${messageId}`, orgId)
-	const result = (r.details as unknown as DlqMessage) ?? r.detail
-	if (!result) throw new Error('DLQ message not found')
-	return result
+	if (!r.details) throw new Error('DLQ message not found')
+	return r.details
 }
 
 export async function retryDlq(orgId: string, messageId: string): Promise<void> {
@@ -503,73 +297,36 @@ export async function abandonDlq(orgId: string, messageId: string, reason?: stri
 }
 
 // ────────────────────────────────────────────
-// V2 Source Profiles (global — no orgId)
+// Source Profiles (global — read-only from FE in V3)
 // ────────────────────────────────────────────
 
 export async function listSourceProfiles(): Promise<SourceProfile[]> {
 	const r = await apiFetchNoOrg<SourceProfile[]>('/ingest/sourceProfiles')
-	return (r.details as unknown as SourceProfile[]) ?? []
+	return r.details ?? []
 }
 
 export async function getSourceProfile(sourceFamily: string): Promise<SourceProfile> {
 	const r = await apiFetchNoOrg<SourceProfile>(`/ingest/sourceProfiles/${sourceFamily}`)
-	const result = (r.details as unknown as SourceProfile) ?? r.detail
-	if (!result) throw new Error('source profile not found')
-	return result
-}
-
-export async function createSourceProfile(data: {
-	sourceFamily: string
-	displayName: string
-	multiRef?: boolean
-	refRules?: {
-		primaryRefFields?: string[]
-		secondaryRefFields?: string[]
-		siteFields?: string[]
-	}
-	suggestedMatchFields?: string[]
-}): Promise<SourceProfile> {
-	const r = await apiFetchNoOrg<SourceProfile>('/ingest/sourceProfiles', {
-		method: 'POST',
-		body: JSON.stringify(data)
-	})
-	const result = (r.details as unknown as SourceProfile) ?? r.detail
-	if (!result) throw new Error('source profile not found in response')
-	return result
-}
-
-export async function updateSourceProfile(
-	sourceFamily: string,
-	data: {
-		displayName?: string
-		multiRef?: boolean
-		refRules?: {
-			primaryRefFields?: string[]
-			secondaryRefFields?: string[]
-			siteFields?: string[]
-		}
-		suggestedMatchFields?: string[]
-	}
-): Promise<void> {
-	await apiFetchNoOrg<unknown>(`/ingest/sourceProfiles/${sourceFamily}`, {
-		method: 'PATCH',
-		body: JSON.stringify(data)
-	})
+	if (!r.details) throw new Error('source profile not found')
+	return r.details
 }
 
 // ────────────────────────────────────────────
-// V2 Device Management (org-scoped)
+// Device Management (org-scoped)
 // ────────────────────────────────────────────
 
 export async function listDeviceManagement(
 	orgId: string,
 	page = 1,
-	perPage = 20
+	perPage = 20,
+	params?: { sourceFamily?: string }
 ): Promise<{ details: DeviceManagement[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
 		perPages: String(perPage)
 	})
+	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
+
 	const res = await fetch(`${BASE}/ingest/deviceManagement?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
@@ -589,9 +346,8 @@ export async function listDeviceManagement(
 
 export async function getDeviceManagement(orgId: string, id: string): Promise<DeviceManagement> {
 	const r = await apiFetch<DeviceManagement>(`/ingest/deviceManagement/${id}`, orgId)
-	const result = (r.details as unknown as DeviceManagement) ?? r.detail
-	if (!result) throw new Error('device management record not found')
-	return result
+	if (!r.details) throw new Error('device management record not found')
+	return r.details
 }
 
 export async function createDeviceManagement(
@@ -611,9 +367,8 @@ export async function createDeviceManagement(
 		method: 'POST',
 		body: JSON.stringify(data)
 	})
-	const result = (r.details as unknown as DeviceManagement) ?? r.detail
-	if (!result) throw new Error('device management record not found in response')
-	return result
+	if (!r.details) throw new Error('device management record not found in response')
+	return r.details
 }
 
 export async function updateDeviceManagement(
@@ -628,32 +383,39 @@ export async function updateDeviceManagement(
 	}
 ): Promise<void> {
 	await apiFetch<unknown>(`/ingest/deviceManagement/${id}`, orgId, {
-		method: 'PATCH',
+		method: 'PUT',
 		body: JSON.stringify(data)
 	})
 }
 
+export async function deleteDeviceManagement(orgId: string, id: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/deviceManagement/${id}`, orgId, { method: 'DELETE' })
+}
+
 // ────────────────────────────────────────────
-// V2 Template Reviews (org-scoped)
+// Unknown Payload Reviews (V3)
 // ────────────────────────────────────────────
 
-export async function listTemplateReviews(
+export async function listUnknownPayloadReviews(
 	orgId: string,
 	page = 1,
-	perPage = 10,
-	params?: { status?: string }
-): Promise<{ details: TemplateReview[]; page: number; perPage: number; total: number; totalPages: number }> {
+	perPage = 20,
+	params?: { status?: string; sourceFamily?: string }
+): Promise<{ details: UnknownPayloadReview[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage)
+		perPages: String(perPage),
+		sortField: 'lastSeenAt',
+		sortOrder: 'desc'
 	})
 	if (params?.status) q.set('status', params.status)
+	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
 
-	const res = await fetch(`${BASE}/ingest/templateReviews?${q}`, {
+	const res = await fetch(`${BASE}/ingest/unknownPayloadReviews?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
 	const json = await res.json() as {
-		details: TemplateReview[]
+		details: UnknownPayloadReview[]
 		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
@@ -666,13 +428,145 @@ export async function listTemplateReviews(
 	}
 }
 
-export async function getTemplateReview(orgId: string, id: string): Promise<TemplateReview> {
-	const r = await apiFetch<TemplateReview>(`/ingest/templateReviews/${id}`, orgId)
-	const result = (r.details as unknown as TemplateReview) ?? r.detail
-	if (!result) throw new Error('template review not found')
-	return result
+export async function getUnknownPayloadReview(orgId: string, id: string): Promise<UnknownPayloadReview> {
+	const r = await apiFetch<UnknownPayloadReview>(`/ingest/unknownPayloadReviews/${id}`, orgId)
+	if (!r.details) throw new Error('unknown payload review not found')
+	return r.details
 }
 
-export async function archiveTemplateReview(orgId: string, id: string): Promise<void> {
-	await apiFetch<unknown>(`/ingest/templateReviews/${id}/archive`, orgId, { method: 'POST' })
+export async function createTemplateFromReview(
+	orgId: string,
+	id: string,
+	data: {
+		name: string
+		sourceFamily?: string
+		matchAll?: MatchCondition[]
+		matchAny?: MatchCondition[]
+		mappings?: FieldMapping[]
+		deliveryTargets?: TemplateDeliveryTarget[]
+	}
+): Promise<MappingTemplate> {
+	const r = await apiFetch<MappingTemplate>(
+		`/ingest/unknownPayloadReviews/${id}/createTemplate`,
+		orgId,
+		{ method: 'POST', body: JSON.stringify(data) }
+	)
+	if (!r.details) throw new Error('template not found in response')
+	return r.details
+}
+
+export async function useSuggestion(
+	orgId: string,
+	id: string,
+	data: { suggestionId: string; name?: string }
+): Promise<MappingTemplate> {
+	const r = await apiFetch<MappingTemplate>(
+		`/ingest/unknownPayloadReviews/${id}/useSuggestion`,
+		orgId,
+		{ method: 'POST', body: JSON.stringify(data) }
+	)
+	if (!r.details) throw new Error('template not found in response')
+	return r.details
+}
+
+export async function rejectUnknownPayload(
+	orgId: string,
+	id: string,
+	reason?: string
+): Promise<void> {
+	await apiFetch<unknown>(`/ingest/unknownPayloadReviews/${id}/reject`, orgId, {
+		method: 'POST',
+		body: JSON.stringify({ reason: reason ?? '' })
+	})
+}
+
+export async function deleteUnknownPayloadReview(orgId: string, id: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/unknownPayloadReviews/${id}`, orgId, { method: 'DELETE' })
+}
+
+// ────────────────────────────────────────────
+// Rejected Payload Patterns (V3)
+// ────────────────────────────────────────────
+
+export async function listRejectedPayloadPatterns(
+	orgId: string,
+	page = 1,
+	perPage = 20,
+	params?: { sourceFamily?: string }
+): Promise<{ details: RejectedPayloadPattern[]; page: number; perPage: number; total: number; totalPages: number }> {
+	const q = new URLSearchParams({
+		page: String(page),
+		perPages: String(perPage),
+		sortField: 'createdAt',
+		sortOrder: 'desc'
+	})
+	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
+
+	const res = await fetch(`${BASE}/ingest/rejectedPayloadPatterns?${q}`, {
+		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+	})
+	const json = await res.json() as {
+		details: RejectedPayloadPattern[]
+		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+	}
+	if (!res.ok) throw json
+	return {
+		details: json.details ?? [],
+		page: json.pagination?.page ?? page,
+		perPage: json.pagination?.perPages ?? perPage,
+		total: json.pagination?.totalRecords ?? 0,
+		totalPages: json.pagination?.totalPages ?? 0
+	}
+}
+
+export async function getRejectedPayloadPattern(
+	orgId: string,
+	id: string
+): Promise<RejectedPayloadPattern> {
+	const r = await apiFetch<RejectedPayloadPattern>(`/ingest/rejectedPayloadPatterns/${id}`, orgId)
+	if (!r.details) throw new Error('rejected payload pattern not found')
+	return r.details
+}
+
+export async function deleteRejectedPayloadPattern(orgId: string, id: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/rejectedPayloadPatterns/${id}`, orgId, { method: 'DELETE' })
+}
+
+// ────────────────────────────────────────────
+// Mapping Suggestions (V3 — system presets, read-only)
+// ────────────────────────────────────────────
+
+export async function listMappingSuggestions(
+	orgId: string,
+	page = 1,
+	perPage = 20,
+	params?: { sourceFamily?: string }
+): Promise<{ details: MappingSuggestion[]; page: number; perPage: number; total: number; totalPages: number }> {
+	const q = new URLSearchParams({
+		page: String(page),
+		perPages: String(perPage)
+	})
+	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
+
+	const res = await fetch(`${BASE}/ingest/mappingSuggestions?${q}`, {
+		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+	})
+	const json = await res.json() as {
+		details: MappingSuggestion[]
+		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+	}
+	if (!res.ok) throw json
+	return {
+		details: json.details ?? [],
+		page: json.pagination?.page ?? page,
+		perPage: json.pagination?.perPages ?? perPage,
+		total: json.pagination?.totalRecords ?? 0,
+		totalPages: json.pagination?.totalPages ?? 0
+	}
+}
+
+export async function getMappingSuggestion(orgId: string, id: string): Promise<MappingSuggestion> {
+	const r = await apiFetch<MappingSuggestion>(`/ingest/mappingSuggestions/${id}`, orgId)
+	if (!r.details) throw new Error('mapping suggestion not found')
+	return r.details
 }

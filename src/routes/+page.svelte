@@ -23,8 +23,8 @@
   const currentLocale = $derived($currentLocaleStore)
 
   // URLs ที่รองรับ base path - อ่านจาก PUBLIC_APP_BASE_PATH env
-  const basePath = env.PUBLIC_APP_BASE_PATH || ''
-  const authStartUrl = `${basePath}/auth/session/start?returnTo=${basePath}/dashboard`
+  const basePath = (env.PUBLIC_APP_BASE_PATH ?? '').replace(/\/$/, '')
+  const authStartUrl = `${basePath}/auth/session/start?returnTo=${encodeURIComponent(`${basePath}/dashboard`)}`
   const dashboardUrl = `${basePath}/dashboard`
 
   function onChangeLanguage(locale: AppLocale) {

@@ -8,6 +8,7 @@
     listDeviceManagement,
     createDeviceManagement,
     updateDeviceManagement,
+    deleteDeviceManagement,
     listSourceProfiles
   } from '$lib/api/ingest'
   import type { DeviceManagement, SourceProfile } from '$lib/types/ingest'
@@ -37,6 +38,12 @@
   let formLng = $state<number | undefined>(undefined)
   let formSite = $state('')
   let formZone = $state('')
+
+  // Delete confirm
+  let showDeleteModal = $state(false)
+  let deleteId = $state<string | null>(null)
+  let deleteLoading = $state(false)
+  let actionSuccess = $state<string | null>(null)
 
   async function load(page = 1) {
     const orgId = $activeOrg?.id
@@ -133,6 +140,28 @@
     }
   }
 
+  function openDelete(id: string) {
+    deleteId = id
+    showDeleteModal = true
+  }
+
+  async function handleDelete() {
+    const orgId = $activeOrg?.id
+    if (!orgId || !deleteId) return
+    deleteLoading = true
+    try {
+      await deleteDeviceManagement(orgId, deleteId)
+      records = records.filter(r => r.deviceMgmtId !== deleteId)
+      actionSuccess = m.ingestDeviceManagementDeleted()
+      showDeleteModal = false
+      deleteId = null
+    } catch (e: unknown) {
+      error = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      deleteLoading = false
+    }
+  }
+
   function formatDate(d: string): string {
     if (!d) return '-'
     try {
@@ -178,6 +207,13 @@
     </button>
   {/if}
 </div>
+
+{#if actionSuccess}
+  <div class="alert alert-success alert-dismissible mb-3">
+    <i class="bi bi-check-circle me-2"></i>{actionSuccess}
+    <button type="button" class="btn-close" onclick={() => (actionSuccess = null)} aria-label={m.actionClose()}></button>
+  </div>
+{/if}
 
 {#if !$activeOrg}
   <div class="alert alert-warning">
@@ -241,8 +277,11 @@
             </td>
             <td class="small">{formatDate(rec.createdAt)}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-secondary" onclick={() => openEdit(rec)} title={m.actionEdit()}>
+              <button class="btn btn-sm btn-outline-secondary me-1" onclick={() => openEdit(rec)} title={m.actionEdit()}>
                 <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick={() => openDelete(rec.deviceMgmtId)} title={m.actionDelete()}>
+                <i class="bi bi-trash"></i>
               </button>
             </td>
           </tr>
@@ -350,6 +389,28 @@
           <button type="button" class="btn btn-theme" onclick={handleSubmit} disabled={formLoading}>
             {#if formLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
             {formMode === 'create' ? m.actionCreate() : m.actionSave()}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- Delete Confirm Modal -->
+{#if showDeleteModal}
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header border-0 pb-0">
+          <h6 class="modal-title"><i class="bi bi-trash me-2 text-danger"></i>{m.actionDelete()}</h6>
+        </div>
+        <div class="modal-body small text-inverse text-opacity-60">{m.ingestDeviceManagementDeleteConfirm()}</div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-sm btn-secondary" onclick={() => { showDeleteModal = false; deleteId = null }} disabled={deleteLoading}>{m.actionCancel()}</button>
+          <button class="btn btn-sm btn-danger" onclick={handleDelete} disabled={deleteLoading}>
+            {#if deleteLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
+            {m.actionDelete()}
           </button>
         </div>
       </div>

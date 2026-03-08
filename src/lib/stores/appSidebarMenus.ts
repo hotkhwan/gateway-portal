@@ -18,17 +18,17 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 	},
 	{
 		kind: 'link',
-		id: 'events',
-		url: 'ingest/management',
+		id: 'ingest',
+		url: 'ingest/templates',
 		icon: 'bi bi-bar-chart',
 		textKey: 'navEvents',
 		children: [
-			{ id: 'eventsManagement', url: 'ingest/management', textKey: 'eventsManagement' },
-			{ id: 'eventsDetails', url: 'ingest/details', textKey: 'eventsDetails' },
-			{ id: 'ingestMappingTemplates', url: 'ingest/mappingTemplates', textKey: 'ingestMappingTemplatesTitle' },
+			{ id: 'ingestTemplates', url: 'ingest/templates', textKey: 'ingestTemplatesTitle' },
+			{ id: 'ingestUnknownPayloadReviews', url: 'ingest/unknownPayloadReviews', textKey: 'ingestUnknownPayloadReviewsTitle' },
 			{ id: 'ingestSourceProfiles', url: 'ingest/sourceProfiles', textKey: 'ingestSourceProfilesTitle' },
 			{ id: 'ingestDeviceManagement', url: 'ingest/deviceManagement', textKey: 'ingestDeviceManagementTitle' },
-			{ id: 'ingestTemplateReviews', url: 'ingest/templateReviews', textKey: 'ingestTemplateReviewsTitle' }
+			{ id: 'ingestRejectedPayloadPatterns', url: 'ingest/rejectedPayloadPatterns', textKey: 'ingestRejectedPayloadPatternsTitle' },
+			{ id: 'ingestMappingSuggestions', url: 'ingest/mappingSuggestions', textKey: 'ingestMappingSuggestionsTitle' }
 		]
 	},
 

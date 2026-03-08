@@ -1,49 +1,6 @@
 // src/lib/types/ingest.ts
 
 // ────────────────────────────────────────────
-// Event Status
-// ────────────────────────────────────────────
-
-export type EventStatusName = 'pending' | 'mapped' | 'approved' | 'rejected'
-
-// ────────────────────────────────────────────
-// Pending / Approved Events
-// ────────────────────────────────────────────
-
-export interface PendingEvent {
-	eventId: string
-	orgId?: string
-	name?: string
-	eventType?: string
-	statusName: EventStatusName
-	lat?: number
-	lng?: number
-	sourceIp?: string
-	deviceKey?: string
-	rawBody?: Record<string, unknown>
-	note?: string
-	templateId?: string
-	templateName?: string
-	createdAt: string
-	updatedAt: string
-	approvedAt?: string
-	approvedBy?: string
-}
-
-export interface ApprovedEvent {
-	approvedEventId: string
-	originalEventId: string
-	deviceId: string
-	normalizedData: Record<string, unknown>
-	deliveredTargets: string[]
-	failedTargets: string[]
-	deliveredAt: string | null
-	status: 'pending_delivery' | 'delivered' | 'partial_delivery' | 'failed'
-	createdAt: string
-	updatedAt: string
-}
-
-// ────────────────────────────────────────────
 // Field Mapping
 // ────────────────────────────────────────────
 
@@ -53,21 +10,6 @@ export interface FieldMapping {
 	required: boolean
 	confidence?: number
 	transform?: string
-}
-
-// ────────────────────────────────────────────
-// Match Rules (V1 Legacy)
-// ────────────────────────────────────────────
-
-export interface MatchRule {
-	deviceId?: string
-	deviceType?: string
-	vendor?: string
-	protocol?: string
-	subType?: string
-	eventType?: string
-	rawSchemaVersion?: string
-	rawBodyKeyHash?: string
 }
 
 // ────────────────────────────────────────────
@@ -130,50 +72,33 @@ export interface DLQConfig {
 }
 
 // ────────────────────────────────────────────
-// Mapping Template (V1 + V2 fields)
+// Mapping Template (V3)
 // ────────────────────────────────────────────
 
 export interface MappingTemplate {
 	templateId: string
 	orgId?: string
 	name: string
-	match?: MatchRule
+	enabled?: boolean
+	sourceFamily?: string
+	finalEventType?: string
+	matchAll?: MatchCondition[]
+	matchAny?: MatchCondition[]
+	priority?: number
 	mappings: FieldMapping[]
 	defaultLocale?: string
 	deliveryTargets?: TemplateDeliveryTarget[]
 	classificationRules?: ClassificationRule[]
 	messageTemplates?: MessageTemplate[]
 	dlq?: DLQConfig
-	// V2 fields
-	sourceFamily?: string
-	finalEventType?: string
-	matchAll?: MatchCondition[]
-	matchAny?: MatchCondition[]
-	priority?: number
 	createdAt: string
 	updatedAt: string
+	createdBy?: string
 }
 
 // ────────────────────────────────────────────
-// Bulk
+// List Response
 // ────────────────────────────────────────────
-
-export interface BulkResult {
-	succeeded: string[]
-	failed: { id: string; reason: string }[]
-}
-
-// ────────────────────────────────────────────
-// List Responses
-// ────────────────────────────────────────────
-
-export interface EventListResponse {
-	details: PendingEvent[]
-	page: number
-	perPage: number
-	total: number
-	totalPages: number
-}
 
 export interface TemplateListResponse {
 	details: MappingTemplate[]
@@ -209,7 +134,7 @@ export interface DashboardStats {
 }
 
 // ────────────────────────────────────────────
-// DLQ (Dead Letter Queue)
+// DLQ (Dead Letter Queue) — used by delivery/dlq pages
 // ────────────────────────────────────────────
 
 export type DlqStatus = 'pending' | 'retrying' | 'resolved' | 'abandoned'
@@ -243,14 +168,18 @@ export interface DlqStats {
 }
 
 // ────────────────────────────────────────────
-// V2 Source Profile
+// V3 Source Profile
 // ────────────────────────────────────────────
 
 export interface SourceProfile {
 	sourceFamily: string
 	displayName: string
-	multiRef: boolean
-	refRules: {
+	mode?: 'active' | 'comingSoon' | 'mock' | 'disabled'
+	enabled?: boolean
+	description?: string
+	// Legacy V2 fields kept for backward compat
+	multiRef?: boolean
+	refRules?: {
 		primaryRefFields?: string[]
 		secondaryRefFields?: string[]
 		siteFields?: string[]
@@ -261,7 +190,7 @@ export interface SourceProfile {
 }
 
 // ────────────────────────────────────────────
-// V2 Device Management
+// V3 Device Management
 // ────────────────────────────────────────────
 
 export interface DeviceManagement {
@@ -281,18 +210,50 @@ export interface DeviceManagement {
 }
 
 // ────────────────────────────────────────────
-// V2 Template Review
+// V3 Unknown Payload Review
 // ────────────────────────────────────────────
 
-export interface TemplateReview {
-	reviewId: string
-	tenantId: string
+export interface UnknownPayloadReview {
+	id: string
 	orgId: string
 	sourceFamily: string
 	fingerprint: string
+	seenCount: number
+	firstSeenAt: string
+	lastSeenAt: string
 	samplePayload: Record<string, unknown>
-	suggestedMatchFields?: string[]
-	status: 'pending' | 'archived'
+	candidateSuggestionIds?: string[]
+	status: 'pending' | 'rejected'
+	createdAt: string
+	updatedAt: string
+}
+
+// ────────────────────────────────────────────
+// V3 Rejected Payload Pattern
+// ────────────────────────────────────────────
+
+export interface RejectedPayloadPattern {
+	id: string
+	orgId: string
+	sourceFamily: string
+	fingerprint: string
+	reason?: string
+	createdAt: string
+	createdBy?: string
+}
+
+// ────────────────────────────────────────────
+// V3 Mapping Suggestion (system preset, read-only)
+// ────────────────────────────────────────────
+
+export interface MappingSuggestion {
+	id: string
+	displayName: string
+	sourceFamily: string
+	matchAll?: MatchCondition[]
+	matchAny?: MatchCondition[]
+	fieldMappings?: FieldMapping[]
+	samplePayload?: Record<string, unknown>
 	createdAt: string
 	updatedAt: string
 }

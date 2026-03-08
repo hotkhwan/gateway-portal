@@ -5,8 +5,8 @@
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { activeOrg } from '$lib/stores/activeOrg'
-  import { listApprovedEvents, getDashboardStats } from '$lib/api/ingest'
-  import type { ApprovedEvent, DashboardStats } from '$lib/api/ingest'
+  import { getDashboardStats } from '$lib/api/ingest'
+  import type { DashboardStats } from '$lib/api/ingest'
 
   type DashboardRecentEvent = NonNullable<DashboardStats['recentEvents']>[number]
   import type { ApexOptions } from 'apexcharts'
@@ -18,8 +18,6 @@
 
   let loading = $state(true)
   let error = $state<string | null>(null)
-  let events = $state<ApprovedEvent[]>([])
-
   // Filter state
   let showFilters = $state(false)
   let filterStartDate = $state('')
@@ -89,23 +87,7 @@
         // Load recent events from stats
         recentEvents = stats.recentEvents ?? []
       } catch (dashboardError) {
-        // Fallback to listApprovedEvents if dashboard API fails (e.g., 500 from backend)
-        console.warn('Dashboard API failed, falling back to listApprovedEvents:', dashboardError)
-
-        const response = await listApprovedEvents(orgId, 1, 100)
-        events = response.details as ApprovedEvent[]
-
-        // Calculate stats from events
-        totalEvents = events.length
-        deliveredEvents = events.filter((e) => e.status === 'delivered').length
-        pendingDelivery = events.filter((e) => e.status === 'pending_delivery').length
-        failedEvents = events.filter((e) => e.status === 'failed').length
-        partialDelivery = events.filter((e) => e.status === 'partial_delivery').length
-
-        totalDeliveredTargets = events.reduce((sum, e) => sum + e.deliveredTargets.length, 0)
-        totalFailedTargets = events.reduce((sum, e) => sum + e.failedTargets.length, 0)
-
-        // recentEvents not available from fallback (different shape from stats API)
+        console.warn('Dashboard API failed:', dashboardError)
       }
 
       // Generate chart options with theme color
@@ -483,7 +465,7 @@
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
             <span class="flex-grow-1">{m.dashboardRecentEvents()}</span>
-            <a href={resolve('/ingest/details')} class="btn btn-sm btn-outline-theme">
+            <a href="/ingest/unknownPayloadReviews" class="btn btn-sm btn-outline-theme">
               {m.actionView()}
             </a>
           </div>
@@ -529,7 +511,7 @@
         <CardBody>
           <div class="d-flex fw-bold small mb-3">
             <span class="flex-grow-1">{m.dashboardRecentEventsDetails()}</span>
-            <a href={resolve('/ingest/details')} class="btn btn-sm btn-outline-theme">
+            <a href="/ingest/unknownPayloadReviews" class="btn btn-sm btn-outline-theme">
               {m.actionView()}
             </a>
           </div>

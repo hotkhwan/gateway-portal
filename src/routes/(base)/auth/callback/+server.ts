@@ -74,7 +74,8 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
   }
 
   const wrapped = await res.json() as any
-  const detail = wrapped?.detail ?? wrapped
+  // auth/oauth endpoint may return either key — handle both
+  const detail = wrapped?.details ?? wrapped?.detail ?? wrapped
 
   // ── 4. set session cookies
   const sec = {
