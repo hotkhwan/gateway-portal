@@ -9,7 +9,7 @@
 
   initLocale()
   $: currentLocale = $currentLocaleStore
-  const base = import.meta.env.PUBLIC_APP_BASE_PATH ?? ''
+  const base = (import.meta.env.PUBLIC_APP_BASE_PATH ?? '').replace(/\/$/, '')
   function toggleLanguage() {
     const newLang = $currentLocaleStore === 'en' ? 'th' : 'en'
     changeLocale(newLang)

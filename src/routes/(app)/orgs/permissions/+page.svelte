@@ -469,7 +469,7 @@
               {#if targets.length === 0}
                 <p class="small text-inverse text-opacity-50">
                   {m.permNoTargetsHint()}
-                  <a href={resolve('/orgs/targets')}
+                  <a href={resolve('/delivery/targets')}
                     >{m.permCreateTargetsFirst()}</a
                   >
                 </p>
