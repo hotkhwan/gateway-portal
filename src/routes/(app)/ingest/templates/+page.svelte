@@ -747,7 +747,7 @@
                       <div class="form-text">
                         {m.ingestTemplateMessageTemplatePlaceholders()}:
                         {#each SUGGESTED_MSG_FIELDS as f, fi}
-                          <code class="me-1">{'{{.'}{f}{'}}'}</code>{fi < SUGGESTED_MSG_FIELDS.length - 1 ? '' : ''}
+                          <code class="me-1">{`{{.${f}}}`}</code>
                         {/each}
                       </div>
                     </div>

@@ -161,7 +161,6 @@
     modalLoading = true
     modalError = null
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload = {
         name: fName.trim(),
         type: fType,
