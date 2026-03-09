@@ -1,6 +1,7 @@
 // src/lib/api/user.ts
 import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { PaginatedResponse, User } from '$lib/types/user'
+import { guardAuth } from '$lib/api/authGuard'
 
 const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
@@ -9,6 +10,7 @@ async function apiFetch(path: string, init?: RequestInit): Promise<any> {
     headers: { 'content-type': 'application/json', ...init?.headers },
     ...init
   })
+  guardAuth(res)
   const json = await res.json()
   if (!res.ok) throw json
   return json

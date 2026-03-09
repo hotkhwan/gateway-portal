@@ -2,6 +2,7 @@
 import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { SystemSettings, BackupStatus, UpdateInfo } from '$lib/types/settings'
 import type { ApiResponse } from '$lib/types/org'
+import { guardAuth } from '$lib/api/authGuard'
 
 const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
@@ -13,6 +14,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<ApiRespons
     },
     ...init
   })
+  guardAuth(res)
   const json = await res.json()
   if (!res.ok) throw json
   return json as ApiResponse<T>
@@ -39,6 +41,7 @@ export async function getBackupStatus(): Promise<BackupStatus> {
 
 export async function triggerBackup(): Promise<Blob> {
   const res = await fetch(`${BASE}/v1/system/backup`, { method: 'POST' })
+  guardAuth(res)
   if (!res.ok) {
     const json = await res.json()
     throw json
@@ -53,6 +56,7 @@ export async function triggerRestore(file: File): Promise<void> {
     method: 'POST',
     body: form
   })
+  guardAuth(res)
   if (!res.ok) {
     const json = await res.json()
     throw json

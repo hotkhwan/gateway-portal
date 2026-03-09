@@ -2,6 +2,7 @@
 import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, OrgUnit, OrgUnitMember } from '$lib/types/org'
 import { logger } from '$lib/utils/logger'
+import { guardAuth } from '$lib/api/authGuard'
 
 const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
@@ -18,6 +19,7 @@ async function apiFetch<T>(
     },
     ...init
   })
+  guardAuth(res)
   const json = await res.json()
   if (!res.ok) throw json
   return json as ApiResponse<T>

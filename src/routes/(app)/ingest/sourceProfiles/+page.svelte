@@ -3,6 +3,7 @@
   import { untrack } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
+  import { activeOrg } from '$lib/stores/activeOrg'
   import { listSourceProfiles } from '$lib/api/ingest'
   import type { SourceProfile } from '$lib/types/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
@@ -18,10 +19,12 @@
   )
 
   async function load() {
+    const orgId = $activeOrg?.id
+    if (!orgId) { loading = false; return }
     loading = true
     error = null
     try {
-      profiles = await listSourceProfiles()
+      profiles = await listSourceProfiles(orgId)
     } catch (e: unknown) {
       error = (e as { message?: string })?.message ?? m.commonError()
     } finally {
@@ -60,8 +63,9 @@
   }
 
   $effect(() => {
+    const orgId = $activeOrg?.id
     setPageTitle(m.ingestSourceProfilesTitle())
-    untrack(() => load())
+    if (orgId) { untrack(() => load()) } else { loading = false }
   })
 </script>
 

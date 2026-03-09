@@ -56,6 +56,8 @@
   "ingestTemplateMessageTitle": "หัวข้อ",
   "ingestTemplateMessageBody": "เนื้อหา",
   "ingestTemplateMessageExtras": "ข้อมูลเพิ่มเติม",
+  "ingestTemplateMessageTemplatesSuggestedHint": "สร้างอัตโนมัติสำหรับช่องทางส่งข้อความ — ปรับแต่งได้ตามต้องการ",
+  "ingestTemplateMessageTemplatePlaceholders": "ตัวแปรที่ใช้ได้",
   "ingestTemplateDlqConfig": "การตั้งค่า DLQ",
   "ingestTemplateDlqEnabled": "เปิดใช้งาน DLQ",
   "ingestTemplateDlqMaxRetries": "จำนวนลองใหม่สูงสุด",
@@ -167,5 +169,22 @@
   "ingestMappingSuggestionUseAsBase": "ใช้เป็นฐานเทมเพลต",
   "ingestMappingSuggestionMatchRule": "กฎการจับคู่",
   "ingestMappingSuggestionFieldMappings": "การแมปฟิลด์",
-  "ingestMappingSuggestionSamplePayload": "ตัวอย่าง Payload"
+  "ingestMappingSuggestionSamplePayload": "ตัวอย่าง Payload",
+
+  "_comments_event_details": "รายละเอียดเหตุการณ์ (approved / normalized)",
+  "ingestDetailsTitle": "รายละเอียดเหตุการณ์",
+  "ingestDetailsSubtitle": "เหตุการณ์ที่ผ่านการอนุมัติและ normalize แล้ว",
+  "ingestDetailsNoRecords": "ไม่พบเหตุการณ์ที่อนุมัติแล้ว",
+  "ingestDetailsEventId": "รหัสเหตุการณ์",
+  "ingestDetailsEventType": "ประเภทเหตุการณ์",
+  "ingestDetailsSourceFamily": "กลุ่มแหล่งข้อมูล",
+  "ingestDetailsDeviceId": "รหัสอุปกรณ์",
+  "ingestDetailsStatus": "สถานะ",
+  "ingestDetailsLocation": "ตำแหน่ง",
+  "ingestDetailsApprovedAt": "อนุมัติเมื่อ",
+  "ingestDetailsApprovedBy": "อนุมัติโดย",
+  "ingestDetailsPayload": "Payload ต้นฉบับ",
+  "ingestDetailsNormalized": "ข้อมูลหลัง Normalize",
+  "ingestDetailsTemplateId": "รหัสเทมเพลต",
+  "ingestDetailsBackToList": "กลับไปรายการ"
 }

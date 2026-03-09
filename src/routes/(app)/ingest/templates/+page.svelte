@@ -7,13 +7,14 @@
   import {
     listTemplates,
     createTemplate,
-    getTemplate,
     updateTemplate,
     deleteTemplate,
     listSourceProfiles
   } from '$lib/api/ingest'
-  import type { MappingTemplate, MatchCondition, FieldMapping } from '$lib/api/ingest'
+  import { listTargets } from '$lib/api/target'
+  import type { MappingTemplate, MatchCondition, FieldMapping, TemplateDeliveryTarget, MessageTemplate } from '$lib/api/ingest'
   import type { SourceProfile } from '$lib/types/ingest'
+  import type { DeliveryTarget } from '$lib/types/org'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
 
@@ -40,8 +41,6 @@
   let formName = $state('')
   let formSourceFamily = $state('')
   let formEnabled = $state(true)
-  let formFinalEventType = $state('')
-  let formPriority = $state(0)
 
   // Match tab
   let formMatchAll = $state<MatchCondition[]>([])
@@ -50,8 +49,10 @@
   // Field mapping tab
   let formMappings = $state<FieldMapping[]>([])
 
-  // Target tab — delivery targets (IDs as comma-separated string for simplicity)
-  let formDeliveryTargetIds = $state('')
+  // Target tab — delivery targets with message templates
+  let availableTargets = $state<DeliveryTarget[]>([])
+  let formDeliveryTargets = $state<TemplateDeliveryTarget[]>([])
+  let formMessageTemplates = $state<MessageTemplate[]>([])
 
   // Delete confirm
   let showDeleteModal = $state(false)
@@ -59,6 +60,15 @@
   let deleteLoading = $state(false)
 
   const OPERATORS = ['eq', 'in', 'contains', 'prefix'] as const
+  const MESSAGING_TYPES = new Set(['line', 'telegram', 'discord'])
+
+  // Derived: sourcePaths from formMappings for match condition field selector
+  let mappingSourcePaths = $derived(
+    formMappings.map(m => m.sourcePath).filter(Boolean)
+  )
+
+  // Suggested message template fields based on mappings
+  const SUGGESTED_MSG_FIELDS = ['sourceFamily', 'deviceName', 'lat', 'lng', 'eventType', 'imageUrl']
 
   async function load(page = 1) {
     const orgId = $activeOrg?.id
@@ -85,22 +95,28 @@
     formName = ''
     formSourceFamily = ''
     formEnabled = true
-    formFinalEventType = ''
-    formPriority = 0
     formMatchAll = []
     formMatchAny = []
     formMappings = []
-    formDeliveryTargetIds = ''
+    formDeliveryTargets = []
+    formMessageTemplates = []
     formError = null
     formTab = 'basic'
     editingId = null
+  }
+
+  async function loadFormDeps() {
+    const orgId = $activeOrg?.id
+    if (!orgId) return
+    try { sourceProfiles = await listSourceProfiles(orgId) } catch { sourceProfiles = [] }
+    try { availableTargets = await listTargets(orgId) } catch { availableTargets = [] }
   }
 
   async function openCreate() {
     resetForm()
     formMode = 'create'
     showFormModal = true
-    try { sourceProfiles = await listSourceProfiles() } catch { sourceProfiles = [] }
+    await loadFormDeps()
   }
 
   async function openEdit(template: MappingTemplate) {
@@ -110,14 +126,13 @@
     formName = template.name
     formSourceFamily = template.sourceFamily ?? ''
     formEnabled = template.enabled ?? true
-    formFinalEventType = template.finalEventType ?? ''
-    formPriority = template.priority ?? 0
     formMatchAll = (template.matchAll ?? []).map(c => ({ ...c, values: [...c.values] }))
     formMatchAny = (template.matchAny ?? []).map(c => ({ ...c, values: [...c.values] }))
     formMappings = (template.mappings ?? []).map(m => ({ ...m }))
-    formDeliveryTargetIds = (template.deliveryTargets ?? []).map(t => t.targetId).join(', ')
+    formDeliveryTargets = (template.deliveryTargets ?? []).map(t => ({ ...t }))
+    formMessageTemplates = (template.messageTemplates ?? []).map(mt => ({ ...mt }))
     showFormModal = true
-    try { sourceProfiles = await listSourceProfiles() } catch { sourceProfiles = [] }
+    await loadFormDeps()
   }
 
   async function handleSubmit() {
@@ -129,14 +144,11 @@
       name: formName.trim(),
       enabled: formEnabled,
       sourceFamily: formSourceFamily || undefined,
-      finalEventType: formFinalEventType.trim() || undefined,
-      priority: formPriority || undefined,
       matchAll: formMatchAll.length ? formMatchAll : undefined,
       matchAny: formMatchAny.length ? formMatchAny : undefined,
       mappings: formMappings,
-      deliveryTargets: formDeliveryTargetIds.trim()
-        ? formDeliveryTargetIds.split(',').map(id => ({ targetId: id.trim() })).filter(t => t.targetId)
-        : undefined
+      deliveryTargets: formDeliveryTargets.length ? formDeliveryTargets : undefined,
+      messageTemplates: formMessageTemplates.length ? formMessageTemplates : undefined
     }
 
     formLoading = true
@@ -195,6 +207,57 @@
   }
   function removeMapping(i: number): void {
     formMappings = formMappings.filter((_, idx) => idx !== i)
+  }
+
+  // Delivery target helpers
+  function addDeliveryTarget(): void {
+    formDeliveryTargets = [...formDeliveryTargets, { targetId: '' }]
+  }
+  function removeDeliveryTarget(i: number): void {
+    const removed = formDeliveryTargets[i]
+    formDeliveryTargets = formDeliveryTargets.filter((_, idx) => idx !== i)
+    // Also remove associated message templates
+    if (removed?.targetId) {
+      formMessageTemplates = formMessageTemplates.filter(mt => mt.key !== removed.targetId)
+    }
+  }
+  function getTargetById(id: string): DeliveryTarget | undefined {
+    return availableTargets.find(t => t.id === id)
+  }
+  function isMessagingTarget(targetId: string): boolean {
+    const t = getTargetById(targetId)
+    return t ? MESSAGING_TYPES.has(t.type) : false
+  }
+  function onTargetSelect(index: number, targetId: string): void {
+    formDeliveryTargets = formDeliveryTargets.map((dt, i) =>
+      i === index ? { ...dt, targetId } : dt
+    )
+    // Auto-add suggested message template for messaging targets
+    if (targetId && isMessagingTarget(targetId)) {
+      const existing = formMessageTemplates.find(mt => mt.key === targetId)
+      if (!existing) {
+        const target = getTargetById(targetId)
+        const channelType = target?.type ?? 'line'
+        const bodyLines = SUGGESTED_MSG_FIELDS
+          .filter(f => mappingSourcePaths.includes(f) || ['eventType', 'sourceFamily'].includes(f))
+          .map(f => `{{.${f}}}`)
+        formMessageTemplates = [...formMessageTemplates, {
+          key: targetId,
+          channelType,
+          locale: 'th',
+          title: `{{.eventType}} - {{.deviceName}}`,
+          body: bodyLines.join('\n') || '{{.eventType}}'
+        }]
+      }
+    }
+  }
+
+  // Message template helpers
+  function addMessageTemplate(): void {
+    formMessageTemplates = [...formMessageTemplates, { channelType: 'line', locale: 'th', title: '', body: '' }]
+  }
+  function removeMessageTemplate(i: number): void {
+    formMessageTemplates = formMessageTemplates.filter((_, idx) => idx !== i)
   }
 
   function formatDate(d: string): string {
@@ -298,7 +361,6 @@
             <th>{m.ingestTemplateName()}</th>
             <th>{m.ingestTemplateSourceFamily()}</th>
             <th>{m.ingestTemplateEnabled()}</th>
-            <th>{m.ingestTemplatePriority()}</th>
             <th>{m.eventsCreatedAt()}</th>
             <th class="text-end">{m.eventsActions()}</th>
           </tr>
@@ -321,7 +383,6 @@
                   <span class="badge bg-secondary">{m.ingestTemplateDisableSuccess()}</span>
                 {/if}
               </td>
-              <td class="small">{tpl.priority ?? 0}</td>
               <td class="small">{formatDate(tpl.createdAt)}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-secondary me-1" onclick={() => openEdit(tpl)} title={m.actionEdit()}>
@@ -399,28 +460,25 @@
               <label class="form-label fw-semibold" for="tplName">{m.ingestTemplateName()} <span class="text-danger">*</span></label>
               <input id="tplName" type="text" class="form-control" bind:value={formName} disabled={formLoading} placeholder="e.g. AIBOX Motion Event" />
             </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" for="tplSourceFamily">{m.ingestTemplateSourceFamily()}</label>
-              <select id="tplSourceFamily" class="form-select" bind:value={formSourceFamily} disabled={formLoading}>
-                <option value="">— {m.actionSelect()} —</option>
-                {#each sourceProfiles as sp}
-                  <option value={sp.sourceFamily}>{sp.displayName} ({sp.sourceFamily})</option>
-                {/each}
-              </select>
-              <div class="form-text">{m.ingestTemplateSourceFamilyHint()}</div>
-            </div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold" for="tplFinalEventType">{m.ingestTemplateFinalEventType()}</label>
-                <input id="tplFinalEventType" type="text" class="form-control" bind:value={formFinalEventType} disabled={formLoading} placeholder="e.g. motion_detected" />
-                <div class="form-text">{m.ingestTemplateFinalEventTypeHint()}</div>
+            {#if formMode === 'edit' && formSourceFamily}
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{m.ingestTemplateSourceFamily()}</label>
+                <div class="form-control bg-inverse bg-opacity-10" style="cursor:default">
+                  <span class="badge bg-theme-subtle text-theme">{formSourceFamily}</span>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold" for="tplPriority">{m.ingestTemplatePriority()}</label>
-                <input id="tplPriority" type="number" class="form-control" bind:value={formPriority} disabled={formLoading} min="0" />
-                <div class="form-text">{m.ingestTemplatePriorityHint()}</div>
+            {:else if formMode === 'create'}
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="tplSourceFamily">{m.ingestTemplateSourceFamily()}</label>
+                <select id="tplSourceFamily" class="form-select" bind:value={formSourceFamily} disabled={formLoading}>
+                  <option value="">— {m.actionSelect()} —</option>
+                  {#each sourceProfiles as sp}
+                    <option value={sp.sourceFamily}>{sp.displayName} ({sp.sourceFamily})</option>
+                  {/each}
+                </select>
+                <div class="form-text">{m.ingestTemplateSourceFamilyHint()}</div>
               </div>
-            </div>
+            {/if}
             <div class="form-check form-switch">
               <input id="tplEnabled" type="checkbox" class="form-check-input" bind:checked={formEnabled} disabled={formLoading} />
               <label class="form-check-label" for="tplEnabled">{m.ingestTemplateEnabled()}</label>
@@ -440,9 +498,18 @@
               {#each formMatchAll as cond, i}
                 <div class="row g-2 mb-2 align-items-center">
                   <div class="col-md-4">
-                    <input type="text" class="form-control form-control-sm font-monospace"
-                      placeholder={m.ingestTemplateConditionFieldPlaceholder()}
-                      bind:value={cond.field} disabled={formLoading} />
+                    {#if mappingSourcePaths.length > 0}
+                      <select class="form-select form-select-sm font-monospace" bind:value={cond.field} disabled={formLoading}>
+                        <option value="">— {m.ingestTemplateConditionField()} —</option>
+                        {#each mappingSourcePaths as sp}
+                          <option value={sp}>{sp}</option>
+                        {/each}
+                      </select>
+                    {:else}
+                      <input type="text" class="form-control form-control-sm font-monospace"
+                        placeholder={m.ingestTemplateConditionFieldPlaceholder()}
+                        bind:value={cond.field} disabled={formLoading} />
+                    {/if}
                   </div>
                   <div class="col-md-3">
                     <select class="form-select form-select-sm" bind:value={cond.operator} disabled={formLoading}>
@@ -481,9 +548,18 @@
               {#each formMatchAny as cond, i}
                 <div class="row g-2 mb-2 align-items-center">
                   <div class="col-md-4">
-                    <input type="text" class="form-control form-control-sm font-monospace"
-                      placeholder={m.ingestTemplateConditionFieldPlaceholder()}
-                      bind:value={cond.field} disabled={formLoading} />
+                    {#if mappingSourcePaths.length > 0}
+                      <select class="form-select form-select-sm font-monospace" bind:value={cond.field} disabled={formLoading}>
+                        <option value="">— {m.ingestTemplateConditionField()} —</option>
+                        {#each mappingSourcePaths as sp}
+                          <option value={sp}>{sp}</option>
+                        {/each}
+                      </select>
+                    {:else}
+                      <input type="text" class="form-control form-control-sm font-monospace"
+                        placeholder={m.ingestTemplateConditionFieldPlaceholder()}
+                        bind:value={cond.field} disabled={formLoading} />
+                    {/if}
                   </div>
                   <div class="col-md-3">
                     <select class="form-select form-select-sm" bind:value={cond.operator} disabled={formLoading}>
@@ -562,13 +638,123 @@
 
           <!-- Tab: Target & Message -->
           {#if formTab === 'target'}
-            <div class="mb-3">
-              <label class="form-label fw-semibold" for="tplDeliveryTargets">{m.ingestTemplateDeliveryTargets()}</label>
-              <input id="tplDeliveryTargets" type="text" class="form-control"
-                bind:value={formDeliveryTargetIds} disabled={formLoading}
-                placeholder="target-id-1, target-id-2" />
-              <div class="form-text">{m.ingestTemplateDeliveryTargetsHint()}</div>
+            <!-- Delivery Targets -->
+            <div class="mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <h6 class="mb-0 me-2">{m.ingestTemplateDeliveryTargets()}</h6>
+                <small class="text-inverse text-opacity-50">{m.ingestTemplateDeliveryTargetsHint()}</small>
+                <button class="btn btn-xs btn-outline-theme ms-auto" onclick={addDeliveryTarget}>
+                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddDeliveryTarget()}
+                </button>
+              </div>
+              {#if formDeliveryTargets.length === 0}
+                <p class="text-inverse text-opacity-50 small">{m.ingestTemplateNoDeliveryTargets()}</p>
+              {:else}
+                {#each formDeliveryTargets as dt, i}
+                  {@const target = getTargetById(dt.targetId)}
+                  <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-md-6">
+                      <select class="form-select form-select-sm" disabled={formLoading}
+                        value={dt.targetId}
+                        onchange={(e) => onTargetSelect(i, (e.target as HTMLSelectElement).value)}>
+                        <option value="">— {m.ingestTemplateSelectTarget()} —</option>
+                        {#each availableTargets as at}
+                          <option value={at.id}>{at.name} ({at.type})</option>
+                        {/each}
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      {#if target}
+                        <span class="badge {target.type === 'webhook' ? 'bg-secondary' : 'bg-info text-dark'}">{target.type}</span>
+                        {#if target.enabled}
+                          <span class="badge bg-success ms-1">{m.ingestTemplateEnabled()}</span>
+                        {:else}
+                          <span class="badge bg-warning text-dark ms-1">{m.ingestTemplateDisableSuccess()}</span>
+                        {/if}
+                      {/if}
+                    </div>
+                    <div class="col-md-2 text-end">
+                      <button class="btn btn-sm btn-outline-danger" aria-label={m.actionDelete()} onclick={() => removeDeliveryTarget(i)}>
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                {/each}
+              {/if}
             </div>
+
+            <!-- Message Templates (auto-shown for messaging targets) -->
+            {@const hasMessagingTargets = formDeliveryTargets.some(dt => isMessagingTarget(dt.targetId))}
+            {#if hasMessagingTargets || formMessageTemplates.length > 0}
+              <hr />
+              <div class="d-flex align-items-center mb-2">
+                <h6 class="mb-0 me-2">{m.ingestTemplateMessageTemplates()}</h6>
+                <small class="text-inverse text-opacity-50">{m.ingestTemplateMessageTemplatesSuggestedHint()}</small>
+                <button class="btn btn-xs btn-outline-theme ms-auto" onclick={addMessageTemplate}>
+                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddMessageTemplate()}
+                </button>
+              </div>
+              {#each formMessageTemplates as mt, i}
+                <div class="card bg-inverse bg-opacity-5 mb-2">
+                  <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <small class="fw-semibold">
+                        {#if mt.key}
+                          {@const linkedTarget = getTargetById(mt.key)}
+                          {#if linkedTarget}
+                            <i class="bi bi-link-45deg me-1"></i>{linkedTarget.name} ({linkedTarget.type})
+                          {:else}
+                            <span class="font-monospace">{mt.key}</span>
+                          {/if}
+                        {:else}
+                          {m.ingestTemplateMessageTemplates()} #{i + 1}
+                        {/if}
+                      </small>
+                      <button class="btn btn-xs btn-outline-danger" onclick={() => removeMessageTemplate(i)}>
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                    <div class="row g-2">
+                      <div class="col-md-4">
+                        <label class="form-label small mb-0">{m.ingestTemplateMessageChannel()}</label>
+                        <select class="form-select form-select-sm" bind:value={mt.channelType} disabled={formLoading}>
+                          <option value="line">LINE</option>
+                          <option value="discord">Discord</option>
+                          <option value="telegram">Telegram</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small mb-0">{m.ingestTemplateMessageLocale()}</label>
+                        <select class="form-select form-select-sm" bind:value={mt.locale} disabled={formLoading}>
+                          <option value="th">TH</option>
+                          <option value="en">EN</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small mb-0">{m.ingestTemplateMessageKey()}</label>
+                        <input type="text" class="form-control form-control-sm font-monospace" bind:value={mt.key} disabled={formLoading} placeholder="target-id" />
+                      </div>
+                    </div>
+                    <div class="mt-2">
+                      <label class="form-label small mb-0">{m.ingestTemplateMessageTitle()}</label>
+                      <input type="text" class="form-control form-control-sm" bind:value={mt.title} disabled={formLoading}
+                        placeholder="{'{{.eventType}} - {{.deviceName}}'}" />
+                    </div>
+                    <div class="mt-2">
+                      <label class="form-label small mb-0">{m.ingestTemplateMessageBody()}</label>
+                      <textarea class="form-control form-control-sm font-monospace" rows="4" bind:value={mt.body} disabled={formLoading}
+                        placeholder="{'{{.sourceFamily}}\n{{.deviceName}}\n{{.lat}}, {{.lng}}\n{{.eventType}}'}"></textarea>
+                      <div class="form-text">
+                        {m.ingestTemplateMessageTemplatePlaceholders()}:
+                        {#each SUGGESTED_MSG_FIELDS as f, fi}
+                          <code class="me-1">{'{{.'}{f}{'}}'}</code>{fi < SUGGESTED_MSG_FIELDS.length - 1 ? '' : ''}
+                        {/each}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            {/if}
           {/if}
         </div>
         <div class="modal-footer">

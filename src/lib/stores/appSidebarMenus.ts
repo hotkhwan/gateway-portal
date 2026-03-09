@@ -28,7 +28,8 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 			{ id: 'ingestSourceProfiles', url: 'ingest/sourceProfiles', textKey: 'ingestSourceProfilesTitle' },
 			{ id: 'ingestDeviceManagement', url: 'ingest/deviceManagement', textKey: 'ingestDeviceManagementTitle' },
 			{ id: 'ingestRejectedPayloadPatterns', url: 'ingest/rejectedPayloadPatterns', textKey: 'ingestRejectedPayloadPatternsTitle' },
-			{ id: 'ingestMappingSuggestions', url: 'ingest/mappingSuggestions', textKey: 'ingestMappingSuggestionsTitle' }
+			{ id: 'ingestMappingSuggestions', url: 'ingest/mappingSuggestions', textKey: 'ingestMappingSuggestionsTitle' },
+			{ id: 'ingestDetails', url: 'ingest/details', textKey: 'ingestDetailsTitle' }
 		]
 	},
 

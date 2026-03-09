@@ -76,8 +76,8 @@
       <div class="text-center py-5">
         <i class="bi bi-file-earmark-text fs-1 text-inverse text-opacity-25 d-block mb-3"></i>
         <p class="text-inverse text-opacity-50">{m.deliveryTemplatesNoRecords()}</p>
-        <a href={resolve('/ingest/mappingTemplates')} class="btn btn-outline-theme btn-sm">
-          <i class="bi bi-arrow-right me-1"></i>{m.ingestMappingTemplatesTitle()}
+        <a href={resolve('/ingest/templates')} class="btn btn-outline-theme btn-sm">
+          <i class="bi bi-arrow-right me-1"></i>{m.ingestTemplatesTitle()}
         </a>
       </div>
     </CardBody>
@@ -104,7 +104,7 @@
             <td><small class="text-truncate d-inline-block" style="max-width:200px">{mt.title}</small></td>
             <td><small class="text-inverse text-opacity-50">{mt.parentName}</small></td>
             <td class="text-end">
-              <a href={resolve('/ingest/mappingTemplates')} class="btn btn-sm btn-outline-theme" title={m.deliveryTemplatesEditInTemplate()}>
+              <a href={resolve('/ingest/templates')} class="btn btn-sm btn-outline-theme" title={m.deliveryTemplatesEditInTemplate()}>
                 <i class="bi bi-pencil-square"></i>
               </a>
             </td>
