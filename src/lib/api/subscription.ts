@@ -1,6 +1,7 @@
 // src/lib/api/subscription.ts
 import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import { logger } from '$lib/utils/logger'
+import { guardAuth } from '$lib/api/authGuard'
 
 const BASE = `${(PUBLIC_APP_BASE_PATH ?? '/aisom').replace(/\/$/, '')}/api`
 
@@ -77,6 +78,7 @@ export async function bootstrapSubscription(): Promise<Subscription> {
 			'content-type': 'application/json'
 		}
 	})
+	guardAuth(res)
 	const json = await res.json()
 	if (!res.ok) throw json
 	logger.log('🔍 [bootstrapSubscription] response:', JSON.stringify(json))
@@ -116,6 +118,7 @@ export async function getSubscription(): Promise<Subscription> {
 			'content-type': 'application/json'
 		}
 	})
+	guardAuth(res)
 	const json = await res.json()
 	if (!res.ok) throw json
 	logger.log('🔍 [getSubscription] response:', JSON.stringify(json))
@@ -160,6 +163,7 @@ export async function changePlan(
 		},
 		body: JSON.stringify({ planId, billingCycle })
 	})
+	guardAuth(res)
 	const json = await res.json()
 	if (!res.ok) throw json
 	logger.log('🔍 [changePlan] response:', JSON.stringify(json))
@@ -200,6 +204,7 @@ export async function activateEnterprise(licenseKey: string): Promise<Subscripti
 		},
 		body: JSON.stringify({ licenseKey })
 	})
+	guardAuth(res)
 	const json = await res.json()
 	if (!res.ok) throw json
 	logger.log('🔍 [activateEnterprise] response:', JSON.stringify(json))
@@ -277,6 +282,7 @@ export async function listPackages(): Promise<PackagePlan[]> {
 	const res = await fetch(`${BASE}/subscriptions/packages`, {
 		headers: { 'content-type': 'application/json' }
 	})
+	guardAuth(res)
 	const json = await res.json()
 	if (!res.ok) throw json
 	return json.details ?? json.detail ?? []
@@ -286,6 +292,7 @@ export async function getCurrentSubscription(): Promise<EffectiveSubscription> {
 	const res = await fetch(`${BASE}/subscriptions/current`, {
 		headers: { 'content-type': 'application/json' }
 	})
+	guardAuth(res)
 	const json = await res.json()
 	if (!res.ok) throw json
 	const result = json.details ?? json.detail

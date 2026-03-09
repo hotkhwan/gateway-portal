@@ -12,12 +12,8 @@ function normalizeLocale(value: string | null | undefined): AppLocale {
 }
 
 function getRuntimeSetLocale(): ((locale: string) => void) | null {
-    // Paraglide v2 บางชุดชื่อ setLocale, บางชุดชื่อ setLanguageTag
     if ('setLocale' in runtime && typeof (runtime as any).setLocale === 'function') {
         return (runtime as any).setLocale
-    }
-    if ('setLanguageTag' in runtime && typeof (runtime as any).setLanguageTag === 'function') {
-        return (runtime as any).setLanguageTag
     }
     return null
 }

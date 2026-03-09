@@ -1,6 +1,7 @@
 // src/lib/api/ingest.ts
 import { PUBLIC_APP_BASE_PATH } from '$env/static/public'
 import type { ApiResponse, IngestConfig } from '$lib/types/org'
+import { guardAuth } from '$lib/api/authGuard'
 import type {
 	MappingTemplate,
 	FieldMapping,
@@ -20,7 +21,8 @@ import type {
 	DeviceManagement,
 	UnknownPayloadReview,
 	RejectedPayloadPattern,
-	MappingSuggestion
+	MappingSuggestion,
+	ApprovedEvent
 } from '$lib/types/ingest'
 
 // Re-export types for consumers
@@ -43,7 +45,8 @@ export type {
 	DeviceManagement,
 	UnknownPayloadReview,
 	RejectedPayloadPattern,
-	MappingSuggestion
+	MappingSuggestion,
+	ApprovedEvent
 }
 export type { ClassificationSet } from '$lib/types/ingest'
 
@@ -62,22 +65,7 @@ async function apiFetch<T>(
 		},
 		...init
 	})
-	const json = await res.json()
-	if (!res.ok) throw json
-	return json as ApiResponse<T>
-}
-
-async function apiFetchNoOrg<T>(
-	path: string,
-	init?: RequestInit
-): Promise<ApiResponse<T>> {
-	const res = await fetch(`${BASE}${path}`, {
-		headers: {
-			'content-type': 'application/json',
-			...init?.headers
-		},
-		...init
-	})
+	guardAuth(res)
 	const json = await res.json()
 	if (!res.ok) throw json
 	return json as ApiResponse<T>
@@ -125,7 +113,7 @@ export async function getDashboardStats(
 }
 
 // ────────────────────────────────────────────
-// Mapping Templates (V3 — endpoint: /ingest/templates)
+// Mapping Templates (V3 — endpoint: /ingest/mappingTemplates)
 // ────────────────────────────────────────────
 
 export async function listTemplates(
@@ -144,9 +132,10 @@ export async function listTemplates(
 	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
 	if (params?.enabled !== undefined) q.set('enabled', String(params.enabled))
 
-	const res = await fetch(`${BASE}/ingest/templates?${q}`, {
+	const res = await fetch(`${BASE}/ingest/mappingTemplates?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
+	guardAuth(res)
 	const json = await res.json() as {
 		details: MappingTemplate[]
 		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
@@ -179,7 +168,7 @@ export async function createTemplate(
 		dlq?: DLQConfig
 	}
 ): Promise<MappingTemplate> {
-	const r = await apiFetch<MappingTemplate>('/ingest/templates', orgId, {
+	const r = await apiFetch<MappingTemplate>('/ingest/mappingTemplates', orgId, {
 		method: 'POST',
 		body: JSON.stringify(data)
 	})
@@ -188,7 +177,7 @@ export async function createTemplate(
 }
 
 export async function getTemplate(orgId: string, templateId: string): Promise<MappingTemplate> {
-	const r = await apiFetch<MappingTemplate>(`/ingest/templates/${templateId}`, orgId)
+	const r = await apiFetch<MappingTemplate>(`/ingest/mappingTemplates/${templateId}`, orgId)
 	if (!r.details) throw new Error('template not found')
 	return r.details
 }
@@ -212,14 +201,14 @@ export async function updateTemplate(
 		dlq?: DLQConfig
 	}
 ): Promise<void> {
-	await apiFetch<unknown>(`/ingest/templates/${templateId}`, orgId, {
-		method: 'PUT',
+	await apiFetch<unknown>(`/ingest/mappingTemplates/${templateId}`, orgId, {
+		method: 'PATCH',
 		body: JSON.stringify(data)
 	})
 }
 
 export async function deleteTemplate(orgId: string, templateId: string): Promise<void> {
-	await apiFetch<unknown>(`/ingest/templates/${templateId}`, orgId, { method: 'DELETE' })
+	await apiFetch<unknown>(`/ingest/mappingTemplates/${templateId}`, orgId, { method: 'DELETE' })
 }
 
 // ────────────────────────────────────────────
@@ -255,6 +244,7 @@ export async function listDlq(
 	const res = await fetch(`${BASE}/ingest/dlq?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
+	guardAuth(res)
 	const json = await res.json() as {
 		details: DlqMessage[]
 		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
@@ -300,13 +290,13 @@ export async function abandonDlq(orgId: string, messageId: string, reason?: stri
 // Source Profiles (global — read-only from FE in V3)
 // ────────────────────────────────────────────
 
-export async function listSourceProfiles(): Promise<SourceProfile[]> {
-	const r = await apiFetchNoOrg<SourceProfile[]>('/ingest/sourceProfiles')
+export async function listSourceProfiles(orgId: string): Promise<SourceProfile[]> {
+	const r = await apiFetch<SourceProfile[]>('/ingest/sourceProfiles', orgId)
 	return r.details ?? []
 }
 
-export async function getSourceProfile(sourceFamily: string): Promise<SourceProfile> {
-	const r = await apiFetchNoOrg<SourceProfile>(`/ingest/sourceProfiles/${sourceFamily}`)
+export async function getSourceProfile(orgId: string, sourceFamily: string): Promise<SourceProfile> {
+	const r = await apiFetch<SourceProfile>(`/ingest/sourceProfiles/${sourceFamily}`, orgId)
 	if (!r.details) throw new Error('source profile not found')
 	return r.details
 }
@@ -330,6 +320,7 @@ export async function listDeviceManagement(
 	const res = await fetch(`${BASE}/ingest/deviceManagement?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
+	guardAuth(res)
 	const json = await res.json() as {
 		details: DeviceManagement[]
 		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
@@ -414,6 +405,7 @@ export async function listUnknownPayloadReviews(
 	const res = await fetch(`${BASE}/ingest/unknownPayloadReviews?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
+	guardAuth(res)
 	const json = await res.json() as {
 		details: UnknownPayloadReview[]
 		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
@@ -505,6 +497,7 @@ export async function listRejectedPayloadPatterns(
 	const res = await fetch(`${BASE}/ingest/rejectedPayloadPatterns?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
+	guardAuth(res)
 	const json = await res.json() as {
 		details: RejectedPayloadPattern[]
 		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
@@ -551,6 +544,7 @@ export async function listMappingSuggestions(
 	const res = await fetch(`${BASE}/ingest/mappingSuggestions?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
 	})
+	guardAuth(res)
 	const json = await res.json() as {
 		details: MappingSuggestion[]
 		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
@@ -568,5 +562,49 @@ export async function listMappingSuggestions(
 export async function getMappingSuggestion(orgId: string, id: string): Promise<MappingSuggestion> {
 	const r = await apiFetch<MappingSuggestion>(`/ingest/mappingSuggestions/${id}`, orgId)
 	if (!r.details) throw new Error('mapping suggestion not found')
+	return r.details
+}
+
+// ────────────────────────────────────────────
+// Event Details (canonical approved events, post-normalization)
+// ────────────────────────────────────────────
+
+export async function listApprovedEvents(
+	orgId: string,
+	page = 1,
+	perPage = 20,
+	params?: { eventType?: string; sourceFamily?: string; search?: string }
+): Promise<{ details: ApprovedEvent[]; page: number; perPage: number; total: number; totalPages: number }> {
+	const q = new URLSearchParams({
+		page: String(page),
+		perPages: String(perPage),
+		sortField: 'createdAt',
+		sortOrder: 'desc'
+	})
+	if (params?.eventType) q.set('eventType', params.eventType)
+	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
+	if (params?.search) q.set('search', params.search)
+
+	const res = await fetch(`${BASE}/ingest/details?${q}`, {
+		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+	})
+	guardAuth(res)
+	const json = await res.json() as {
+		details: ApprovedEvent[]
+		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+	}
+	if (!res.ok) throw json
+	return {
+		details: json.details ?? [],
+		page: json.pagination?.page ?? page,
+		perPage: json.pagination?.perPages ?? perPage,
+		total: json.pagination?.totalRecords ?? 0,
+		totalPages: json.pagination?.totalPages ?? 0
+	}
+}
+
+export async function getApprovedEvent(orgId: string, eventId: string): Promise<ApprovedEvent> {
+	const r = await apiFetch<ApprovedEvent>(`/ingest/details/${eventId}`, orgId)
+	if (!r.details) throw new Error('approved event not found')
 	return r.details
 }

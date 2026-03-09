@@ -75,7 +75,8 @@
     formZone = ''
     formError = null
     showFormModal = true
-    try { sourceProfiles = await listSourceProfiles() } catch { sourceProfiles = [] }
+    const orgId = $activeOrg?.id
+    try { if (orgId) sourceProfiles = await listSourceProfiles(orgId) } catch { sourceProfiles = [] }
   }
 
   async function openEdit(record: DeviceManagement) {
@@ -91,7 +92,8 @@
     formZone = record.zone ?? ''
     formError = null
     showFormModal = true
-    try { sourceProfiles = await listSourceProfiles() } catch { sourceProfiles = [] }
+    const orgId = $activeOrg?.id
+    try { if (orgId) sourceProfiles = await listSourceProfiles(orgId) } catch { sourceProfiles = [] }
   }
 
   async function handleSubmit() {

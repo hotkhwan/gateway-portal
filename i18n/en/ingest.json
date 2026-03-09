@@ -56,6 +56,8 @@
   "ingestTemplateMessageTitle": "Title",
   "ingestTemplateMessageBody": "Body",
   "ingestTemplateMessageExtras": "Extras",
+  "ingestTemplateMessageTemplatesSuggestedHint": "Auto-generated for messaging targets — customize as needed",
+  "ingestTemplateMessageTemplatePlaceholders": "Available placeholders",
   "ingestTemplateDlqConfig": "DLQ Configuration",
   "ingestTemplateDlqEnabled": "DLQ Enabled",
   "ingestTemplateDlqMaxRetries": "Max Retries",
@@ -167,5 +169,22 @@
   "ingestMappingSuggestionUseAsBase": "Use as Template Base",
   "ingestMappingSuggestionMatchRule": "Match Rule",
   "ingestMappingSuggestionFieldMappings": "Field Mappings",
-  "ingestMappingSuggestionSamplePayload": "Sample Payload"
+  "ingestMappingSuggestionSamplePayload": "Sample Payload",
+
+  "_comments_event_details": "Event Details (approved / normalized events)",
+  "ingestDetailsTitle": "Event Details",
+  "ingestDetailsSubtitle": "Approved events after normalization",
+  "ingestDetailsNoRecords": "No approved events found",
+  "ingestDetailsEventId": "Event ID",
+  "ingestDetailsEventType": "Event Type",
+  "ingestDetailsSourceFamily": "Source Family",
+  "ingestDetailsDeviceId": "Device ID",
+  "ingestDetailsStatus": "Status",
+  "ingestDetailsLocation": "Location",
+  "ingestDetailsApprovedAt": "Approved At",
+  "ingestDetailsApprovedBy": "Approved By",
+  "ingestDetailsPayload": "Original Payload",
+  "ingestDetailsNormalized": "Normalized Data",
+  "ingestDetailsTemplateId": "Template ID",
+  "ingestDetailsBackToList": "Back to list"
 }

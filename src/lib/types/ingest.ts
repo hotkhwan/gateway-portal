@@ -97,6 +97,31 @@ export interface MappingTemplate {
 }
 
 // ────────────────────────────────────────────
+// Approved Event (canonical, post-normalization)
+// ────────────────────────────────────────────
+
+export interface ApprovedEvent {
+	eventId: string
+	orgId: string
+	templateId?: string
+	sourceFamily?: string
+	eventType?: string
+	finalEventType?: string
+	status: string
+	deviceId?: string
+	lat?: number
+	lng?: number
+	site?: string
+	zone?: string
+	payload?: Record<string, unknown>
+	normalized?: Record<string, unknown>
+	createdAt: string
+	updatedAt: string
+	approvedAt?: string
+	approvedBy?: string
+}
+
+// ────────────────────────────────────────────
 // List Response
 // ────────────────────────────────────────────
 

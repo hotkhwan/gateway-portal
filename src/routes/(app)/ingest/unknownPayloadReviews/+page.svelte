@@ -119,7 +119,7 @@
     params.set('sourceFamily', review.sourceFamily)
     params.set('fingerprint', review.fingerprint)
     params.set('samplePayload', JSON.stringify(review.samplePayload))
-    goto(resolve(`/ingest/templates?${params}`))
+    goto(`${resolve('/ingest/templates')}?${params}`)
   }
 
   function formatDate(d: string): string {
