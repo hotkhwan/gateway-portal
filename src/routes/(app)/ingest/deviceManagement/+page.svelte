@@ -9,11 +9,15 @@
     createDeviceManagement,
     updateDeviceManagement,
     deleteDeviceManagement,
-    listSourceProfiles
+    listSourceProfiles,
+    downloadDeviceTemplate,
+    exportDevices,
+    importDevices
   } from '$lib/api/ingest'
-  import type { DeviceManagement, SourceProfile } from '$lib/types/ingest'
+  import type { DeviceManagement, SourceProfile, DeviceImportResult } from '$lib/types/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
+  import MapPicker from '$lib/components/leaflet/MapPicker.svelte'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
@@ -44,6 +48,14 @@
   let deleteId = $state<string | null>(null)
   let deleteLoading = $state(false)
   let actionSuccess = $state<string | null>(null)
+
+  // Import modal
+  let showImportModal = $state(false)
+  let importFile = $state<File | null>(null)
+  let importDryRun = $state(false)
+  let importLoading = $state(false)
+  let importResult = $state<DeviceImportResult | null>(null)
+  let importError = $state<string | null>(null)
 
   async function load(page = 1) {
     const orgId = $activeOrg?.id
@@ -164,6 +176,69 @@
     }
   }
 
+  async function handleDownloadTemplate() {
+    const orgId = $activeOrg?.id
+    if (!orgId) return
+    try {
+      const blob = await downloadDeviceTemplate(orgId)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'device-management-template.xlsx'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e: unknown) {
+      error = (e as { message?: string })?.message ?? m.commonError()
+    }
+  }
+
+  async function handleExport() {
+    const orgId = $activeOrg?.id
+    if (!orgId) return
+    try {
+      const blob = await exportDevices(orgId)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'device-management-export.xlsx'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e: unknown) {
+      error = (e as { message?: string })?.message ?? m.commonError()
+    }
+  }
+
+  function openImport() {
+    importFile = null
+    importDryRun = false
+    importResult = null
+    importError = null
+    showImportModal = true
+  }
+
+  function handleFileSelect(e: Event) {
+    const input = e.target as HTMLInputElement
+    if (input.files?.length) importFile = input.files[0]
+  }
+
+  async function handleImport() {
+    const orgId = $activeOrg?.id
+    if (!orgId || !importFile) return
+    importLoading = true
+    importError = null
+    try {
+      importResult = await importDevices(orgId, importFile, importDryRun)
+      if (!importDryRun) {
+        actionSuccess = m.ingestDeviceManagementImportSuccess()
+        load(pagination.page)
+      }
+    } catch (e: unknown) {
+      importError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      importLoading = false
+    }
+  }
+
   function formatDate(d: string): string {
     if (!d) return '-'
     try {
@@ -204,9 +279,20 @@
     {/if}
   </div>
   {#if $activeOrg}
-    <button class="btn btn-sm btn-theme" onclick={openCreate}>
-      <i class="bi bi-plus-lg me-1"></i>{m.ingestDeviceManagementCreate()}
-    </button>
+    <div class="d-flex gap-1">
+      <button class="btn btn-sm btn-outline-secondary" onclick={handleDownloadTemplate} title={m.ingestDeviceManagementDownloadTemplate()}>
+        <i class="bi bi-file-earmark-arrow-down me-1"></i>{m.ingestDeviceManagementDownloadTemplate()}
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" onclick={handleExport} title={m.ingestDeviceManagementExport()}>
+        <i class="bi bi-download me-1"></i>{m.ingestDeviceManagementExport()}
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" onclick={openImport} title={m.ingestDeviceManagementImport()}>
+        <i class="bi bi-upload me-1"></i>{m.ingestDeviceManagementImport()}
+      </button>
+      <button class="btn btn-sm btn-theme" onclick={openCreate}>
+        <i class="bi bi-plus-lg me-1"></i>{m.ingestDeviceManagementCreate()}
+      </button>
+    </div>
   {/if}
 </div>
 
@@ -364,14 +450,29 @@
             <input id="dmDeviceId" type="text" class="form-control" bind:value={formDeviceId} disabled={formLoading} placeholder="e.g. CAM-EAST-31" />
           </div>
 
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold" for="dmLat">{m.ingestDeviceManagementLat()}</label>
-              <input id="dmLat" type="number" step="any" class="form-control" bind:value={formLat} disabled={formLoading} placeholder="e.g. 13.7563" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold" for="dmLng">{m.ingestDeviceManagementLng()}</label>
-              <input id="dmLng" type="number" step="any" class="form-control" bind:value={formLng} disabled={formLoading} placeholder="e.g. 100.5018" />
+          <div class="mb-3">
+            <span class="form-label fw-semibold d-block">{m.ingestDeviceManagementLocation()}</span>
+            <MapPicker
+              lat={formLat}
+              lng={formLng}
+              height="280px"
+              disabled={formLoading}
+              showLocationButton={true}
+              onchange={(newLat: number, newLng: number) => { formLat = newLat; formLng = newLng }}
+            />
+            <div class="row g-2 mt-2">
+              <div class="col-md-6">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{m.ingestDeviceManagementLat()}</span>
+                  <input type="number" step="any" class="form-control" bind:value={formLat} disabled={formLoading} placeholder="13.7563" />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{m.ingestDeviceManagementLng()}</span>
+                  <input type="number" step="any" class="form-control" bind:value={formLng} disabled={formLoading} placeholder="100.5018" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -414,6 +515,61 @@
             {#if deleteLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
             {m.actionDelete()}
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- Import Modal -->
+{#if showImportModal}
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-upload me-2"></i>{m.ingestDeviceManagementImportTitle()}</h5>
+          <button type="button" class="btn-close" aria-label={m.actionClose()} onclick={() => (showImportModal = false)}></button>
+        </div>
+        <div class="modal-body">
+          {#if importError}
+            <div class="alert alert-danger small py-2">{importError}</div>
+          {/if}
+          {#if importResult}
+            <div class="alert alert-info small">
+              <div><strong>{m.ingestDeviceManagementImportInserted()}:</strong> {importResult.inserted}</div>
+              <div><strong>{m.ingestDeviceManagementImportUpdated()}:</strong> {importResult.updated}</div>
+              <div><strong>{m.ingestDeviceManagementImportSkipped()}:</strong> {importResult.skipped}</div>
+              {#if importResult.errors?.length}
+                <div class="mt-2"><strong>{m.ingestDeviceManagementImportErrors()}:</strong></div>
+                <ul class="mb-0">
+                  {#each importResult.errors as err}
+                    <li>{err}</li>
+                  {/each}
+                </ul>
+              {/if}
+            </div>
+            <div class="text-end">
+              <button class="btn btn-sm btn-secondary" onclick={() => (showImportModal = false)}>{m.actionClose()}</button>
+            </div>
+          {:else}
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="importFile">{m.ingestDeviceManagementImportSelectFile()}</label>
+              <input id="importFile" type="file" class="form-control" accept=".xlsx" onchange={handleFileSelect} disabled={importLoading} />
+              <small class="text-inverse text-opacity-50">{m.ingestDeviceManagementImportMaxSize()}</small>
+            </div>
+            <div class="form-check mb-3">
+              <input id="importDryRun" type="checkbox" class="form-check-input" bind:checked={importDryRun} disabled={importLoading} />
+              <label class="form-check-label" for="importDryRun">{m.ingestDeviceManagementImportDryRun()}</label>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <button class="btn btn-secondary" onclick={() => (showImportModal = false)} disabled={importLoading}>{m.actionCancel()}</button>
+              <button class="btn btn-theme" onclick={handleImport} disabled={importLoading || !importFile}>
+                {#if importLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
+                {m.ingestDeviceManagementImport()}
+              </button>
+            </div>
+          {/if}
         </div>
       </div>
     </div>

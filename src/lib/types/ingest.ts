@@ -97,6 +97,66 @@ export interface MappingTemplate {
 }
 
 // ────────────────────────────────────────────
+// Pending Event (Event Management)
+// ────────────────────────────────────────────
+
+export interface PendingEvent {
+	id: string
+	eventId: string
+	tenantId: string
+	orgId: string
+	name?: string
+	description?: string
+	lat?: number
+	lng?: number
+	eventType?: string
+	priority?: 'low' | 'medium' | 'high'
+	tags?: string[]
+	status: string
+	statusName?: string
+	rawBody?: Record<string, unknown>
+	contentType?: string
+	sourceIp?: string
+	fingerprint?: string
+	suggestedType?: string
+	createdAt: string
+	updatedAt: string
+	approvedBy?: string
+	approvedAt?: string
+}
+
+export interface EventUpdateInput {
+	name?: string
+	description?: string
+	lat?: number
+	lng?: number
+	eventType?: string
+	priority?: 'low' | 'medium' | 'high'
+	tags?: string[]
+}
+
+// ────────────────────────────────────────────
+// Bulk Operations
+// ────────────────────────────────────────────
+
+export interface BulkResult {
+	succeeded: string[]
+	failed: Array<{ id: string; reason: string }>
+}
+
+// ────────────────────────────────────────────
+// Device Import Result
+// ────────────────────────────────────────────
+
+export interface DeviceImportResult {
+	inserted: number
+	updated: number
+	skipped: number
+	ids: string[]
+	errors: string[]
+}
+
+// ────────────────────────────────────────────
 // Approved Event (canonical, post-normalization)
 // ────────────────────────────────────────────
 
@@ -239,7 +299,7 @@ export interface DeviceManagement {
 // ────────────────────────────────────────────
 
 export interface UnknownPayloadReview {
-	id: string
+	reviewId: string
 	orgId: string
 	sourceFamily: string
 	fingerprint: string
@@ -247,7 +307,7 @@ export interface UnknownPayloadReview {
 	firstSeenAt: string
 	lastSeenAt: string
 	samplePayload: Record<string, unknown>
-	candidateSuggestionIds?: string[]
+	candidateSuggestionIds: string[]
 	status: 'pending' | 'rejected'
 	createdAt: string
 	updatedAt: string
@@ -258,13 +318,13 @@ export interface UnknownPayloadReview {
 // ────────────────────────────────────────────
 
 export interface RejectedPayloadPattern {
-	id: string
+	patternId: string
 	orgId: string
 	sourceFamily: string
 	fingerprint: string
-	reason?: string
+	reason: string
+	createdBy: string
 	createdAt: string
-	createdBy?: string
 }
 
 // ────────────────────────────────────────────

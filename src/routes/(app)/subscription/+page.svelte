@@ -3,26 +3,28 @@
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { PLANS, type PlanId, type BillingCycle } from '$lib/api/subscription'
+  import { currentLocaleStore } from '$lib/i18nClient/setLanguage'
   import {
+    listPackages,
+    getCurrentSubscription,
     bootstrapSubscription,
-    getSubscription,
     changePlan,
     activateEnterprise
   } from '$lib/api/subscription'
+  import type { PackagePlan, CurrentSubscriptionDetails, BillingCycle, LocalisedText, PlanId } from '$lib/api/subscription'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
-  import type { Subscription } from '$lib/api/subscription'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
-  let subscription = $state<Subscription | null>(null)
+  let packages = $state<PackagePlan[]>([])
+  let subscription = $state<CurrentSubscriptionDetails | null>(null)
 
   // Upgrade modal state
   let showUpgradeModal = $state(false)
   let upgradeLoading = $state(false)
   let upgradeError = $state<string | null>(null)
-  let selectedPlan = $state<PlanId>('pro')
+  let upgradePlan = $state<PackagePlan | null>(null)
   let selectedBillingCycle = $state<BillingCycle>('monthly')
 
   // Enterprise modal state
@@ -31,36 +33,54 @@
   let enterpriseError = $state<string | null>(null)
   let licenseKey = $state('')
 
-  async function loadSubscription() {
+  let locale = $derived($currentLocaleStore ?? 'en')
+
+  function lt(text: LocalisedText | undefined): string {
+    if (!text) return ''
+    return (locale === 'th' ? text.th : text.en) || text.en || ''
+  }
+
+  async function loadData() {
     loading = true
     error = null
     try {
-      subscription = await getSubscription()
-    } catch (e: unknown) {
-      // If no subscription exists, bootstrap one
-      try {
-        subscription = await bootstrapSubscription()
-      } catch (e2: unknown) {
-        error = (e2 as { message?: string })?.message ?? m.commonError()
+      const [pkgRes, subRes] = await Promise.allSettled([
+        listPackages(),
+        getCurrentSubscription()
+      ])
+      packages = pkgRes.status === 'fulfilled' ? pkgRes.value : []
+      if (subRes.status === 'fulfilled') {
+        subscription = subRes.value
+      } else {
+        // If no subscription exists, bootstrap one
+        try {
+          subscription = await bootstrapSubscription()
+        } catch (e2: unknown) {
+          subscription = null
+        }
       }
+    } catch (e: unknown) {
+      error = (e as { message?: string })?.message ?? m.commonError()
     } finally {
       loading = false
     }
   }
 
-  function openUpgradeModal(planId: PlanId) {
-    selectedPlan = planId
-    selectedBillingCycle = 'monthly'
+  function openUpgradeModal(pkg: PackagePlan) {
+    upgradePlan = pkg
+    selectedBillingCycle = pkg.billing.supportedCycles.includes('monthly') ? 'monthly' : pkg.billing.supportedCycles[0] ?? 'monthly'
     upgradeError = null
     showUpgradeModal = true
   }
 
   async function handleUpgrade() {
+    if (!upgradePlan) return
     upgradeLoading = true
     upgradeError = null
     try {
-      subscription = await changePlan(selectedPlan, selectedBillingCycle)
+      subscription = await changePlan(upgradePlan.code as PlanId, selectedBillingCycle)
       showUpgradeModal = false
+      await loadData()
     } catch (e: unknown) {
       upgradeError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
@@ -81,6 +101,7 @@
     try {
       subscription = await activateEnterprise(licenseKey.trim())
       showEnterpriseModal = false
+      await loadData()
     } catch (e: unknown) {
       enterpriseError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
@@ -88,26 +109,13 @@
     }
   }
 
-  function getPlanStatusClass(planId: PlanId): string {
-    if (!subscription) return ''
-    if (subscription.planId === planId) return 'border-theme bg-theme bg-opacity-10'
-    return ''
-  }
-
-  function getPlanBadge(planId: PlanId): string {
-    if (!subscription) return ''
-    if (subscription.planId === planId) return m.subscriptionCurrentPlan()
-    return ''
-  }
-
-  function formatPrice(price: number, cycle: BillingCycle): string {
-    if (price === 0) return m.subscriptionFree()
-    return `$${price}${cycle === 'monthly' ? m.subscriptionPerMonth() : m.subscriptionPerYear()}`
+  function isCurrentPlan(pkg: PackagePlan): boolean {
+    return subscription?.planId === pkg.code
   }
 
   onMount(() => {
     setPageTitle(m.subscriptionTitle())
-    loadSubscription()
+    loadData()
   })
 </script>
 
@@ -127,91 +135,86 @@
 {:else if error}
   <div class="alert alert-danger">
     <i class="bi bi-exclamation-triangle me-2"></i>{error}
-    <button class="btn btn-sm btn-danger ms-2" onclick={loadSubscription}
-      >{m.actionRefresh()}</button
-    >
+    <button class="btn btn-sm btn-danger ms-2" onclick={loadData}>{m.actionRefresh()}</button>
   </div>
 {:else if subscription}
   <!-- Current Plan Card -->
-  <Card class="mb-4">
-    <CardBody>
-      <div class="d-flex align-items-center">
-        <div class="flex-grow-1">
-          <h5 class="mb-1">
-            <i class="bi bi-gem text-theme me-2"></i>
-            {m.subscriptionCurrentPlan()}: {PLANS[subscription.planId].name}
-          </h5>
-          <p class="mb-0 text-inverse text-opacity-75">
-            {PLANS[subscription.planId].description}
-          </p>
+  {#if packages.length > 0}
+    {@const currentPkg = packages.find(p => p.code === subscription?.planId)}
+    <Card class="mb-4">
+      <CardBody>
+        <div class="d-flex align-items-center">
+          <div class="flex-grow-1">
+            <h5 class="mb-1">
+              <i class="bi bi-gem text-theme me-2"></i>
+              {m.subscriptionCurrentPlan()}: {currentPkg ? lt(currentPkg.name) : subscription.planId}
+            </h5>
+            {#if currentPkg}
+              <p class="mb-0 text-inverse text-opacity-75">
+                {lt(currentPkg.description)}
+              </p>
+            {/if}
+          </div>
+          <div class="text-end">
+            <span class="badge rounded-pill bg-success">
+              {m.subscriptionStatusActive()}
+            </span>
+          </div>
         </div>
-        <div class="text-end">
-          <span
-            class="badge rounded-pill"
-            class:bg-success={subscription.status === 'active'}
-            class:bg-warning={subscription.status === 'pending'}
-            class:bg-danger={subscription.status === 'cancelled'}
-            class:bg-secondary={subscription.status === 'inactive'}
-          >
-            {subscription.status.toUpperCase()}
-          </span>
-        </div>
-      </div>
-    </CardBody>
-  </Card>
+      </CardBody>
+    </Card>
+  {/if}
 
   <!-- Plan Cards -->
   <div class="row g-4">
-    {#each Object.values(PLANS) as plan (plan.id)}
+    {#each packages as pkg (pkg.id)}
       <div class="col-md-4">
-        <Card class={getPlanStatusClass(plan.id)}>
+        <Card class={isCurrentPlan(pkg) ? 'border-theme bg-theme bg-opacity-10' : ''}>
           <CardBody>
             <div class="d-flex justify-content-between align-items-start mb-3">
               <div>
-                <h5 class="mb-1">{plan.name}</h5>
+                <h5 class="mb-1">{lt(pkg.name)}</h5>
                 <p class="text-inverse text-opacity-75 small mb-0">
-                  {plan.description}
+                  {lt(pkg.description)}
                 </p>
               </div>
-              {#if getPlanBadge(plan.id)}
-                <span class="badge bg-theme">{getPlanBadge(plan.id)}</span>
+              {#if isCurrentPlan(pkg)}
+                <span class="badge bg-theme">{m.subscriptionCurrentPlan()}</span>
+              {:else if pkg.ui?.highlight && lt(pkg.ui.badge)}
+                <span class="badge bg-theme">{lt(pkg.ui.badge)}</span>
               {/if}
             </div>
 
             <h3 class="mb-4">
-              {formatPrice(plan.price, plan.billingCycle)}
+              {#if pkg.billing.price.monthly === 0 && pkg.code === 'enterprise'}
+                {m.subscriptionPackagesCustomPricing()}
+              {:else if pkg.billing.price.monthly === 0}
+                {m.subscriptionFree()}
+              {:else}
+                {lt(pkg.billing.price.display)}
+              {/if}
             </h3>
 
             <ul class="list-unstyled mb-4">
-              {#each plan.features as feature}
+              {#each pkg.ui?.featureList ?? [] as feature}
                 <li class="mb-2">
                   <i class="bi bi-check-circle-fill text-success me-2"></i>
-                  {feature}
+                  {lt(feature.label)}
                 </li>
               {/each}
             </ul>
 
-            {#if subscription.planId !== plan.id}
-              <button
-                class="btn w-100"
-                class:btn-outline-theme={plan.id === 'freemium'}
-                class:btn-theme={plan.id === 'pro'}
-                class:btn-dark={plan.id === 'enterprise'}
-                disabled={subscription.planId === 'enterprise'}
-                onclick={() => {
-                  if (plan.id === 'enterprise') openEnterpriseModal()
-                  else openUpgradeModal(plan.id)
-                }}
-              >
-                {#if plan.id === 'enterprise'}
-                  {m.subscriptionActivateEnterprise()}
-                {:else}
-                  {m.subscriptionUpgrade()}
-                {/if}
-              </button>
-            {:else}
+            {#if isCurrentPlan(pkg)}
               <button class="btn btn-outline-theme w-100" disabled>
                 {m.subscriptionCurrentPlan()}
+              </button>
+            {:else if pkg.code === 'enterprise'}
+              <button class="btn btn-dark w-100" onclick={openEnterpriseModal}>
+                {m.subscriptionActivateEnterprise()}
+              </button>
+            {:else}
+              <button class="btn btn-theme w-100" onclick={() => openUpgradeModal(pkg)}>
+                {m.subscriptionUpgrade()}
               </button>
             {/if}
           </CardBody>
@@ -222,95 +225,65 @@
 {/if}
 
 <!-- Upgrade Modal -->
-{#if showUpgradeModal}
-  <div
-    class="modal d-block"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-  >
+{#if showUpgradeModal && upgradePlan}
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
         <div class="modal-header">
           <h5 class="modal-title">
-            {m.subscriptionUpgradeTitle()}: {PLANS[selectedPlan].name}
+            {m.subscriptionUpgradeTitle()}: {lt(upgradePlan.name)}
           </h5>
-          <button
-            type="button"
-            class="btn-close"
-            aria-label={m.actionClose()}
-            onclick={() => (showUpgradeModal = false)}
-          ></button>
+          <button type="button" class="btn-close" aria-label={m.actionClose()} onclick={() => (showUpgradeModal = false)}></button>
         </div>
-
-        {#if upgradeError}
-          <div class="modal-body">
-            <div class="alert alert-danger small py-2">{upgradeError}</div>
-          </div>
-        {/if}
 
         <div class="modal-body">
+          {#if upgradeError}
+            <div class="alert alert-danger small py-2">{upgradeError}</div>
+          {/if}
           <p class="mb-4">{m.subscriptionUpgradeDesc()}</p>
 
-          <fieldset class="mb-4">
-            <legend class="form-label fw-semibold mb-2">{m.subscriptionBillingCycle()}</legend>
-            <div class="btn-group w-100" role="group">
-              <input
-                type="radio"
-                class="btn-check"
-                name="billingCycle"
-                id="cycleMonthly"
-                value="monthly"
-                bind:group={selectedBillingCycle}
-              />
-              <label class="btn btn-outline-theme" for="cycleMonthly">
-                {m.subscriptionMonthly()}
-              </label>
-
-              <input
-                type="radio"
-                class="btn-check"
-                name="billingCycle"
-                id="cycleYearly"
-                value="yearly"
-                bind:group={selectedBillingCycle}
-              />
-              <label class="btn btn-outline-theme" for="cycleYearly">
-                {m.subscriptionYearly()} <span class="badge bg-success ms-1">-20%</span>
-              </label>
+          {#if upgradePlan.billing.supportedCycles.length > 1}
+            <div class="mb-3">
+              <span class="form-label fw-semibold">{m.subscriptionBillingCycle()}</span>
+              <div class="btn-group w-100">
+                {#if upgradePlan.billing.supportedCycles.includes('monthly')}
+                  <button
+                    class="btn btn-sm"
+                    class:btn-theme={selectedBillingCycle === 'monthly'}
+                    class:btn-outline-theme={selectedBillingCycle !== 'monthly'}
+                    onclick={() => (selectedBillingCycle = 'monthly')}
+                  >
+                    {m.subscriptionMonthly()}
+                    {#if upgradePlan.billing.price.monthly > 0}
+                      (${upgradePlan.billing.price.monthly}{m.subscriptionPerMonth()})
+                    {/if}
+                  </button>
+                {/if}
+                {#if upgradePlan.billing.supportedCycles.includes('yearly')}
+                  <button
+                    class="btn btn-sm"
+                    class:btn-theme={selectedBillingCycle === 'yearly'}
+                    class:btn-outline-theme={selectedBillingCycle !== 'yearly'}
+                    onclick={() => (selectedBillingCycle = 'yearly')}
+                  >
+                    {m.subscriptionYearly()}
+                    {#if upgradePlan.billing.price.yearly > 0}
+                      (${upgradePlan.billing.price.yearly}{m.subscriptionPerYear()})
+                    {/if}
+                  </button>
+                {/if}
+              </div>
             </div>
-          </fieldset>
-        </div>
-
-        <div class="alert alert-info small">
-          <i class="bi bi-info-circle me-2"></i>
-          {m.subscriptionUpgradeInfo()} {formatPrice(
-            PLANS[selectedPlan].price,
-            selectedBillingCycle
-          )}
+          {/if}
         </div>
 
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick={() => (showUpgradeModal = false)}
-            disabled={upgradeLoading}
-          >
+          <button type="button" class="btn btn-secondary" onclick={() => (showUpgradeModal = false)} disabled={upgradeLoading}>
             {m.actionCancel()}
           </button>
-          <button
-            type="button"
-            class="btn btn-theme"
-            onclick={handleUpgrade}
-            disabled={upgradeLoading}
-          >
+          <button type="button" class="btn btn-theme" onclick={handleUpgrade} disabled={upgradeLoading}>
             {#if upgradeLoading}
-              <span
-                class="spinner-border spinner-border-sm me-1"
-                role="status"
-                aria-hidden="true"
-              ></span>
+              <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
               {m.actionSubmitting()}
             {:else}
               {m.subscriptionUpgrade()}
@@ -325,33 +298,20 @@
 
 <!-- Enterprise Activation Modal -->
 {#if showEnterpriseModal}
-  <div
-    class="modal d-block"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-  >
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-inverse-subtle">
         <div class="modal-header">
           <h5 class="modal-title">
             {m.subscriptionEnterpriseTitle()}
           </h5>
-          <button
-            type="button"
-            class="btn-close"
-            aria-label={m.actionClose()}
-            onclick={() => (showEnterpriseModal = false)}
-          ></button>
+          <button type="button" class="btn-close" aria-label={m.actionClose()} onclick={() => (showEnterpriseModal = false)}></button>
         </div>
 
-        {#if enterpriseError}
-          <div class="modal-body">
-            <div class="alert alert-danger small py-2">{enterpriseError}</div>
-          </div>
-        {/if}
-
         <div class="modal-body">
+          {#if enterpriseError}
+            <div class="alert alert-danger small py-2">{enterpriseError}</div>
+          {/if}
           <p class="mb-4">{m.subscriptionEnterpriseDesc()}</p>
 
           <div class="mb-3">
@@ -379,26 +339,12 @@
         </div>
 
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick={() => (showEnterpriseModal = false)}
-            disabled={enterpriseLoading}
-          >
+          <button type="button" class="btn btn-secondary" onclick={() => (showEnterpriseModal = false)} disabled={enterpriseLoading}>
             {m.actionCancel()}
           </button>
-          <button
-            type="button"
-            class="btn btn-dark"
-            onclick={handleEnterpriseActivate}
-            disabled={enterpriseLoading || !licenseKey.trim()}
-          >
+          <button type="button" class="btn btn-dark" onclick={handleEnterpriseActivate} disabled={enterpriseLoading || !licenseKey.trim()}>
             {#if enterpriseLoading}
-              <span
-                class="spinner-border spinner-border-sm me-1"
-                role="status"
-                aria-hidden="true"
-              ></span>
+              <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
               {m.actionSubmitting()}
             {:else}
               {m.subscriptionActivateEnterprise()}

@@ -357,29 +357,7 @@
           {/if}
 
           <div class="row g-3 mb-3">
-            <div class="col-sm-4">
-              <label class="form-label fw-semibold" for="mapLat">{m.profileLatitude()}</label>
-              <input
-                id="mapLat"
-                type="number"
-                step="any"
-                class="form-control font-monospace"
-                bind:value={mapLat}
-                disabled={prefLoading}
-              />
-            </div>
-            <div class="col-sm-4">
-              <label class="form-label fw-semibold" for="mapLng">{m.profileLongitude()}</label>
-              <input
-                id="mapLng"
-                type="number"
-                step="any"
-                class="form-control font-monospace"
-                bind:value={mapLng}
-                disabled={prefLoading}
-              />
-            </div>
-            <div class="col-sm-2">
+            <div class="col-sm-6">
               <label class="form-label fw-semibold" for="zoomLevel">{m.profileZoom()}</label>
               <input
                 id="zoomLevel"
@@ -391,7 +369,7 @@
                 disabled={prefLoading}
               />
             </div>
-            <div class="col-sm-2">
+            <div class="col-sm-6">
               <label class="form-label fw-semibold" for="perPages">{m.profilePerPage()}</label>
               <select id="perPages" class="form-select" bind:value={perPages} disabled={prefLoading}>
                 {#each [10, 20, 50, 100] as n}
@@ -402,29 +380,52 @@
           </div>
 
           <div class="mb-3">
-            <div class="form-label fw-semibold">
+            <span class="form-label fw-semibold d-block">
               <i class="bi bi-map me-1"></i>{m.profileMapLocation()}
-            </div>
-            <small class="text-inverse text-opacity-50 ms-2">{m.eventsLocationHint()}</small>
+            </span>
+            <small class="text-inverse text-opacity-50 d-block mb-2">{m.eventsLocationHint()}</small>
             {#if showMap}
-              {#key `${mapLat},${mapLng}`}
-                <div class="mt-2">
-                  <MapPicker
-                    lat={mapLat}
-                    lng={mapLng}
-                    zoom={zoomLevel}
-                    height="350px"
-                    disabled={prefLoading}
-                    onchange={(lat: number, lng: number) => { mapLat = lat; mapLng = lng }}
-                  />
-                </div>
-              {/key}
+              <MapPicker
+                lat={mapLat}
+                lng={mapLng}
+                zoom={zoomLevel}
+                height="350px"
+                disabled={prefLoading}
+                showLocationButton={true}
+                onchange={(lat: number, lng: number) => { mapLat = lat; mapLng = lng }}
+              />
             {:else}
               <div style="height:350px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,0.08))"
-                class="d-flex align-items-center justify-content-center mt-2">
+                class="d-flex align-items-center justify-content-center">
                 <div class="spinner-border spinner-border-sm" role="status"></div>
               </div>
             {/if}
+            <div class="row g-2 mt-2">
+              <div class="col-sm-6">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{m.profileLatitude()}</span>
+                  <input
+                    type="number"
+                    step="any"
+                    class="form-control font-monospace"
+                    bind:value={mapLat}
+                    disabled={prefLoading}
+                  />
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{m.profileLongitude()}</span>
+                  <input
+                    type="number"
+                    step="any"
+                    class="form-control font-monospace"
+                    bind:value={mapLng}
+                    disabled={prefLoading}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <button class="btn btn-theme" onclick={handleSavePreferences} disabled={prefLoading}>

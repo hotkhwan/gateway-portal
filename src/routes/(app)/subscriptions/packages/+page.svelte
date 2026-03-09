@@ -3,13 +3,14 @@
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { listPackages, getSubscription, changePlan } from '$lib/api/subscription'
-  import type { PackagePlan, Subscription, BillingCycle } from '$lib/api/subscription'
+  import { currentLocaleStore } from '$lib/i18nClient/setLanguage'
+  import { listPackages, getCurrentSubscription, changePlan } from '$lib/api/subscription'
+  import type { PackagePlan, CurrentSubscriptionDetails, BillingCycle, LocalisedText } from '$lib/api/subscription'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
   let packages = $state<PackagePlan[]>([])
-  let currentSub = $state<Subscription | null>(null)
+  let currentSub = $state<CurrentSubscriptionDetails | null>(null)
 
   // Upgrade modal
   let showUpgradeModal = $state(false)
@@ -18,13 +19,20 @@
   let upgradeLoading = $state(false)
   let upgradeError = $state<string | null>(null)
 
+  let locale = $derived($currentLocaleStore ?? 'en')
+
+  function lt(text: LocalisedText | undefined): string {
+    if (!text) return ''
+    return (locale === 'th' ? text.th : text.en) || text.en || ''
+  }
+
   async function loadData() {
     loading = true
     error = null
     try {
       const [pkgRes, subRes] = await Promise.allSettled([
         listPackages(),
-        getSubscription()
+        getCurrentSubscription()
       ])
       packages = pkgRes.status === 'fulfilled' ? pkgRes.value : []
       currentSub = subRes.status === 'fulfilled' ? subRes.value : null
@@ -37,7 +45,7 @@
 
   function openUpgrade(pkg: PackagePlan) {
     upgradePlan = pkg
-    upgradeCycle = pkg.billing.cycle !== 'none' ? pkg.billing.cycle : 'monthly'
+    upgradeCycle = pkg.billing.supportedCycles.includes('monthly') ? 'monthly' : pkg.billing.supportedCycles[0] ?? 'monthly'
     upgradeError = null
     showUpgradeModal = true
   }
@@ -47,8 +55,7 @@
     upgradeLoading = true
     upgradeError = null
     try {
-      const sub = await changePlan(upgradePlan.planId, upgradeCycle)
-      currentSub = sub
+      currentSub = await changePlan(upgradePlan.code as 'freemium' | 'pro' | 'enterprise', upgradeCycle)
       showUpgradeModal = false
       await loadData()
     } catch (e: unknown) {
@@ -59,7 +66,11 @@
   }
 
   function isCurrentPlan(pkg: PackagePlan): boolean {
-    return currentSub?.planId === pkg.planId
+    return currentSub?.planId === pkg.code
+  }
+
+  function priceForCycle(pkg: PackagePlan, cycle: BillingCycle): number {
+    return cycle === 'yearly' ? pkg.billing.price.yearly : pkg.billing.price.monthly
   }
 
   onMount(() => {
@@ -100,46 +111,47 @@
           class:border-theme={pkg.ui?.highlight}
           class:border-0={!pkg.ui?.highlight}
         >
-          {#if pkg.ui?.highlight}
+          {#if pkg.ui?.highlight && lt(pkg.ui.badge)}
+            <div class="card-header bg-theme text-white text-center py-1">
+              <small class="fw-semibold">{lt(pkg.ui.badge)}</small>
+            </div>
+          {:else if pkg.ui?.highlight}
             <div class="card-header bg-theme text-white text-center py-1">
               <small class="fw-semibold">{m.subscriptionPackagesHighlighted()}</small>
             </div>
           {/if}
           <div class="card-body text-center d-flex flex-column">
-            <h4 class="fw-bold mb-1">{pkg.name}</h4>
-            <p class="text-inverse text-opacity-50 small mb-3">{pkg.description}</p>
+            <h4 class="fw-bold mb-1">{lt(pkg.name)}</h4>
+            <p class="text-inverse text-opacity-50 small mb-3">{lt(pkg.description)}</p>
 
             <!-- Price -->
             <div class="mb-3">
-              {#if pkg.billing.price.amount === 0 && pkg.planId === 'enterprise'}
+              {#if pkg.billing.price.monthly === 0 && pkg.code === 'enterprise'}
                 <span class="fs-5 fw-bold">{m.subscriptionPackagesCustomPricing()}</span>
-              {:else if pkg.billing.price.amount === 0}
+              {:else if pkg.billing.price.monthly === 0}
                 <span class="fs-2 fw-bold">{m.subscriptionFree()}</span>
               {:else}
-                <span class="fs-2 fw-bold">${pkg.billing.price.amount}</span>
-                <span class="text-inverse text-opacity-50">
-                  {pkg.billing.cycle === 'monthly' ? m.subscriptionPerMonth() : m.subscriptionPerYear()}
-                </span>
+                <span class="fs-2 fw-bold">{lt(pkg.billing.price.display)}</span>
               {/if}
             </div>
 
-            <!-- Features -->
+            <!-- Feature list from UI -->
             <ul class="list-unstyled text-start flex-grow-1 mb-3">
               {#each pkg.ui?.featureList ?? [] as feature}
                 <li class="mb-1">
                   <i class="bi bi-check-circle-fill text-theme me-2"></i>
-                  <small>{feature}</small>
+                  <small>{lt(feature.label)}</small>
                 </li>
               {/each}
             </ul>
 
-            <!-- Limits -->
+            <!-- Limits summary -->
             <div class="small text-inverse text-opacity-50 mb-3 text-start">
-              <div>{m.subscriptionLimitOrgs()}: {pkg.limits.orgs === -1 ? '∞' : pkg.limits.orgs}</div>
-              <div>{m.subscriptionLimitMembers()}: {pkg.limits.members === -1 ? '∞' : pkg.limits.members}</div>
+              <div>{m.subscriptionLimitOrgs()}: {pkg.limits.maxOrganizationsPerTenant === -1 ? '∞' : pkg.limits.maxOrganizationsPerTenant}</div>
+              <div>{m.subscriptionLimitMembers()}: {pkg.limits.teamMembers === -1 ? '∞' : pkg.limits.teamMembers}</div>
               <div>{m.subscriptionLimitEvents()}: {pkg.limits.eventsPerMonth === -1 ? '∞' : pkg.limits.eventsPerMonth.toLocaleString()}</div>
               <div>{m.subscriptionLimitWebhooks()}: {pkg.limits.webhooksPerOrg === -1 ? '∞' : pkg.limits.webhooksPerOrg}</div>
-              <div>{m.subscriptionLimitMsgChannels()}: {pkg.limits.msgChannelsPerOrg === -1 ? '∞' : pkg.limits.msgChannelsPerOrg}</div>
+              <div>{m.subscriptionLimitMsgChannels()}: {pkg.limits.messageChannelsPerOrg === -1 ? '∞' : pkg.limits.messageChannelsPerOrg}</div>
             </div>
 
             <!-- Action -->
@@ -147,7 +159,11 @@
               <button class="btn btn-outline-theme" disabled>
                 <i class="bi bi-check-lg me-1"></i>{m.subscriptionPackagesCurrent()}
               </button>
-            {:else if pkg.planId === 'enterprise'}
+            {:else if currentSub?.planId === 'enterprise'}
+              <button class="btn btn-outline-secondary" disabled>
+                {m.subscriptionPackagesUpgrade()}
+              </button>
+            {:else if pkg.code === 'enterprise'}
               <button class="btn btn-outline-theme" onclick={() => openUpgrade(pkg)}>
                 {m.subscriptionPackagesContactSales()}
               </button>
@@ -177,24 +193,38 @@
             <div class="alert alert-danger small py-2">{upgradeError}</div>
           {/if}
           <p>{m.subscriptionUpgradeDesc()}</p>
-          <p class="fw-semibold">{upgradePlan.name} — {upgradePlan.billing.price.display}</p>
+          <p class="fw-semibold">{lt(upgradePlan.name)} — {lt(upgradePlan.billing.price.display)}</p>
 
-          {#if upgradePlan.billing.price.amount > 0}
+          {#if upgradePlan.billing.supportedCycles.length > 1}
             <div class="mb-3">
               <span class="form-label">{m.subscriptionBillingCycle()}</span>
               <div class="btn-group w-100">
-                <button
-                  class="btn btn-sm"
-                  class:btn-theme={upgradeCycle === 'monthly'}
-                  class:btn-outline-theme={upgradeCycle !== 'monthly'}
-                  onclick={() => (upgradeCycle = 'monthly')}
-                >{m.subscriptionMonthly()}</button>
-                <button
-                  class="btn btn-sm"
-                  class:btn-theme={upgradeCycle === 'yearly'}
-                  class:btn-outline-theme={upgradeCycle !== 'yearly'}
-                  onclick={() => (upgradeCycle = 'yearly')}
-                >{m.subscriptionYearly()}</button>
+                {#if upgradePlan.billing.supportedCycles.includes('monthly')}
+                  <button
+                    class="btn btn-sm"
+                    class:btn-theme={upgradeCycle === 'monthly'}
+                    class:btn-outline-theme={upgradeCycle !== 'monthly'}
+                    onclick={() => (upgradeCycle = 'monthly')}
+                  >
+                    {m.subscriptionMonthly()}
+                    {#if upgradePlan.billing.price.monthly > 0}
+                      (${upgradePlan.billing.price.monthly}{m.subscriptionPerMonth()})
+                    {/if}
+                  </button>
+                {/if}
+                {#if upgradePlan.billing.supportedCycles.includes('yearly')}
+                  <button
+                    class="btn btn-sm"
+                    class:btn-theme={upgradeCycle === 'yearly'}
+                    class:btn-outline-theme={upgradeCycle !== 'yearly'}
+                    onclick={() => (upgradeCycle = 'yearly')}
+                  >
+                    {m.subscriptionYearly()}
+                    {#if upgradePlan.billing.price.yearly > 0}
+                      (${upgradePlan.billing.price.yearly}{m.subscriptionPerYear()})
+                    {/if}
+                  </button>
+                {/if}
               </div>
             </div>
           {/if}

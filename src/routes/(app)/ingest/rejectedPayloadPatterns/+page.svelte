@@ -41,7 +41,7 @@
 
   function openAllow(pattern: RejectedPayloadPattern) {
     allowPattern = pattern
-    allowId = pattern.id
+    allowId = pattern.patternId
     showAllowModal = true
   }
 
@@ -51,7 +51,7 @@
     allowLoading = true
     try {
       await deleteRejectedPayloadPattern(orgId, allowId)
-      patterns = patterns.filter(p => p.id !== allowId)
+      patterns = patterns.filter(p => p.patternId !== allowId)
       actionSuccess = m.ingestRejectedPayloadPatternAllowed()
       showAllowModal = false
       allowId = null
@@ -151,14 +151,14 @@
           </tr>
         </thead>
         <tbody>
-          {#each patterns as pattern (pattern.id)}
+          {#each patterns as pattern (pattern.patternId)}
             <tr>
               <td><span class="badge bg-theme-subtle text-theme">{pattern.sourceFamily}</span></td>
               <td>
                 <code class="small" title={pattern.fingerprint}>{truncate(pattern.fingerprint)}</code>
               </td>
-              <td class="small text-inverse text-opacity-60">{pattern.reason ?? '-'}</td>
-              <td class="small text-inverse text-opacity-60">{pattern.createdBy ?? '-'}</td>
+              <td class="small text-inverse text-opacity-60">{pattern.reason}</td>
+              <td class="small text-inverse text-opacity-60">{pattern.createdBy}</td>
               <td class="small">{formatDate(pattern.createdAt)}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-success" onclick={() => openAllow(pattern)}

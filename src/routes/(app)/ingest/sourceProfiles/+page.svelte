@@ -4,7 +4,7 @@
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { activeOrg } from '$lib/stores/activeOrg'
-  import { listSourceProfiles } from '$lib/api/ingest'
+  import { listSourceProfiles, createSourceProfile, updateSourceProfile } from '$lib/api/ingest'
   import type { SourceProfile } from '$lib/types/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
@@ -17,6 +17,16 @@
   let filtered = $derived(
     filterMode ? profiles.filter(p => p.mode === filterMode) : profiles
   )
+
+  // Form modal
+  let showFormModal = $state(false)
+  let formMode = $state<'create' | 'edit'>('create')
+  let formLoading = $state(false)
+  let formError = $state<string | null>(null)
+  let formSourceFamily = $state('')
+  let formDisplayName = $state('')
+  let formProfileMode = $state<string>('active')
+  let actionSuccess = $state<string | null>(null)
 
   async function load() {
     const orgId = $activeOrg?.id
@@ -62,6 +72,55 @@
     } catch { return d }
   }
 
+  function openCreate() {
+    formMode = 'create'
+    formSourceFamily = ''
+    formDisplayName = ''
+    formProfileMode = 'active'
+    formError = null
+    showFormModal = true
+  }
+
+  function openEdit(profile: SourceProfile) {
+    formMode = 'edit'
+    formSourceFamily = profile.sourceFamily
+    formDisplayName = profile.displayName
+    formProfileMode = profile.mode ?? 'active'
+    formError = null
+    showFormModal = true
+  }
+
+  async function handleFormSubmit() {
+    const orgId = $activeOrg?.id
+    if (!orgId) return
+    if (!formSourceFamily.trim()) { formError = m.ingestSourceProfileSourceFamilyRequired(); return }
+    if (!formDisplayName.trim()) { formError = m.ingestSourceProfileDisplayNameRequired(); return }
+
+    formLoading = true
+    formError = null
+    try {
+      if (formMode === 'create') {
+        await createSourceProfile(orgId, {
+          sourceFamily: formSourceFamily.trim(),
+          displayName: formDisplayName.trim(),
+          mode: formProfileMode
+        })
+      } else {
+        await updateSourceProfile(orgId, formSourceFamily, {
+          displayName: formDisplayName.trim(),
+          mode: formProfileMode
+        })
+      }
+      actionSuccess = m.ingestSourceProfileSaved()
+      showFormModal = false
+      load()
+    } catch (e: unknown) {
+      formError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      formLoading = false
+    }
+  }
+
   $effect(() => {
     const orgId = $activeOrg?.id
     setPageTitle(m.ingestSourceProfilesTitle())
@@ -74,7 +133,10 @@
     <h1 class="page-header mb-0">{m.ingestSourceProfilesTitle()}</h1>
     <small class="text-inverse text-opacity-50">{m.ingestSourceProfilesSubtitle()}</small>
   </div>
-  <select class="form-select form-select-sm ms-3" style="width:auto" bind:value={filterMode}>
+  <button class="btn btn-sm btn-theme ms-3" onclick={openCreate}>
+    <i class="bi bi-plus-lg me-1"></i>{m.ingestSourceProfileCreate()}
+  </button>
+  <select class="form-select form-select-sm ms-2" style="width:auto" bind:value={filterMode}>
     <option value="">— {m.ingestSourceProfileMode()} —</option>
     <option value="active">{m.ingestSourceProfileModeActive()}</option>
     <option value="comingSoon">{m.ingestSourceProfileModeComingSoon()}</option>
@@ -85,6 +147,13 @@
     <i class="bi bi-arrow-clockwise"></i>
   </button>
 </div>
+
+{#if actionSuccess}
+  <div class="alert alert-success alert-dismissible mb-3">
+    <i class="bi bi-check-circle me-2"></i>{actionSuccess}
+    <button type="button" class="btn-close" onclick={() => (actionSuccess = null)} aria-label={m.actionClose()}></button>
+  </div>
+{/if}
 
 {#if loading}
   <div class="text-center py-5">
@@ -122,6 +191,7 @@
           <th>{m.ingestSourceProfileMode()}</th>
           <th>{m.ingestSourceProfileSuggestedMatchFields()}</th>
           <th>{m.eventsUpdatedAt()}</th>
+          <th class="text-end">{m.eventsActions()}</th>
         </tr>
       </thead>
       <tbody>
@@ -145,9 +215,59 @@
               {/if}
             </td>
             <td class="small">{formatDate(profile.updatedAt)}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-secondary" onclick={() => openEdit(profile)} title={m.actionEdit()}>
+                <i class="bi bi-pencil"></i>
+              </button>
+            </td>
           </tr>
         {/each}
       </tbody>
     </table>
   </div>
+{/if}
+
+<!-- Create / Edit Modal -->
+{#if showFormModal}
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {formMode === 'create' ? m.ingestSourceProfileCreate() : m.ingestSourceProfileEdit()}
+          </h5>
+          <button type="button" class="btn-close" aria-label={m.actionClose()} onclick={() => (showFormModal = false)}></button>
+        </div>
+        <div class="modal-body">
+          {#if formError}
+            <div class="alert alert-danger small py-2">{formError}</div>
+          {/if}
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="spFamily">{m.ingestSourceProfileFamily()} <span class="text-danger">*</span></label>
+            <input id="spFamily" type="text" class="form-control font-monospace" bind:value={formSourceFamily} disabled={formLoading || formMode === 'edit'} placeholder="e.g. ata" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="spDisplayName">{m.ingestSourceProfileDisplayName()} <span class="text-danger">*</span></label>
+            <input id="spDisplayName" type="text" class="form-control" bind:value={formDisplayName} disabled={formLoading} placeholder="e.g. ATA Camera" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="spMode">{m.ingestSourceProfileMode()}</label>
+            <select id="spMode" class="form-select" bind:value={formProfileMode} disabled={formLoading}>
+              <option value="active">{m.ingestSourceProfileModeActive()}</option>
+              <option value="comingSoon">{m.ingestSourceProfileModeComingSoon()}</option>
+              <option value="mock">{m.ingestSourceProfileModeMock()}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick={() => (showFormModal = false)} disabled={formLoading}>{m.actionCancel()}</button>
+          <button type="button" class="btn btn-theme" onclick={handleFormSubmit} disabled={formLoading}>
+            {#if formLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
+            {formMode === 'create' ? m.actionCreate() : m.actionSave()}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
 {/if}

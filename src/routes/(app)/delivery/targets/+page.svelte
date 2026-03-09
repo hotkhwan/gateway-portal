@@ -14,13 +14,13 @@
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
   import type { DeliveryTarget, TargetType } from '$lib/types/org'
-  import type { EffectiveSubscription } from '$lib/api/subscription'
+  import type { CurrentSubscriptionDetails } from '$lib/api/subscription'
   import { resolve } from '$app/paths'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
   let targets = $state<DeliveryTarget[]>([])
-  let effectiveSub = $state<EffectiveSubscription | null>(null)
+  let effectiveSub = $state<CurrentSubscriptionDetails | null>(null)
 
   // Modal state
   let showModal = $state(false)
@@ -59,13 +59,13 @@
   })
 
   let quotaLimits = $derived.by(() => {
-    const lim = effectiveSub?.plan?.limits
+    const lim = effectiveSub?.limits
     return {
       webhook: lim?.webhooksPerOrg ?? Infinity,
-      line: lim?.linePerOrg ?? Infinity,
-      discord: lim?.discordPerOrg ?? Infinity,
-      telegram: lim?.telegramPerOrg ?? Infinity,
-      msgChannels: lim?.msgChannelsPerOrg ?? Infinity
+      line: lim?.lineTargetsPerOrg ?? Infinity,
+      discord: lim?.discordTargetsPerOrg ?? Infinity,
+      telegram: lim?.telegramTargetsPerOrg ?? Infinity,
+      msgChannels: lim?.messageChannelsPerOrg ?? Infinity
     }
   })
 
