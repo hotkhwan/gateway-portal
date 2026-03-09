@@ -462,7 +462,7 @@
             </div>
             {#if formMode === 'edit' && formSourceFamily}
               <div class="mb-3">
-                <label class="form-label fw-semibold">{m.ingestTemplateSourceFamily()}</label>
+                <span class="form-label fw-semibold">{m.ingestTemplateSourceFamily()}</span>
                 <div class="form-control bg-inverse bg-opacity-10" style="cursor:default">
                   <span class="badge bg-theme-subtle text-theme">{formSourceFamily}</span>
                 </div>
@@ -710,39 +710,39 @@
                           {m.ingestTemplateMessageTemplates()} #{i + 1}
                         {/if}
                       </small>
-                      <button class="btn btn-xs btn-outline-danger" onclick={() => removeMessageTemplate(i)}>
+                      <button class="btn btn-xs btn-outline-danger" aria-label="Remove" onclick={() => removeMessageTemplate(i)}>
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
                     <div class="row g-2">
                       <div class="col-md-4">
-                        <label class="form-label small mb-0">{m.ingestTemplateMessageChannel()}</label>
-                        <select class="form-select form-select-sm" bind:value={mt.channelType} disabled={formLoading}>
+                        <label class="form-label small mb-0" for="mt-channel-{i}">{m.ingestTemplateMessageChannel()}</label>
+                        <select id="mt-channel-{i}" class="form-select form-select-sm" bind:value={mt.channelType} disabled={formLoading}>
                           <option value="line">LINE</option>
                           <option value="discord">Discord</option>
                           <option value="telegram">Telegram</option>
                         </select>
                       </div>
                       <div class="col-md-4">
-                        <label class="form-label small mb-0">{m.ingestTemplateMessageLocale()}</label>
-                        <select class="form-select form-select-sm" bind:value={mt.locale} disabled={formLoading}>
+                        <label class="form-label small mb-0" for="mt-locale-{i}">{m.ingestTemplateMessageLocale()}</label>
+                        <select id="mt-locale-{i}" class="form-select form-select-sm" bind:value={mt.locale} disabled={formLoading}>
                           <option value="th">TH</option>
                           <option value="en">EN</option>
                         </select>
                       </div>
                       <div class="col-md-4">
-                        <label class="form-label small mb-0">{m.ingestTemplateMessageKey()}</label>
-                        <input type="text" class="form-control form-control-sm font-monospace" bind:value={mt.key} disabled={formLoading} placeholder="target-id" />
+                        <label class="form-label small mb-0" for="mt-key-{i}">{m.ingestTemplateMessageKey()}</label>
+                        <input id="mt-key-{i}" type="text" class="form-control form-control-sm font-monospace" bind:value={mt.key} disabled={formLoading} placeholder="target-id" />
                       </div>
                     </div>
                     <div class="mt-2">
-                      <label class="form-label small mb-0">{m.ingestTemplateMessageTitle()}</label>
-                      <input type="text" class="form-control form-control-sm" bind:value={mt.title} disabled={formLoading}
+                      <label class="form-label small mb-0" for="mt-title-{i}">{m.ingestTemplateMessageTitle()}</label>
+                      <input id="mt-title-{i}" type="text" class="form-control form-control-sm" bind:value={mt.title} disabled={formLoading}
                         placeholder="{'{{.eventType}} - {{.deviceName}}'}" />
                     </div>
                     <div class="mt-2">
-                      <label class="form-label small mb-0">{m.ingestTemplateMessageBody()}</label>
-                      <textarea class="form-control form-control-sm font-monospace" rows="4" bind:value={mt.body} disabled={formLoading}
+                      <label class="form-label small mb-0" for="mt-body-{i}">{m.ingestTemplateMessageBody()}</label>
+                      <textarea id="mt-body-{i}" class="form-control form-control-sm font-monospace" rows="4" bind:value={mt.body} disabled={formLoading}
                         placeholder="{'{{.sourceFamily}}\n{{.deviceName}}\n{{.lat}}, {{.lng}}\n{{.eventType}}'}"></textarea>
                       <div class="form-text">
                         {m.ingestTemplateMessageTemplatePlaceholders()}:

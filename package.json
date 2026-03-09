@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "bun run i18n:merge && set -a && source .env && set +a && bun run vite dev",
-    "build": "bun run i18n:merge && set -a && source .env && set +a && bun run vite build",
+    "build": "bun run i18n:merge && if [ -f .env ]; then set -a && source .env && set +a; fi && bun run vite build",
     "preview": "vite preview",
-    "start": "set -a && source .env && set +a && echo \"\\n🚀 Server is ready at: http://localhost:${PUBLIC_APP_BASE_PORT:-3001}{PUBLIC_APP_BASE_PATH:-\\}\\n\" && PORT=${PUBLIC_APP_BASE_PORT:-/} node build/index.js",
+    "start": "if [ -f .env ]; then set -a && source .env && set +a; fi && echo \"\" && echo \"🚀 Server is ready at: http://localhost:${PUBLIC_APP_BASE_PORT:-3001}${PUBLIC_APP_BASE_PATH:-/}\" && echo \"\" && PORT=${PUBLIC_APP_BASE_PORT:-3001} node build/index.js",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
