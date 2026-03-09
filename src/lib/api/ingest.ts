@@ -22,7 +22,11 @@ import type {
 	UnknownPayloadReview,
 	RejectedPayloadPattern,
 	MappingSuggestion,
-	ApprovedEvent
+	ApprovedEvent,
+	PendingEvent,
+	EventUpdateInput,
+	BulkResult,
+	DeviceImportResult
 } from '$lib/types/ingest'
 
 // Re-export types for consumers
@@ -46,7 +50,11 @@ export type {
 	UnknownPayloadReview,
 	RejectedPayloadPattern,
 	MappingSuggestion,
-	ApprovedEvent
+	ApprovedEvent,
+	PendingEvent,
+	EventUpdateInput,
+	BulkResult,
+	DeviceImportResult
 }
 export type { ClassificationSet } from '$lib/types/ingest'
 
@@ -109,6 +117,119 @@ export async function getDashboardStats(
 	const url = `/ingest/dashboard${q.toString() ? `?${q}` : ''}`
 	const r = await apiFetch<DashboardStats>(url, orgId)
 	if (!r.details) throw new Error('dashboard stats not found')
+	return r.details
+}
+
+// ────────────────────────────────────────────
+// Event Management (Pending Events)
+// ────────────────────────────────────────────
+
+export async function listPendingEvents(
+	orgId: string,
+	page = 1,
+	perPage = 20,
+	params?: { status?: string; eventType?: string; sortField?: string; sortOrder?: string }
+): Promise<{ details: PendingEvent[]; page: number; perPage: number; total: number; totalPages: number }> {
+	const q = new URLSearchParams({
+		page: String(page),
+		perPage: String(perPage),
+		sortField: params?.sortField ?? 'createdAt',
+		sortOrder: params?.sortOrder ?? 'desc'
+	})
+	if (params?.status && params.status !== 'all') q.set('status', params.status)
+	if (params?.eventType) q.set('eventType', params.eventType)
+
+	const res = await fetch(`${BASE}/ingest/management?${q}`, {
+		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+	})
+	guardAuth(res)
+	const json = await res.json() as {
+		details: PendingEvent[]
+		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+	}
+	if (!res.ok) throw json
+	return {
+		details: json.details ?? [],
+		page: json.pagination?.page ?? page,
+		perPage: json.pagination?.perPages ?? perPage,
+		total: json.pagination?.totalRecords ?? 0,
+		totalPages: json.pagination?.totalPages ?? 0
+	}
+}
+
+export async function getPendingEvent(orgId: string, eventId: string): Promise<PendingEvent> {
+	const r = await apiFetch<PendingEvent>(`/ingest/management/${eventId}`, orgId)
+	if (!r.details) throw new Error('pending event not found')
+	return r.details
+}
+
+export async function updatePendingEvent(
+	orgId: string,
+	eventId: string,
+	data: EventUpdateInput
+): Promise<void> {
+	await apiFetch<unknown>(`/ingest/management/${eventId}`, orgId, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	})
+}
+
+export async function approveEvent(
+	orgId: string,
+	eventId: string,
+	data?: EventUpdateInput
+): Promise<void> {
+	await apiFetch<unknown>(`/ingest/management/${eventId}/approve`, orgId, {
+		method: 'POST',
+		body: data ? JSON.stringify(data) : undefined
+	})
+}
+
+export async function rejectEvent(orgId: string, eventId: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/management/${eventId}/reject`, orgId, { method: 'POST' })
+}
+
+export async function deletePendingEvent(orgId: string, eventId: string): Promise<void> {
+	await apiFetch<unknown>(`/ingest/management/${eventId}`, orgId, { method: 'DELETE' })
+}
+
+// ────────────────────────────────────────────
+// Bulk Operations (Event Management)
+// ────────────────────────────────────────────
+
+export async function bulkApprove(orgId: string, eventIds: string[]): Promise<BulkResult> {
+	const r = await apiFetch<BulkResult>('/ingest/management/bulk/approve', orgId, {
+		method: 'POST',
+		body: JSON.stringify({ eventIds })
+	})
+	if (!r.details) throw new Error('bulk approve failed')
+	return r.details
+}
+
+export async function bulkReject(orgId: string, eventIds: string[]): Promise<BulkResult> {
+	const r = await apiFetch<BulkResult>('/ingest/management/bulk/reject', orgId, {
+		method: 'POST',
+		body: JSON.stringify({ eventIds })
+	})
+	if (!r.details) throw new Error('bulk reject failed')
+	return r.details
+}
+
+export async function bulkDelete(orgId: string, eventIds: string[]): Promise<BulkResult> {
+	const r = await apiFetch<BulkResult>('/ingest/management/bulk/delete', orgId, {
+		method: 'POST',
+		body: JSON.stringify({ eventIds })
+	})
+	if (!r.details) throw new Error('bulk delete failed')
+	return r.details
+}
+
+export async function bulkApplyTemplate(orgId: string, templateId: string, eventIds: string[]): Promise<BulkResult> {
+	const r = await apiFetch<BulkResult>('/ingest/management/bulk/applyTemplate', orgId, {
+		method: 'POST',
+		body: JSON.stringify({ templateId, eventIds })
+	})
+	if (!r.details) throw new Error('bulk apply template failed')
 	return r.details
 }
 
@@ -287,7 +408,7 @@ export async function abandonDlq(orgId: string, messageId: string, reason?: stri
 }
 
 // ────────────────────────────────────────────
-// Source Profiles (global — read-only from FE in V3)
+// Source Profiles (global)
 // ────────────────────────────────────────────
 
 export async function listSourceProfiles(orgId: string): Promise<SourceProfile[]> {
@@ -299,6 +420,29 @@ export async function getSourceProfile(orgId: string, sourceFamily: string): Pro
 	const r = await apiFetch<SourceProfile>(`/ingest/sourceProfiles/${sourceFamily}`, orgId)
 	if (!r.details) throw new Error('source profile not found')
 	return r.details
+}
+
+export async function createSourceProfile(
+	orgId: string,
+	data: { sourceFamily: string; displayName: string; mode?: string }
+): Promise<SourceProfile> {
+	const r = await apiFetch<SourceProfile>('/ingest/sourceProfiles', orgId, {
+		method: 'POST',
+		body: JSON.stringify(data)
+	})
+	if (!r.details) throw new Error('source profile not found in response')
+	return r.details
+}
+
+export async function updateSourceProfile(
+	orgId: string,
+	sourceFamily: string,
+	data: { displayName?: string; mode?: string }
+): Promise<void> {
+	await apiFetch<unknown>(`/ingest/sourceProfiles/${sourceFamily}`, orgId, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	})
 }
 
 // ────────────────────────────────────────────
@@ -374,13 +518,57 @@ export async function updateDeviceManagement(
 	}
 ): Promise<void> {
 	await apiFetch<unknown>(`/ingest/deviceManagement/${id}`, orgId, {
-		method: 'PUT',
+		method: 'PATCH',
 		body: JSON.stringify(data)
 	})
 }
 
 export async function deleteDeviceManagement(orgId: string, id: string): Promise<void> {
 	await apiFetch<unknown>(`/ingest/deviceManagement/${id}`, orgId, { method: 'DELETE' })
+}
+
+export async function downloadDeviceTemplate(orgId: string): Promise<Blob> {
+	const res = await fetch(`${BASE}/ingest/deviceManagement/template`, {
+		headers: { 'x-active-org': orgId }
+	})
+	guardAuth(res)
+	if (!res.ok) throw new Error('failed to download template')
+	return res.blob()
+}
+
+export async function exportDevices(
+	orgId: string,
+	params?: { sourceFamily?: string; entityType?: string }
+): Promise<Blob> {
+	const q = new URLSearchParams()
+	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
+	if (params?.entityType) q.set('entityType', params.entityType)
+	const url = `/ingest/deviceManagement/export${q.toString() ? `?${q}` : ''}`
+	const res = await fetch(`${BASE}${url}`, {
+		headers: { 'x-active-org': orgId }
+	})
+	guardAuth(res)
+	if (!res.ok) throw new Error('failed to export devices')
+	return res.blob()
+}
+
+export async function importDevices(
+	orgId: string,
+	file: File,
+	dryRun = false
+): Promise<DeviceImportResult> {
+	const formData = new FormData()
+	formData.append('file', file)
+	if (dryRun) formData.append('dryRun', 'true')
+	const res = await fetch(`${BASE}/ingest/deviceManagement/import`, {
+		method: 'POST',
+		headers: { 'x-active-org': orgId },
+		body: formData
+	})
+	guardAuth(res)
+	const json = await res.json()
+	if (!res.ok) throw json
+	return json as DeviceImportResult
 }
 
 // ────────────────────────────────────────────

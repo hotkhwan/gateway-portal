@@ -51,7 +51,7 @@
       reviews = r.details
       pagination = { page: r.page, perPage: r.perPage, total: r.total, totalPages: r.totalPages }
       // Deselect if selected item is no longer in list
-      if (selectedReview && !r.details.find(rv => rv.id === selectedReview!.id)) {
+      if (selectedReview && !r.details.find(rv => rv.reviewId === selectedReview!.reviewId)) {
         selectedReview = null
       }
     } catch (e: unknown) {
@@ -103,7 +103,7 @@
       await deleteUnknownPayloadReview(orgId, deleteId)
       actionSuccess = m.ingestUnknownPayloadReviewDeleted()
       showDeleteModal = false
-      if (selectedReview?.id === deleteId) selectedReview = null
+      if (selectedReview?.reviewId === deleteId) selectedReview = null
       deleteId = null
       await load(pagination.page)
     } catch (e: unknown) {
@@ -115,7 +115,7 @@
 
   function goCreateTemplate(review: UnknownPayloadReview) {
     const params = new URLSearchParams()
-    params.set('fromReview', review.id)
+    params.set('fromReview', review.reviewId)
     params.set('sourceFamily', review.sourceFamily)
     params.set('fingerprint', review.fingerprint)
     params.set('samplePayload', JSON.stringify(review.samplePayload))
@@ -209,11 +209,11 @@
             </div>
           {:else}
             <div class="list-group list-group-flush">
-              {#each reviews as review (review.id)}
+              {#each reviews as review (review.reviewId)}
                 <button
                   type="button"
                   class="list-group-item list-group-item-action px-3 py-2 text-start"
-                  class:active={selectedReview?.id === review.id}
+                  class:active={selectedReview?.reviewId === review.reviewId}
                   onclick={() => selectReview(review)}
                 >
                   <div class="d-flex align-items-center gap-2 mb-1">
@@ -285,12 +285,12 @@
                   <button class="btn btn-success" onclick={() => goCreateTemplate(selectedReview!)}>
                     <i class="bi bi-plus-circle me-1"></i>{m.ingestUnknownPayloadReviewCreateTemplate()}
                   </button>
-                  <button class="btn btn-outline-danger" onclick={() => openReject(selectedReview!.id)}>
+                  <button class="btn btn-outline-danger" onclick={() => openReject(selectedReview!.reviewId)}>
                     <i class="bi bi-x-circle me-1"></i>{m.ingestUnknownPayloadReviewReject()}
                   </button>
                 </div>
               {/if}
-              <button class="btn btn-sm btn-outline-secondary" onclick={() => openDelete(selectedReview!.id)} title={m.actionDelete()}>
+              <button class="btn btn-sm btn-outline-secondary" onclick={() => openDelete(selectedReview!.reviewId)} title={m.actionDelete()}>
                 <i class="bi bi-trash"></i>
               </button>
             </div>

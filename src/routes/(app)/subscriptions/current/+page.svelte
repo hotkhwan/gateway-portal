@@ -4,14 +4,14 @@
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { getCurrentSubscription } from '$lib/api/subscription'
-  import type { EffectiveSubscription } from '$lib/api/subscription'
+  import type { CurrentSubscriptionDetails } from '$lib/api/subscription'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
   import { resolve } from '$app/paths'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
-  let data = $state<EffectiveSubscription | null>(null)
+  let data = $state<CurrentSubscriptionDetails | null>(null)
 
   async function loadData() {
     loading = true
@@ -25,30 +25,17 @@
     }
   }
 
-  function statusBadge(s: string): string {
-    const map: Record<string, string> = {
-      active: 'bg-success',
-      inactive: 'bg-secondary',
-      pending: 'bg-warning text-dark',
-      cancelled: 'bg-danger'
-    }
-    return map[s] ?? 'bg-secondary'
-  }
-
-  function statusLabel(s: string): string {
-    const map: Record<string, () => string> = {
-      active: () => m.subscriptionStatusActive(),
-      inactive: () => m.subscriptionStatusInactive(),
-      pending: () => m.subscriptionStatusPending(),
-      cancelled: () => m.subscriptionStatusCancelled()
-    }
-    return (map[s] ?? (() => s))()
-  }
-
   function formatLimit(v: number | undefined): string {
     if (v == null) return '-'
     if (v === -1 || v === Infinity) return m.subscriptionCurrentUnlimited()
     return v.toLocaleString()
+  }
+
+  function statusBadgeClass(status: string): string {
+    if (status === 'active') return 'bg-success'
+    if (status === 'pending') return 'bg-warning'
+    if (status === 'cancelled') return 'bg-danger'
+    return 'bg-secondary'
   }
 
   onMount(() => {
@@ -79,8 +66,8 @@
     <button class="btn btn-sm btn-danger ms-2" onclick={loadData}>{m.actionRefresh()}</button>
   </div>
 {:else if data}
-  <!-- Plan info -->
   <div class="row g-4">
+    <!-- Plan info -->
     <div class="col-md-5">
       <Card>
         <CardBody>
@@ -89,89 +76,65 @@
             <tbody>
               <tr>
                 <th class="text-inverse text-opacity-50">{m.subscriptionCurrentPlanName()}</th>
-                <td class="fw-semibold">{data.plan?.name ?? data.subscription.planId}</td>
+                <td class="fw-semibold text-capitalize">{data.planId}</td>
               </tr>
               <tr>
                 <th class="text-inverse text-opacity-50">{m.subscriptionCurrentStatus()}</th>
                 <td>
-                  <span class="badge {statusBadge(data.subscription.status)}">
-                    {statusLabel(data.subscription.status)}
-                  </span>
+                  <span class="badge {statusBadgeClass(data.status)}">{data.status}</span>
                 </td>
               </tr>
               <tr>
-                <th class="text-inverse text-opacity-50">{m.subscriptionCurrentBillingCycle()}</th>
-                <td>
-                  {#if data.subscription.billingCycle === 'monthly'}
-                    {m.subscriptionMonthly()}
-                  {:else if data.subscription.billingCycle === 'yearly'}
-                    {m.subscriptionYearly()}
-                  {:else}
-                    -
-                  {/if}
-                </td>
+                <th class="text-inverse text-opacity-50">{m.subscriptionBillingCycle()}</th>
+                <td class="text-capitalize">{data.billingCycle}</td>
               </tr>
-              <tr>
-                <th class="text-inverse text-opacity-50">{m.subscriptionCurrentPeriodStart()}</th>
-                <td><small>{data.subscription.currentPeriodStart ? new Date(data.subscription.currentPeriodStart).toLocaleDateString() : '-'}</small></td>
-              </tr>
-              <tr>
-                <th class="text-inverse text-opacity-50">{m.subscriptionCurrentPeriodEnd()}</th>
-                <td><small>{data.subscription.currentPeriodEnd ? new Date(data.subscription.currentPeriodEnd).toLocaleDateString() : '-'}</small></td>
-              </tr>
+              {#if data.features && Object.keys(data.features).length > 0}
+                <tr>
+                  <th class="text-inverse text-opacity-50">{m.subscriptionPackagesFeatures()}</th>
+                  <td>
+                    <ul class="list-unstyled mb-0 small">
+                      {#each Object.entries(data.features).filter(([, v]) => v) as [key]}
+                        <li><i class="bi bi-check text-theme me-1"></i>{key}</li>
+                      {/each}
+                    </ul>
+                  </td>
+                </tr>
+              {/if}
             </tbody>
           </table>
         </CardBody>
       </Card>
     </div>
 
-    <!-- Usage table -->
+    <!-- Limits table -->
     <div class="col-md-7">
       <Card>
         <CardBody>
-          <h5 class="mb-3"><i class="bi bi-bar-chart me-2"></i>{m.subscriptionCurrentUsage()}</h5>
+          <h5 class="mb-3"><i class="bi bi-bar-chart me-2"></i>{m.subscriptionPackagesLimits()}</h5>
           <table class="table table-sm mb-0">
             <thead>
               <tr>
                 <th>{m.subscriptionCurrentResource()}</th>
-                <th class="text-end">{m.subscriptionCurrentUsed()}</th>
                 <th class="text-end">{m.subscriptionCurrentLimit()}</th>
-                <th style="width:120px"></th>
               </tr>
             </thead>
             <tbody>
               {#each [
-                { label: m.subscriptionLimitOrgs(), used: data.usage?.orgs ?? 0, limit: data.plan?.limits?.orgs },
-                { label: m.subscriptionLimitMembers(), used: data.usage?.members ?? 0, limit: data.plan?.limits?.members },
-                { label: m.subscriptionLimitEvents(), used: data.usage?.eventsThisMonth ?? 0, limit: data.plan?.limits?.eventsPerMonth },
-                { label: m.subscriptionLimitWebhooks(), used: data.usage?.webhooks ?? 0, limit: data.plan?.limits?.webhooksPerOrg },
-                { label: m.subscriptionLimitLine(), used: data.usage?.lineTargets ?? 0, limit: data.plan?.limits?.linePerOrg },
-                { label: m.subscriptionLimitDiscord(), used: data.usage?.discordTargets ?? 0, limit: data.plan?.limits?.discordPerOrg },
-                { label: m.subscriptionLimitTelegram(), used: data.usage?.telegramTargets ?? 0, limit: data.plan?.limits?.telegramPerOrg },
-                { label: m.subscriptionLimitMsgChannels(), used: data.usage?.msgChannels ?? 0, limit: data.plan?.limits?.msgChannelsPerOrg }
+                { label: m.subscriptionLimitOrgs(), value: data.limits.maxOrganizationsPerTenant },
+                { label: m.subscriptionLimitMembers(), value: data.limits.teamMembers },
+                { label: m.subscriptionLimitEvents(), value: data.limits.eventsPerMonth },
+                { label: m.subscriptionLimitWebhooks(), value: data.limits.webhooksPerOrg },
+                { label: m.subscriptionLimitLine(), value: data.limits.lineTargetsPerOrg },
+                { label: m.subscriptionLimitDiscord(), value: data.limits.discordTargetsPerOrg },
+                { label: m.subscriptionLimitTelegram(), value: data.limits.telegramTargetsPerOrg },
+                { label: m.subscriptionLimitMsgChannels(), value: data.limits.messageChannelsPerOrg }
               ] as row}
-                {@const limit = row.limit ?? 0}
-                {@const pct = limit > 0 && limit !== -1 ? Math.min(100, Math.round((row.used / limit) * 100)) : 0}
-                <tr>
-                  <td>{row.label}</td>
-                  <td class="text-end fw-semibold" class:text-danger={limit > 0 && limit !== -1 && row.used >= limit}>{row.used.toLocaleString()}</td>
-                  <td class="text-end text-inverse text-opacity-50">{formatLimit(limit)}</td>
-                  <td>
-                    {#if limit > 0 && limit !== -1}
-                      <div class="progress" style="height:6px">
-                        <div
-                          class="progress-bar"
-                          class:bg-danger={pct >= 90}
-                          class:bg-warning={pct >= 70 && pct < 90}
-                          class:bg-theme={pct < 70}
-                          style="width:{pct}%"
-                        ></div>
-                      </div>
-                    {:else}
-                      <small class="text-inverse text-opacity-25">∞</small>
-                    {/if}
-                  </td>
-                </tr>
+                {#if row.value != null}
+                  <tr>
+                    <td>{row.label}</td>
+                    <td class="text-end fw-semibold">{formatLimit(row.value)}</td>
+                  </tr>
+                {/if}
               {/each}
             </tbody>
           </table>

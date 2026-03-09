@@ -23,6 +23,7 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		icon: 'bi bi-bar-chart',
 		textKey: 'navEvents',
 		children: [
+			{ id: 'ingestManagement', url: 'ingest/management', textKey: 'ingestManagementTitle' },
 			{ id: 'ingestTemplates', url: 'ingest/templates', textKey: 'ingestTemplatesTitle' },
 			{ id: 'ingestUnknownPayloadReviews', url: 'ingest/unknownPayloadReviews', textKey: 'ingestUnknownPayloadReviewsTitle' },
 			{ id: 'ingestSourceProfiles', url: 'ingest/sourceProfiles', textKey: 'ingestSourceProfilesTitle' },
