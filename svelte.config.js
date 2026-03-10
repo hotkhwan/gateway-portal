@@ -6,6 +6,7 @@ const basePath = rawBase === '/' ? '' : rawBase.replace(/\/+$/, '')
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
+
 	preprocess: vitePreprocess(),
 
 	vite: {
@@ -26,5 +27,6 @@ const config = {
 		}
 	}
 }
+
 
 export default config

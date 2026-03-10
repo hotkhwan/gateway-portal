@@ -1,5 +1,5 @@
 // src/routes/(base)/api/auth/logout/+server.ts
-export const POST = async ({ cookies, fetch }) => {
+export const POST = async ({ cookies }) => {
   const cookiePath = '/'
 
   // read token BEFORE deleting cookies
@@ -18,7 +18,7 @@ export const POST = async ({ cookies, fetch }) => {
 
   if (apiBase && sessionToken) {
     try {
-      backendResponse = await fetch(`${apiBase}${backendLogoutPath}`, {
+      backendResponse = await globalThis.fetch(`${apiBase}${backendLogoutPath}`, {
         method: 'POST',
         headers: {
           authorization: `Bearer ${sessionToken}`,
