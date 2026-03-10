@@ -1,5 +1,5 @@
 // src/hooks.server.ts
-import type { Handle } from '@sveltejs/kit'
+import type { Handle, HandleServerError } from '@sveltejs/kit'
 import { redirect } from '@sveltejs/kit'
 import { userFromToken } from '$lib/server/auth'
 
@@ -44,6 +44,9 @@ export const handle: Handle = async ({ event, resolve }) => {
   const pathname = event.url.pathname
   const pathnameNoBase = stripBase(pathname, BASE_PATH)
 
+  // 🔍 Debug: log every request to detect loops
+  console.log(`[hooks] ${event.request.method} ${pathname} → stripped: ${pathnameNoBase} | BASE_PATH="${BASE_PATH}" | hasToken=${!!event.cookies.get('session_token')}`)
+
   // ⛔ auth routes ห้ามโดน redirect ซ้ำ
   if (pathnameNoBase.startsWith('/auth')) {
     return resolve(event)
@@ -57,8 +60,8 @@ export const handle: Handle = async ({ event, resolve }) => {
       const user = userFromToken(token)
       event.locals.user = { ...user, accessToken: token }
     } catch {
-      event.cookies.delete('session_token', { path: BASE_PATH || '/' })
-      event.cookies.delete('session_refresh', { path: BASE_PATH || '/' })
+      event.cookies.delete('session_token', { path: '/' })
+      event.cookies.delete('session_refresh', { path: '/' })
     }
   }
 
@@ -71,4 +74,16 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
 
   return resolve(event)
+}
+
+export const handleError: HandleServerError = ({ error, event }) => {
+  console.error('--- SERVER ERROR ---')
+  console.error('URL:', event.url.pathname)
+  console.error('Message:', (error as Error)?.message)
+  console.error('Stack:', (error as Error)?.stack)
+
+  return {
+    message: 'Internal Server Error',
+    code: 'INTERNAL_ERROR'
+  }
 }

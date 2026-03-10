@@ -11,6 +11,7 @@
   let chart: ApexCharts | null = null
   let elm: HTMLDivElement | null = null
   let ApexLib: typeof ApexCharts | null = null
+  let unsubscribe: (() => void) | null = null
 
   function buildTheme(vars: any): ApexOptions {
     return {
@@ -32,7 +33,7 @@
   onMount(async () => {
     ApexLib = (await import('apexcharts')).default
 
-    appVariables.subscribe((vars) => {
+    unsubscribe = appVariables.subscribe((vars) => {
       if (!vars?.color) return
       chart?.destroy()
       render(vars)
@@ -45,6 +46,7 @@
   })
 
   onDestroy(() => {
+    unsubscribe?.()
     chart?.destroy()
   })
 </script>

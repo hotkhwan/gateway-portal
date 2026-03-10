@@ -23,9 +23,21 @@ export const orgList = writable<Org[]>([])
 export const activeOrgId = writable<string | null>(getStoredOrgId())
 
 // Sync activeOrgId to localStorage whenever it changes
-activeOrgId.subscribe((id) => {
-  storeOrgId(id)
-})
+// Use start callback instead of module-level subscribe to avoid SSR memory leak
+const activeOrgIdSynced = {
+  ...activeOrgId,
+  set(value: string | null) {
+    activeOrgId.set(value)
+    storeOrgId(value)
+  },
+  update(fn: (value: string | null) => string | null) {
+    activeOrgId.update((current) => {
+      const next = fn(current)
+      storeOrgId(next)
+      return next
+    })
+  }
+}
 
 export const activeOrg = derived(
   [orgList, activeOrgId],
@@ -43,13 +55,13 @@ export async function setActiveOrg(id: string | null) {
       // Continue with local state update even if API fails
     }
   }
-  activeOrgId.set(id)
+  activeOrgIdSynced.set(id)
 }
 
 export function setOrgList(orgs: Org[]) {
   orgList.set(orgs)
   // auto-select first org if none selected
-  activeOrgId.update((current) => {
+  activeOrgIdSynced.update((current) => {
     if (!current && orgs.length > 0) return orgs[0].id
     // if current org no longer in list, reset
     if (current && !orgs.find((o) => o.id === current)) return orgs[0]?.id ?? null

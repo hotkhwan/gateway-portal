@@ -30,7 +30,6 @@ async function apiFetch<T>(
 export async function listOrgs(): Promise<Org[]> {
   const r = await apiFetch<any[]>('/orgs')
   const items = r.details ?? []
-  console.log('🔍 [listOrgs] response:', JSON.stringify(r))
   const now = new Date().toISOString()
   return items.map((item: any) => ({
     id: item.orgId ?? item.id,

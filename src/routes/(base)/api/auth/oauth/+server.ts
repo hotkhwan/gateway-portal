@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types'
 
 const apiBase = process.env.API_BASE || ''
 
-export const POST: RequestHandler = async ({ request, fetch }) => {
+export const POST: RequestHandler = async ({ request }) => {
     if (!apiBase) {
         return new Response(
             JSON.stringify({ code: 'CONFIG_ERROR', message: 'API_BASE is empty', status: false }),
@@ -25,7 +25,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
     // ✅ FIX: ยิงไป backend endpoint ที่เราจะเพิ่มจริง ๆ
     const targetUrl = new URL(apiBase.replace(/\/+$/, '') + '/auth/oauth')
 
-    const res = await fetch(targetUrl.toString(), {
+    // Use globalThis.fetch to avoid SvelteKit internal routing loop
+    const res = await globalThis.fetch(targetUrl.toString(), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ code, redirectUri })

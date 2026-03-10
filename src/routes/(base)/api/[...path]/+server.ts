@@ -45,13 +45,14 @@ function decodeJwtExp(token: string) {
   }
 }
 
-async function refreshSession(fetchFn: typeof fetch, cookies: Cookies) {
+async function refreshSession(cookies: Cookies) {
   const refreshToken = cookies.get('session_refresh')
   if (!refreshToken) return { ok: false as const }
 
   const targetUrl = `${API_BASE}/auth/refreshToken`
 
-  const res = await fetchFn(targetUrl, {
+  // Use globalThis.fetch to avoid SvelteKit internal routing loop
+  const res = await globalThis.fetch(targetUrl, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ refreshToken })
@@ -90,26 +91,26 @@ async function refreshSession(fetchFn: typeof fetch, cookies: Cookies) {
 }
 
 async function forwardOnce(
-  request: Request,
+  body: ArrayBuffer | undefined,
   url: URL,
+  method: string,
+  reqHeaders: Headers,
   path: string,
-  fetchFn: typeof fetch,
   cookies: Cookies
 ) {
   const targetUrl = new URL(API_BASE.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, ''))
   url.searchParams.forEach((v, k) => targetUrl.searchParams.set(k, v))
 
-  const headers = filterHeaders(request.headers)
+  const headers = filterHeaders(reqHeaders)
 
   const token = cookies.get('session_token')
   if (token) headers.set('authorization', `Bearer ${token}`)
 
-  const res = await fetchFn(targetUrl.toString(), {
-    method: request.method,
+  // Use globalThis.fetch to avoid SvelteKit internal routing loop
+  const res = await globalThis.fetch(targetUrl.toString(), {
+    method,
     headers,
-    body: request.method === 'GET' || request.method === 'HEAD'
-      ? undefined
-      : await request.arrayBuffer()
+    body
   })
 
   return new Response(res.body, {
@@ -122,7 +123,6 @@ async function proxy(
   request: Request,
   url: URL,
   path: string,
-  fetchFn: typeof fetch,
   cookies: Cookies
 ) {
   const token = cookies.get('session_token')
@@ -131,31 +131,36 @@ async function proxy(
   const skew = Number(AUTH_REFRESH_SKEW_SEC || 45)
 
   if (exp && exp - now <= skew) {
-    await refreshSession(fetchFn, cookies)
+    await refreshSession(cookies)
   }
 
-  const first = await forwardOnce(request, url, path, fetchFn, cookies)
+  // Read body once, reuse for retry
+  const body = request.method === 'GET' || request.method === 'HEAD'
+    ? undefined
+    : await request.arrayBuffer()
+
+  const first = await forwardOnce(body, url, request.method, request.headers, path, cookies)
 
   if (first.status !== 401 && first.status !== 403) return first
   if (!cookies.get('session_refresh')) return first
 
-  const refreshed = await refreshSession(fetchFn, cookies)
+  const refreshed = await refreshSession(cookies)
   if (!refreshed.ok) return first
 
-  return forwardOnce(request, url, path, fetchFn, cookies)
+  return forwardOnce(body, url, request.method, request.headers, path, cookies)
 }
 
-export const GET: RequestHandler = ({ params, request, url, fetch, cookies }) =>
-  proxy(request, url, params.path ?? '', fetch, cookies)
+export const GET: RequestHandler = ({ params, request, url, cookies }) =>
+  proxy(request, url, params.path ?? '', cookies)
 
-export const POST: RequestHandler = ({ params, request, url, fetch, cookies }) =>
-  proxy(request, url, params.path ?? '', fetch, cookies)
+export const POST: RequestHandler = ({ params, request, url, cookies }) =>
+  proxy(request, url, params.path ?? '', cookies)
 
-export const PUT: RequestHandler = ({ params, request, url, fetch, cookies }) =>
-  proxy(request, url, params.path ?? '', fetch, cookies)
+export const PUT: RequestHandler = ({ params, request, url, cookies }) =>
+  proxy(request, url, params.path ?? '', cookies)
 
-export const PATCH: RequestHandler = ({ params, request, url, fetch, cookies }) =>
-  proxy(request, url, params.path ?? '', fetch, cookies)
+export const PATCH: RequestHandler = ({ params, request, url, cookies }) =>
+  proxy(request, url, params.path ?? '', cookies)
 
-export const DELETE: RequestHandler = ({ params, request, url, fetch, cookies }) =>
-  proxy(request, url, params.path ?? '', fetch, cookies)
+export const DELETE: RequestHandler = ({ params, request, url, cookies }) =>
+  proxy(request, url, params.path ?? '', cookies)

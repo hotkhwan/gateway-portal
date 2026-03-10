@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: portal
-  namespace: gw
+  namespace: gateway
   labels:
     app: portal
 spec:
@@ -15,7 +15,7 @@ spec:
         app: portal
     spec:
       nodeSelector:
-        kubernetes.io/hostname: gateway
+        kubernetes.io/hostname: edgexpert-1c3b 
       containers:
         - name: portal
           image: docker.io/oven/bun:1.2-debian
@@ -28,6 +28,13 @@ spec:
           ports:
             - name: http
               containerPort: 3001
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
           volumeMounts:
             - name: src-code
               mountPath: /app
@@ -36,14 +43,14 @@ spec:
       volumes:
         - name: src-code
           hostPath:
-            path: /home/aisom/gateway-portal
+            path: /home/aisom/portal
             type: Directory
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: portal
-  namespace: gw
+  namespace: gateway
 spec:
   selector:
     app: portal
@@ -58,14 +65,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: portal-config
-  namespace: gw
+  namespace: gateway
 data:
-  PUBLIC_APP_BASE_PATH: /
+  PUBLIC_APP_BASE_PATH: /aisom
   PUBLIC_APP_BASE_PORT: "3001"
-  ORIGIN: https://gw.aisom.cloud
-  PUBLIC_APP_ORIGIN: https://gw.aisom.cloud
-  API_BASE: https://gw.aisom.cloud/api/v1
-  PUBLIC_KC_ISSUER_URI: https://gw.aisom.cloud/sso
+  API_BASE: http://kapi.gateway:3001/api/v1
+  PUBLIC_KC_ISSUER_URI: https://gateway.aisom.cloud/sso
   PUBLIC_KC_REALM: aisom
   PUBLIC_KC_CLIENT_FE_ID: fe
   AUTH_REFRESH_PATH: /auth/refreshToken

@@ -74,8 +74,16 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
   }
 
   const wrapped = await res.json() as any
+  console.log('[auth/callback] token exchange response:', JSON.stringify(wrapped).substring(0, 500))
   // auth/oauth endpoint may return either key — handle both
   const detail = wrapped?.details ?? wrapped?.detail ?? wrapped
+
+  if (!detail?.access_token) {
+    console.error('[auth/callback] no access_token in response:', JSON.stringify(wrapped).substring(0, 500))
+    throw redirect(302,
+      `${base}/auth/error?error=${encodeURIComponent('No access token received from backend')}&type=auth_failed`
+    )
+  }
 
   // ── 4. set session cookies
   const sec = {
