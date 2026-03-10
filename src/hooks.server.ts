@@ -60,8 +60,8 @@ export const handle: Handle = async ({ event, resolve }) => {
       const user = userFromToken(token)
       event.locals.user = { ...user, accessToken: token }
     } catch {
-      event.cookies.delete('session_token', { path: BASE_PATH || '/' })
-      event.cookies.delete('session_refresh', { path: BASE_PATH || '/' })
+      event.cookies.delete('session_token', { path: '/' })
+      event.cookies.delete('session_refresh', { path: '/' })
     }
   }
 

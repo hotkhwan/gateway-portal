@@ -67,9 +67,9 @@ metadata:
   name: portal-config
   namespace: gateway
 data:
-  PUBLIC_APP_BASE_PATH: /aisom555
+  PUBLIC_APP_BASE_PATH: /aisom
   PUBLIC_APP_BASE_PORT: "3001"
-  API_BASE: https://gateway.aisom.cloud/api/v1
+  API_BASE: http://kapi.gateway:3001/api/v1
   PUBLIC_KC_ISSUER_URI: https://gateway.aisom.cloud/sso
   PUBLIC_KC_REALM: aisom
   PUBLIC_KC_CLIENT_FE_ID: fe
