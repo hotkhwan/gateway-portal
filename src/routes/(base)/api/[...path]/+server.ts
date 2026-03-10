@@ -29,9 +29,8 @@ function filterHeaders(headers: Headers) {
 }
 
 function cookiePath() {
-  const raw = (PUBLIC_APP_BASE_PATH || '').trim()
-  if (!raw || raw === '/') return '/'
-  return '/' + raw.replace(/^\/+|\/+$/g, '')
+  // Always use '/' to match auth/callback which sets cookies with path '/'
+  return '/'
 }
 
 function decodeJwtExp(token: string) {
@@ -60,30 +59,34 @@ async function refreshSession(cookies: Cookies) {
 
   if (!res.ok) return { ok: false as const }
 
-  const data = await res.json() as {
-    accessToken: string
-    refreshToken?: string
-    expiresIn?: number
-    refreshExpiresIn?: number
-  }
+  const wrapper = await res.json() as Record<string, any>
+  // Backend wraps response in { code, message, status, details }
+  const data = wrapper.details ?? wrapper
+
+  const accessToken = data.access_token ?? data.accessToken
+  const newRefreshToken = data.refresh_token ?? data.refreshToken
+  const expiresIn = data.expires_in ?? data.expiresIn
+  const refreshExpiresIn = data.refresh_expires_in ?? data.refreshExpiresIn
+
+  if (!accessToken) return { ok: false as const }
 
   const path = cookiePath()
 
-  cookies.set('session_token', data.accessToken, {
+  cookies.set('session_token', accessToken, {
     httpOnly: true,
     sameSite: 'lax',
     secure: COOKIE_SECURE === 'true',
     path,
-    maxAge: Math.max(60, data.expiresIn ?? 3600)
+    maxAge: Math.max(60, expiresIn ?? 3600)
   })
 
-  if (data.refreshToken) {
-    cookies.set('session_refresh', data.refreshToken, {
+  if (newRefreshToken) {
+    cookies.set('session_refresh', newRefreshToken, {
       httpOnly: true,
       sameSite: 'lax',
       secure: COOKIE_SECURE === 'true',
       path,
-      maxAge: Math.max(300, data.refreshExpiresIn ?? 86400)
+      maxAge: Math.max(300, refreshExpiresIn ?? 86400)
     })
   }
 
