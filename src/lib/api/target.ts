@@ -40,14 +40,14 @@ export async function createTarget(
     method: 'POST',
     body: JSON.stringify(body)
   })
-  if (!r.detail) throw new Error('created target not returned')
-  return r.detail                                  // single → detail
+  if (!r.details) throw new Error('created target not returned')
+  return r.details
 }
 
 export async function getTarget(orgId: string, targetId: string): Promise<DeliveryTarget> {
   const r = await apiFetch<DeliveryTarget>(`/targets/${targetId}`, orgId)
-  if (!r.detail) throw new Error('target not found')
-  return r.detail                                  // single → detail
+  if (!r.details) throw new Error('target not found')
+  return r.details
 }
 
 export async function updateTarget(
@@ -59,8 +59,8 @@ export async function updateTarget(
     method: 'PATCH',
     body: JSON.stringify(body)
   })
-  if (!r.detail) throw new Error('updated target not returned')
-  return r.detail                                  // single → detail
+  if (!r.details) throw new Error('updated target not returned')
+  return r.details
 }
 
 export async function deleteTarget(orgId: string, targetId: string): Promise<void> {
