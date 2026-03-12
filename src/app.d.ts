@@ -28,6 +28,8 @@ declare global {
   interface ImportMeta {
     readonly env: ImportMetaEnv
   }
+
+  const __APP_VERSION__: string
 }
 
 export { }
