@@ -43,6 +43,12 @@
   "settingsRestoreConfirmBody": "คุณแน่ใจหรือไม่ที่จะกู้คืนจากข้อมูลสำรองนี้? การตั้งค่าทั้งหมดในปัจจุบันจะถูกแทนที่",
   "settingsRestoreNoFile": "กรุณาเลือกไฟล์สำรองข้อมูลก่อน",
 
+  "_comments_version": "ส่วนข้อมูลเวอร์ชัน",
+  "settingsVersionTitle": "ข้อมูลเวอร์ชัน",
+  "settingsVersionSubtitle": "รายละเอียดเวอร์ชันระบบและพอร์ทัลปัจจุบัน",
+  "settingsVersionPortal": "เวอร์ชันพอร์ทัล",
+  "settingsVersionBackend": "เวอร์ชันแบ็กเอนด์",
+
   "_comments_update": "ส่วนอัปเดตระบบ",
   "settingsUpdateTitle": "อัปเดตระบบ",
   "settingsUpdateSubtitle": "ตรวจสอบและใช้งานการอัปเดตซอฟต์แวร์ระบบ",

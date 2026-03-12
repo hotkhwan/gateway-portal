@@ -43,6 +43,12 @@
   "settingsRestoreConfirmBody": "Are you sure you want to restore from this backup? All current settings will be replaced.",
   "settingsRestoreNoFile": "Please select a backup file first.",
 
+  "_comments_version": "Version info section",
+  "settingsVersionTitle": "Version Information",
+  "settingsVersionSubtitle": "Current system and portal version details",
+  "settingsVersionPortal": "Portal Version",
+  "settingsVersionBackend": "Backend Version",
+
   "_comments_update": "System update section",
   "settingsUpdateTitle": "System Update",
   "settingsUpdateSubtitle": "Check and apply system software updates",

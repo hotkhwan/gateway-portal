@@ -48,6 +48,10 @@
   let showRestoreConfirm = $state(false)
   let restoreFileInput = $state<HTMLInputElement | undefined>(undefined)
 
+  // ── Version ──────────────────────────────────
+  const portalVersion = __APP_VERSION__
+  let backendVersion = $state<string | null>(null)
+
   // ── Update ────────────────────────────────────
   let updateInfo = $state<UpdateInfo | null>(null)
   let updateCheckLoading = $state(false)
@@ -69,6 +73,7 @@
       systemLogoUrl = settings.systemLogoUrl ?? ''
       auditRetentionDays = settings.auditRetentionDays ?? 90
       backupStatus = backup
+      backendVersion = settings.appVersion ?? null
     } catch (e: unknown) {
       loadError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
@@ -221,6 +226,35 @@
 
 {:else}
   <div class="row g-4">
+
+    <!-- ══ Version Info ══ -->
+    <div class="col-12">
+      <Card>
+        <CardBody>
+          <h5 class="mb-3">
+            <i class="bi bi-info-circle text-theme me-2"></i>{m.settingsVersionTitle()}
+          </h5>
+          <p class="text-inverse text-opacity-50 small">{m.settingsVersionSubtitle()}</p>
+
+          <div class="row g-3">
+            <div class="col-sm-4">
+              <div class="small fw-semibold text-inverse text-opacity-50 mb-1">
+                {m.settingsVersionPortal()}
+              </div>
+              <span class="badge bg-theme font-monospace">{portalVersion}</span>
+            </div>
+            <div class="col-sm-4">
+              <div class="small fw-semibold text-inverse text-opacity-50 mb-1">
+                {m.settingsVersionBackend()}
+              </div>
+              <span class="badge bg-secondary font-monospace">
+                {backendVersion ?? m.settingsUpdateUnknown()}
+              </span>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+    </div>
 
     <!-- ══ General ══ -->
     <div class="col-lg-6">

@@ -1,6 +1,8 @@
 // src/lib/types/settings.ts
 
 export interface SystemSettings {
+  appName: string
+  appVersion: string
   systemName: string
   systemDescription: string
   systemLogoUrl: string

@@ -21,26 +21,26 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<ApiRespons
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {
-  const r = await apiFetch<SystemSettings>('/v1/system/settings')
+  const r = await apiFetch<SystemSettings>('/system/settings')
   if (!r.details) throw new Error('No settings data returned')
   return r.details
 }
 
 export async function updateSystemSettings(data: Partial<SystemSettings>): Promise<void> {
-  await apiFetch('/v1/system/settings', {
+  await apiFetch('/system/settings', {
     method: 'PUT',
     body: JSON.stringify(data)
   })
 }
 
 export async function getBackupStatus(): Promise<BackupStatus> {
-  const r = await apiFetch<BackupStatus>('/v1/system/backup/status')
+  const r = await apiFetch<BackupStatus>('/system/backup/status')
   if (!r.details) throw new Error('No backup status returned')
   return r.details
 }
 
 export async function triggerBackup(): Promise<Blob> {
-  const res = await fetch(`${BASE}/v1/system/backup`, { method: 'POST' })
+  const res = await fetch(`${BASE}/system/backup`, { method: 'POST' })
   guardAuth(res)
   if (!res.ok) {
     const json = await res.json()
@@ -52,7 +52,7 @@ export async function triggerBackup(): Promise<Blob> {
 export async function triggerRestore(file: File): Promise<void> {
   const form = new FormData()
   form.append('file', file)
-  const res = await fetch(`${BASE}/v1/system/restore`, {
+  const res = await fetch(`${BASE}/system/restore`, {
     method: 'POST',
     body: form
   })
@@ -64,11 +64,11 @@ export async function triggerRestore(file: File): Promise<void> {
 }
 
 export async function getUpdateInfo(): Promise<UpdateInfo> {
-  const r = await apiFetch<UpdateInfo>('/v1/system/update')
+  const r = await apiFetch<UpdateInfo>('/system/update')
   if (!r.details) throw new Error('No update info returned')
   return r.details
 }
 
 export async function applyUpdate(): Promise<void> {
-  await apiFetch('/v1/system/update/apply', { method: 'POST' })
+  await apiFetch('/system/update/apply', { method: 'POST' })
 }
