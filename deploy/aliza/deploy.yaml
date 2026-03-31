@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aisom-app
+  namespace: aisom
+  labels:
+    app: aisom-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aisom-app
+  template:
+    metadata:
+      labels:
+        app: aisom-app
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: klynx-poc-01
+      containers:
+        - name: aisom-app
+          image: docker.io/oven/bun:1.2-debian
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: ["sleep", "infinity"]
+          ports:
+            - name: http
+              containerPort: 3001
+          volumeMounts:
+            - name: src-code
+              mountPath: /app
+          securityContext:
+            privileged: true
+      volumes:
+        - name: src-code
+          hostPath:
+            path: /home/aisom/gateway-portal
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aisom-app
+  namespace: aisom
+spec:
+  selector:
+    app: aisom-app
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3001
+      protocol: TCP
