@@ -5,10 +5,8 @@
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
   import { activeWorkspaceId } from '$lib/stores/activeWorkspace'
-  import { getDashboardStats } from '$lib/api/ingest'
-  import type { DashboardStats } from '$lib/api/ingest'
-
-  type DashboardRecentEvent = NonNullable<DashboardStats['recentEvents']>[number]
+  import { getDashboardStats, listApprovedEvents } from '$lib/api/ingest'
+  import type { ApprovedEvent } from '$lib/types/ingest'
   import type { ApexOptions } from 'apexcharts'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
@@ -18,33 +16,100 @@
 
   let loading = $state(true)
   let error = $state<string | null>(null)
+
   // Filter state
   let showFilters = $state(false)
   let filterStartDate = $state('')
   let filterEndDate = $state('')
-  let filterStatus = $state<'all' | 'pending' | 'approved' | 'rejected'>('all')
   let filterEventType = $state('')
 
-  // Stats data
-  let totalEvents = $state(0)
-  let deliveredEvents = $state(0)
-  let pendingDelivery = $state(0)
+  // Stats from dashboard API
   let failedEvents = $state(0)
-  let partialDelivery = $state(0)
-  let totalDeliveredTargets = $state(0)
-  let totalFailedTargets = $state(0)
+  let byEventType = $state<Record<string, number>>({})
 
-  // Recent events
-  let recentEvents = $state<DashboardRecentEvent[]>([])
-
-  // Chart data
-  let statsChartOptions = $state<ApexOptions | null>(null)
-  let statusChartOptions = $state<ApexOptions | null>(null)
+  // Data from event_details
+  let recentEvents = $state<ApprovedEvent[]>([])
+  let totalEventDetails = $state(0)
 
   // Map data
-  let geoCells = $state<Array<{ cell: string; count: number; lat: number; lng: number }>>([])
+  let geoCells = $state<
+    Array<{ cell: string; count: number; lat: number; lng: number }>
+  >([])
 
-  const asApex = (v: unknown) => v as ApexOptions
+  // Derived: top categories (split eventType by '.')
+  let topCategories = $derived(
+    Object.entries(
+      (Object.keys(byEventType).length > 0
+        ? Object.entries(byEventType)
+        : recentEvents.map((e) => [e.eventType, 1] as [string, number])
+      ).reduce(
+        (acc, [type, count]) => {
+          const cat = type.includes('.') ? type.split('.')[0] : type
+          acc[cat] = (acc[cat] ?? 0) + count
+          return acc
+        },
+        {} as Record<string, number>
+      )
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+  )
+
+  // Derived: top actions (part after '.')
+  let topActions = $derived(
+    Object.entries(
+      (Object.keys(byEventType).length > 0
+        ? Object.entries(byEventType)
+        : recentEvents.map((e) => [e.eventType, 1] as [string, number])
+      ).reduce(
+        (acc, [type, count]) => {
+          const act = type.includes('.')
+            ? type.split('.').slice(1).join('.')
+            : type
+          acc[act] = (acc[act] ?? 0) + count
+          return acc
+        },
+        {} as Record<string, number>
+      )
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+  )
+
+  // Derived: top 10 devices from recent events (50 fetched)
+  let topDevices = $derived(
+    Object.entries(
+      recentEvents.reduce(
+        (acc, e) => {
+          const dev = e.source?.deviceName ?? e.source?.deviceId ?? '-'
+          acc[dev] = (acc[dev] ?? 0) + 1
+          return acc
+        },
+        {} as Record<string, number>
+      )
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+  )
+
+  // Derived: top 10 event types for treemap
+  let topEventTypes = $derived(
+    Object.keys(byEventType).length > 0
+      ? Object.entries(byEventType)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+      : Object.entries(
+          recentEvents.reduce(
+            (acc, e) => {
+              acc[e.eventType] = (acc[e.eventType] ?? 0) + 1
+              return acc
+            },
+            {} as Record<string, number>
+          )
+        )
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+  )
 
   async function loadEvents() {
     const orgId = $activeWorkspaceId
@@ -56,69 +121,56 @@
     loading = true
     error = null
     try {
-      // Build filter params
-      const params: {
-        startDate?: string
-        endDate?: string
-        status?: 'all' | 'pending' | 'approved' | 'rejected'
-        eventType?: string
-      } = {}
-
-      if (filterStartDate) params.startDate = filterStartDate
-      if (filterEndDate) params.endDate = filterEndDate
-      if (filterStatus !== 'all') params.status = filterStatus
-      if (filterEventType) params.eventType = filterEventType
-
-      // Load dashboard stats with geohash data for map
+      // Dashboard stats (counts + byEventType)
       try {
-        const stats = await getDashboardStats(orgId, params)
-        // Update stats from dashboard API
-        totalEvents = stats.totalEvents
-        deliveredEvents = stats.approvedEvents
-        pendingDelivery = stats.pendingEvents
+        const stats = await getDashboardStats(orgId, {
+          startDate: filterStartDate || undefined,
+          endDate: filterEndDate || undefined,
+          eventType: filterEventType || undefined
+        })
         failedEvents = stats.rejectedEvents
-        // Calculate partial delivery from recent events
-        const recentEventsWithPartial = (stats.recentEvents ?? []).filter((e: { status: string }) => e.status === 'partial')
-        partialDelivery = recentEventsWithPartial.length
-
-        // Load geo cell data for map
-        geoCells = stats.byGeoCell || []
-
-        // Load recent events from stats
-        recentEvents = stats.recentEvents ?? []
-      } catch (dashboardError) {
-        console.warn('Dashboard API failed:', dashboardError)
+        byEventType = stats.byEventType ?? {}
+        if (stats.byGeoCell && stats.byGeoCell.length > 0) {
+          geoCells = stats.byGeoCell
+        }
+      } catch (e) {
+        console.warn('Dashboard stats failed:', e)
       }
 
-      // Generate chart options with theme color
-      const theme = '#0d6efd'
+      // Recent events from event_details (fetch 50 for better device/type stats)
+      try {
+        const result = await listApprovedEvents(orgId, 1, 50, {
+          eventType: filterEventType || undefined
+        })
+        recentEvents = result.details
+        totalEventDetails = result.total
 
-      // Stats chart - show delivery trend
-      statsChartOptions = asApex({
-        chart: {
-          height: '30px',
-          type: 'line',
-          sparkline: { enabled: true }
-        },
-        colors: [theme],
-        stroke: { curve: 'smooth', width: 2 },
-        series: [
-          {
-            name: 'Events',
-            data: Array.from({ length: 13 }, () => Math.floor(Math.random() * totalEvents) + 1)
+        // Build geo cells from geoCell data if stats had none
+        if (geoCells.length === 0 && recentEvents.length > 0) {
+          const cellMap = new Map<
+            string,
+            { cell: string; count: number; lat: number; lng: number }
+          >()
+          for (const ev of recentEvents) {
+            if (ev.geoCell?.cell) {
+              const existing = cellMap.get(ev.geoCell.cell)
+              if (existing) {
+                existing.count++
+              } else {
+                cellMap.set(ev.geoCell.cell, {
+                  cell: ev.geoCell.cell,
+                  count: 1,
+                  lat: ev.location?.lat ?? ev.lat,
+                  lng: ev.location?.lng ?? ev.lng
+                })
+              }
+            }
           }
-        ]
-      })
-
-      // Status chart - pie chart showing status distribution
-      statusChartOptions = asApex({
-        chart: { height: 100, type: 'donut', sparkline: { enabled: true } },
-        colors: ['#198754', '#ffc107', '#dc3545', '#0dcaf0'],
-        stroke: { show: false },
-        plotOptions: { pie: { donut: { background: 'transparent' } } },
-        series: [deliveredEvents, pendingDelivery, failedEvents, partialDelivery],
-        labels: ['Delivered', 'Pending', 'Failed', 'Partial']
-      })
+          geoCells = Array.from(cellMap.values())
+        }
+      } catch (e) {
+        console.warn('Event details failed:', e)
+      }
     } catch (e: unknown) {
       error = (e as { message?: string })?.message ?? 'An error occurred'
     } finally {
@@ -129,31 +181,124 @@
   $effect(() => {
     const orgId = $activeWorkspaceId
     setPageTitle('Dashboard')
-    if (orgId) {
-      untrack(() => loadEvents())
-    } else {
-      loading = false
-    }
+    if (orgId) untrack(() => loadEvents())
+    else loading = false
   })
 
   function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleString()
   }
 
-  function getStatusBadge(status: string): string {
-    switch (status) {
-      case 'pending_delivery':
-        return 'bg-warning'
-      case 'delivered':
-        return 'bg-success'
-      case 'partial_delivery':
-        return 'bg-info'
-      case 'failed':
-        return 'bg-danger'
-      default:
-        return 'bg-secondary'
-    }
+  function getDeviceLabel(event: ApprovedEvent): string {
+    return event.source?.deviceName ?? event.source?.deviceId ?? '-'
   }
+
+  function getLocationLabel(event: ApprovedEvent): string {
+    return event.geo?.adminName ?? event.location?.zone ?? '-'
+  }
+
+  function getEventCategory(eventType: string): string {
+    return eventType.includes('.') ? eventType.split('.')[0] : eventType
+  }
+
+  function getEventAction(eventType: string): string {
+    return eventType.includes('.')
+      ? eventType.split('.').slice(1).join('.')
+      : '-'
+  }
+
+  const asApex = (v: unknown) => v as ApexOptions
+
+  // Sparkline for Total Events card (uses byEventType values as shape indicator)
+  let totalSparklineOptions = $derived(
+    asApex({
+      chart: { type: 'area', height: 40, sparkline: { enabled: true } },
+      stroke: { curve: 'smooth', width: 2 },
+      fill: {
+        type: 'gradient',
+        gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1 }
+      },
+      colors: ['#4fc9da'],
+      series: [
+        {
+          name: 'Events',
+          data:
+            Object.values(byEventType).length > 0
+              ? Object.values(byEventType).sort((a, b) => a - b)
+              : [0, 0]
+        }
+      ],
+      tooltip: { enabled: false }
+    })
+  )
+
+  // Horizontal bar — Top 10 Event Types
+  let eventTypesChartOptions = $derived(
+    asApex({
+      chart: {
+        type: 'bar',
+        height: 200,
+        toolbar: { show: false },
+        animations: { enabled: false }
+      },
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          barHeight: '60%',
+          borderRadius: 3,
+          dataLabels: { position: 'center' }
+        }
+      },
+      colors: ['#4fc9da'],
+      dataLabels: {
+        enabled: true,
+        style: { fontSize: '10px', colors: ['#fff'] },
+        formatter: (v: number) => String(v)
+      },
+      xaxis: {
+        categories: topEventTypes.map(([t]) => t),
+        labels: { style: { fontSize: '9px' } }
+      },
+      yaxis: { labels: { style: { fontSize: '9px' }, maxWidth: 120 } },
+      series: [{ name: 'Count', data: topEventTypes.map(([, c]) => c) }],
+      grid: { show: false },
+      tooltip: { y: { formatter: (v: number) => `${v} events` } }
+    })
+  )
+
+  // Horizontal bar — Top 10 Devices
+  let topDevicesChartOptions = $derived(
+    asApex({
+      chart: {
+        type: 'bar',
+        height: 200,
+        toolbar: { show: false },
+        animations: { enabled: false }
+      },
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          barHeight: '60%',
+          borderRadius: 3,
+          dataLabels: { position: 'center' }
+        }
+      },
+      colors: ['#f6c23e'],
+      dataLabels: {
+        enabled: true,
+        style: { fontSize: '10px', colors: ['#000'] },
+        formatter: (v: number) => String(v)
+      },
+      xaxis: {
+        categories: topDevices.map(([d]) => d),
+        labels: { style: { fontSize: '9px' } }
+      },
+      yaxis: { labels: { style: { fontSize: '9px' }, maxWidth: 120 } },
+      series: [{ name: 'Events', data: topDevices.map(([, c]) => c) }],
+      grid: { show: false },
+      tooltip: { y: { formatter: (v: number) => `${v} events` } }
+    })
+  )
 
   function applyFilters() {
     loadEvents()
@@ -162,7 +307,6 @@
   function clearFilters() {
     filterStartDate = ''
     filterEndDate = ''
-    filterStatus = 'all'
     filterEventType = ''
     loadEvents()
   }
@@ -176,89 +320,51 @@
     {m.workspaceSelectPost()}
   </div>
 {:else}
-  <!-- Filter Bar -->
-  <Card class="mb-3">
-    <CardBody>
-      <div class="d-flex align-items-center mb-3">
-        <span class="flex-grow-1 fw-semibold">
-          <i class="bi bi-funnel me-2"></i>{m.dashboardFilterLabel()}
-        </span>
-        <button
-          class="btn btn-sm btn-outline-theme"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#filterCollapse"
-          aria-expanded={showFilters}
-          aria-label={m.dashboardFilterToggle()}
-          onclick={() => (showFilters = !showFilters)}
-        >
-          <i class="bi bi-sliders"></i>
-        </button>
-      </div>
-      <div class="collapse" class:show={showFilters} id="filterCollapse">
-        <div class="row g-2">
-          <div class="col-md-2">
-            <label class="form-label small mb-1" for="filterStartDate">{m.dashboardFilterStartDate()}</label>
-            <input
-              id="filterStartDate"
-              type="datetime-local"
-              class="form-control form-control-sm"
-              style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
-              bind:value={filterStartDate}
-            />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label small mb-1" for="filterEndDate">{m.dashboardFilterEndDate()}</label>
-            <input
-              id="filterEndDate"
-              type="datetime-local"
-              class="form-control form-control-sm"
-              style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
-              bind:value={filterEndDate}
-            />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label small mb-1" for="filterStatus">{m.dashboardFilterStatus()}</label>
-            <select id="filterStatus" class="form-select form-select-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" bind:value={filterStatus}>
-              <option value="all">{m.dashboardFilterStatusAll()}</option>
-              <option value="pending">{m.dashboardFilterStatusPending()}</option>
-              <option value="approved">{m.dashboardFilterStatusApproved()}</option>
-              <option value="rejected">{m.dashboardFilterStatusRejected()}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label small mb-1" for="filterEventType">{m.dashboardFilterEventType()}</label>
-            <input
-              id="filterEventType"
-              type="text"
-              class="form-control form-control-sm"
-              placeholder={m.dashboardFilterEventTypePlaceholder()}
-              style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
-              bind:value={filterEventType}
-            />
-          </div>
-          <div class="col-12">
-            <div class="d-flex gap-2">
-              <button
-                class="btn btn-sm btn-theme"
-                type="button"
-                onclick={applyFilters}
-              >
-                <i class="bi bi-search me-1"></i>{m.dashboardFilterApply()}
-              </button>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                type="button"
-                onclick={clearFilters}
-              >
-                <i class="bi bi-x-circle me-1"></i>{m.dashboardFilterClear()}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </CardBody>
-  </Card>
+  <!-- Filter Bar (compact inline) -->
+  <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+    <i class="bi bi-funnel text-theme"></i>
+    <input
+      id="filterStartDate"
+      type="datetime-local"
+      class="form-control form-control-sm"
+      style="width:auto;font-size:0.75rem;"
+      title={m.dashboardFilterStartDate()}
+      bind:value={filterStartDate}
+    />
+    <span class="text-inverse text-opacity-50 small">–</span>
+    <input
+      id="filterEndDate"
+      type="datetime-local"
+      class="form-control form-control-sm"
+      style="width:auto;font-size:0.75rem;"
+      title={m.dashboardFilterEndDate()}
+      bind:value={filterEndDate}
+    />
+    <input
+      id="filterEventType"
+      type="text"
+      class="form-control form-control-sm"
+      style="width:180px;font-size:0.75rem;"
+      placeholder={m.dashboardFilterEventType()}
+      bind:value={filterEventType}
+    />
+    <button
+      class="btn btn-sm btn-theme"
+      type="button"
+      onclick={applyFilters}
+      aria-label={m.dashboardFilterApply()}
+    >
+      <i class="bi bi-search"></i>
+    </button>
+    <button
+      class="btn btn-sm btn-outline-secondary"
+      type="button"
+      onclick={clearFilters}
+      aria-label={m.dashboardFilterClear()}
+    >
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
 
   {#if loading}
     <div class="text-center py-5">
@@ -269,292 +375,243 @@
   {:else if error}
     <div class="alert alert-danger">
       <i class="bi bi-exclamation-triangle me-2"></i>{error}
-      <button class="btn btn-sm btn-danger ms-2" onclick={() => loadEvents()}>{m.actionRefresh()}</button>
+      <button class="btn btn-sm btn-danger ms-2" onclick={() => loadEvents()}
+        >{m.actionRefresh()}</button
+      >
     </div>
   {:else}
-    <!-- BEGIN row -->
-    <div class="row">
-    <!-- Stats Cards -->
-    <div class="col-xl-3 col-lg-6">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardTotalEvents()}</span>
-            <CardExpandToggler />
-          </div>
-          <div class="row align-items-center mb-2">
-            <div class="col-7">
-              <h3 class="mb-0">{totalEvents}</h3>
+    <!-- Row 1: Stat cards -->
+    <div class="row g-3 mb-4">
+      <!-- Card 1: Total Events -->
+      <div class="col-xl-3 col-lg-6">
+        <Card class="mb-3 h-100">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-3">
+              <span class="flex-grow-1">{m.dashboardTotalEvents()}</span>
+              <CardExpandToggler />
             </div>
-            <div class="col-5">
-              <div class="mt-n2">
-                {#if statsChartOptions}
-                  <ApexCharts options={statsChartOptions} height="30px" />
-                {/if}
+            <div class="row align-items-center mb-2">
+              <div class="col-7">
+                <h3 class="mb-0">{totalEventDetails}</h3>
+              </div>
+              <div class="col-5">
+                <ApexCharts options={totalSparklineOptions} height="40px" />
               </div>
             </div>
-          </div>
-          <div class="small text-inverse text-opacity-50">
-            <div>
+            <div class="small text-inverse text-opacity-50">
               <i class="bi bi-calendar-check me-1"></i>{m.dashboardEvents24h()}
             </div>
-          </div>
-        </CardBody>
-      </Card>
-    </div>
+          </CardBody>
+        </Card>
+      </div>
 
-    <div class="col-xl-3 col-lg-6">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardDeliveredEvents()}</span>
-            <CardExpandToggler />
-          </div>
-          <div class="row align-items-center mb-2">
-            <div class="col-7">
-              <h3 class="mb-0 text-success">{deliveredEvents}</h3>
+      <!-- Card 2: Event Category -->
+      <div class="col-xl-3 col-lg-6">
+        <Card class="mb-3 h-100">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-3">
+              <span class="flex-grow-1">{m.dashboardCategory()}</span>
+              <CardExpandToggler />
             </div>
-            <div class="col-5">
-              <div class="mt-n2">
-                {#if statsChartOptions}
-                  <ApexCharts options={statsChartOptions} height="30px" />
-                {/if}
+            <h3 class="mb-2">{topCategories.length}</h3>
+            {#if topCategories.length === 0}
+              <div class="small text-inverse text-opacity-50">
+                {m.dashboardNoData()}
               </div>
-            </div>
-          </div>
-          <div class="small text-inverse text-opacity-50">
-            <div>
-              <i class="bi bi-check-circle me-1" aria-label={m.dashboardCheckCircle()}></i>{totalDeliveredTargets} {m.dashboardTargets()}
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    </div>
-
-    <div class="col-xl-3 col-lg-6">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardPendingDelivery()}</span>
-            <CardExpandToggler />
-          </div>
-          <div class="row align-items-center mb-2">
-            <div class="col-7">
-              <h3 class="mb-0 text-warning">{pendingDelivery}</h3>
-            </div>
-            <div class="col-5">
-              <div class="mt-n2">
-                {#if statsChartOptions}
-                  <ApexCharts options={statsChartOptions} height="30px" />
-                {/if}
-              </div>
-            </div>
-          </div>
-          <div class="small text-inverse text-opacity-50">
-            <div>
-              <i class="bi bi-clock me-1" aria-label={m.dashboardClock()}></i>{m.dashboardAwaitingDelivery()}
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    </div>
-
-    <div class="col-xl-3 col-lg-6">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardFailedEvents()}</span>
-            <CardExpandToggler />
-          </div>
-          <div class="row align-items-center mb-2">
-            <div class="col-7">
-              <h3 class="mb-0 text-danger">{failedEvents}</h3>
-            </div>
-            <div class="col-5">
-              <div class="mt-n2">
-                {#if statsChartOptions}
-                  <ApexCharts options={statsChartOptions} height="30px" />
-                {/if}
-              </div>
-            </div>
-          </div>
-          <div class="small text-inverse text-opacity-50">
-            <div>
-              <i class="bi bi-x-circle me-1" aria-label={m.dashboardXCircle()}></i>{totalFailedTargets} {m.dashboardFailedTargets()}
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    </div>
-
-    <!-- Status Distribution Chart -->
-    <div class="col-xl-4">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardIngestSummary()}</span>
-            <CardExpandToggler />
-          </div>
-
-          <div class="row align-items-center">
-            <div class="col-lg-6">
-              <div class="text-center">
-                {#if statusChartOptions}
-                  <ApexCharts options={statusChartOptions} height="200px" />
-                {/if}
-              </div>
-            </div>
-
-            <div class="col-lg-6">
+            {:else}
               <div class="small">
-                <div class="d-flex align-items-center mb-2">
-                  <div class="w-10px h-10px rounded-pill bg-success me-2"></div>
-                  <div class="flex-1">{m.dashboardTargetsDelivered()}</div>
-                  <div class="fw-bold">{deliveredEvents}</div>
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                  <div class="w-10px h-10px rounded-pill bg-warning me-2"></div>
-                  <div class="flex-1">{m.dashboardStatus()}</div>
-                  <div class="fw-bold">{pendingDelivery}</div>
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                  <div class="w-10px h-10px rounded-pill bg-danger me-2"></div>
-                  <div class="flex-1">{m.dashboardTargetsFailed()}</div>
-                  <div class="fw-bold">{failedEvents}</div>
-                </div>
-                <div class="d-flex align-items-center">
-                  <div class="w-10px h-10px rounded-pill bg-info me-2"></div>
-                  <div class="flex-1">{m.dashboardPartialDelivery()}</div>
-                  <div class="fw-bold">{partialDelivery}</div>
-                </div>
+                {#each topCategories as [cat, count]}
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-1"
+                  >
+                    <span class="text-truncate me-2" title={cat}>{cat}</span>
+                    <span class="badge bg-theme">{count}</span>
+                  </div>
+                {/each}
               </div>
+            {/if}
+          </CardBody>
+        </Card>
+      </div>
+
+      <!-- Card 3: Event Action -->
+      <div class="col-xl-3 col-lg-6">
+        <Card class="mb-3 h-100">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-3">
+              <span class="flex-grow-1">{m.dashboardAction()}</span>
+              <CardExpandToggler />
             </div>
-          </div>
-        </CardBody>
-      </Card>
+            <h3 class="mb-2">{topActions.length}</h3>
+            {#if topActions.length === 0}
+              <div class="small text-inverse text-opacity-50">
+                {m.dashboardNoData()}
+              </div>
+            {:else}
+              <div class="small">
+                {#each topActions as [act, count]}
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-1"
+                  >
+                    <span class="text-truncate me-2" title={act}>{act}</span>
+                    <span class="badge bg-success">{count}</span>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </CardBody>
+        </Card>
+      </div>
+
+      <!-- Card 4: Failed Events -->
+      <div class="col-xl-3 col-lg-6">
+        <Card class="mb-3 h-100">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-3">
+              <span class="flex-grow-1">{m.dashboardFailedEvents()}</span>
+              <CardExpandToggler />
+            </div>
+            <h3 class="mb-1 text-danger">{failedEvents}</h3>
+            <div class="small text-inverse text-opacity-50">
+              <i class="bi bi-x-circle me-1"></i>{m.dashboardFailedTargets()}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
     </div>
 
-    <!-- Event Map -->
-    <div class="col-xl-4">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardEventMap()}</span>
-            <CardExpandToggler />
-          </div>
+    <!-- Row 2: Charts + Map -->
+    <div class="row g-3 mb-4">
+      <!-- Left column: Event Types + Top Devices stacked -->
+      <div class="col-xl-4">
+        <!-- Top 10 Event Types -->
+        <Card class="mb-3">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-2">
+              <span class="flex-grow-1">{m.dashboardTopEventTypes()}</span>
+              <CardExpandToggler />
+            </div>
+            {#if topEventTypes.length === 0}
+              <div class="text-center py-3 text-inverse text-opacity-50">
+                <p class="small mb-0">{m.dashboardNoData()}</p>
+              </div>
+            {:else}
+              <ApexCharts options={eventTypesChartOptions} height="200px" />
+            {/if}
+          </CardBody>
+        </Card>
 
-          {#if geoCells.length > 0}
+        <!-- Top 10 Device Events -->
+        <Card class="mb-3">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-2">
+              <span class="flex-grow-1">{m.dashboardTopDeviceEvents()}</span>
+              <CardExpandToggler />
+            </div>
+            {#if topDevices.length === 0}
+              <div class="text-center py-3 text-inverse text-opacity-50">
+                <p class="small mb-0">{m.dashboardNoData()}</p>
+              </div>
+            {:else}
+              <ApexCharts options={topDevicesChartOptions} height="200px" />
+            {/if}
+          </CardBody>
+        </Card>
+      </div>
+
+      <!-- Event Map — ใหญ่ครอบคลุม Thailand -->
+      <div class="col-xl-8">
+        <Card class="mb-3">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-3">
+              <span class="flex-grow-1">{m.dashboardEventMap()}</span>
+              <CardExpandToggler />
+            </div>
             <EventMap
-              geoCells={geoCells}
-              height="250px"
-              onCellClick={(cell: { cell: string; count: number; lat: number; lng: number }) => console.log('Clicked cell:', cell)}
+              {geoCells}
+              height="460px"
+              zoom={3}
+              onCellClick={(cell: {
+                cell: string
+                count: number
+                lat: number
+                lng: number
+              }) => console.log('Clicked cell:', cell)}
             />
-          {:else}
-            <div class="text-center py-5 text-inverse text-opacity-50">
-              <i class="bi bi-map fs-1 mb-3 d-block"></i>
-              <p class="small">{m.dashboardMapNoData()}</p>
-            </div>
-          {/if}
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      </div>
+
     </div>
 
-    <!-- Recent Events Table -->
-    <div class="col-xl-4">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardRecentEvents()}</span>
-            <a href="/ingest/unknownPayloadReviews" class="btn btn-sm btn-outline-theme">
-              {m.actionView()}
-            </a>
-          </div>
-
-          {#if recentEvents.length === 0}
-            <div class="text-center py-5 text-inverse text-opacity-50">
-              <i class="bi bi-bar-chart fs-1 mb-3 d-block"></i>
-              <p>{m.dashboardNoApprovedRecords()}</p>
+    <!-- Row 3: Recent Events -->
+    <div class="row g-3">
+      <div class="col-12">
+        <Card class="mb-3">
+          <CardBody>
+            <div class="d-flex fw-bold small mb-3">
+              <span class="flex-grow-1">
+                {m.dashboardRecentEvents()}
+                {#if totalEventDetails > 0}
+                  <span class="badge bg-secondary ms-2 fw-normal"
+                    >{totalEventDetails} {m.dashboardTotal()}</span
+                  >
+                {/if}
+              </span>
+              <a
+                href={resolve('/ingest/details')}
+                class="btn btn-sm btn-outline-theme"
+              >
+                {m.actionView()}
+              </a>
             </div>
-          {:else}
-            <div class="table-responsive">
-              <table class="table table-sm table-hover align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>{m.dashboardEventId()}</th>
-                    <th>{m.dashboardDevice()}</th>
-                    <th>{m.dashboardStatus()}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each recentEvents as event (event.id)}
-                    <tr class="cursor-pointer">
-                      <td class="fw-semibold font-monospace small">{event.eventId}</td>
-                      <td>{event.eventType}</td>
-                      <td>
-                        <span class="badge {getStatusBadge(event.status)}">
-                          {event.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                      </td>
+
+            {#if recentEvents.length === 0}
+              <div class="text-center py-5 text-inverse text-opacity-50">
+                <i class="bi bi-bar-chart fs-1 mb-3 d-block"></i>
+                <p>{m.dashboardNoApprovedRecords()}</p>
+              </div>
+            {:else}
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>{m.dashboardEventId()}</th>
+                      <th>{m.dashboardCategory()}</th>
+                      <th>{m.dashboardAction()}</th>
+                      <th>{m.dashboardDevice()}</th>
+                      <th>{m.dashboardLocation()}</th>
+                      <th>{m.dashboardCreatedAt()}</th>
                     </tr>
-                  {/each}
-                </tbody>
-              </table>
-            </div>
-          {/if}
-        </CardBody>
-      </Card>
+                  </thead>
+                  <tbody>
+                    {#each recentEvents as event (event.id)}
+                      <tr class="cursor-pointer">
+                        <td class="fw-semibold font-monospace small"
+                          >{event.eventId}</td
+                        >
+                        <td
+                          ><span class="badge bg-theme"
+                            >{getEventCategory(event.eventType)}</span
+                          ></td
+                        >
+                        <td
+                          ><span class="badge bg-success"
+                            >{getEventAction(event.eventType)}</span
+                          ></td
+                        >
+                        <td class="small">{getDeviceLabel(event)}</td>
+                        <td class="small">{getLocationLabel(event)}</td>
+                        <td class="small">{formatDate(event.createdAt)}</td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
+          </CardBody>
+        </Card>
+      </div>
     </div>
-
-    <!-- Detailed Recent Events -->
-    <div class="col-12">
-      <Card class="mb-3">
-        <CardBody>
-          <div class="d-flex fw-bold small mb-3">
-            <span class="flex-grow-1">{m.dashboardRecentEventsDetails()}</span>
-            <a href="/ingest/unknownPayloadReviews" class="btn btn-sm btn-outline-theme">
-              {m.actionView()}
-            </a>
-          </div>
-
-          {#if recentEvents.length === 0}
-            <div class="text-center py-5 text-inverse text-opacity-50">
-              <i class="bi bi-bar-chart fs-1 mb-3 d-block"></i>
-              <p>{m.dashboardNoApprovedRecords()}</p>
-            </div>
-          {:else}
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>{m.dashboardEventId()}</th>
-                    <th>{m.dashboardEventType()}</th>
-                    <th>{m.dashboardStatus()}</th>
-                    <th>{m.dashboardCreatedAt()}</th>
-                    <th>Source IP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each recentEvents as event (event.id)}
-                    <tr class="cursor-pointer">
-                      <td class="fw-semibold font-monospace small">{event.eventId}</td>
-                      <td>{event.eventType}</td>
-                      <td>
-                        <span class="badge {getStatusBadge(event.status)}">
-                          {event.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                      </td>
-                      <td class="small">{formatDate(event.createdAt)}</td>
-                      <td class="font-monospace small">{event.sourceIp ?? '-'}</td>
-                    </tr>
-                  {/each}
-                </tbody>
-              </table>
-            </div>
-          {/if}
-        </CardBody>
-      </Card>
-    </div>
-  </div>
-  <!-- END row -->
   {/if}
 {/if}

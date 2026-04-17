@@ -62,6 +62,13 @@
   "dashboardDeliveredAt": "Delivered At",
   "dashboardTargetsDelivered": "Delivered",
   "dashboardTargetsFailed": "Failed",
+  "dashboardCategory": "Category",
+  "dashboardAction": "Action",
+  "dashboardLocation": "Location",
+  "dashboardTotal": "total",
+  "dashboardNoData": "No data",
+  "dashboardTopEventTypes": "Top 10 Event Types",
+  "dashboardTopDeviceEvents": "Top 10 Device Events",
 
   "_comments_dashboard_map": "Map section",
   "dashboardEventMap": "Event Map",
