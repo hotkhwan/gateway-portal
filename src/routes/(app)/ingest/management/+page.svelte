@@ -1,9 +1,10 @@
 <!-- src/routes/(app)/ingest/management/+page.svelte -->
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import { untrack } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId, activeWorkspace } from '$lib/stores/activeWorkspace'
   import {
     listPendingEvents,
     getPendingEvent,
@@ -64,7 +65,7 @@
   let allSelected = $derived(events.length > 0 && events.every(e => selectedIds.has(e.eventId)))
 
   async function load(page = 1) {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -85,7 +86,7 @@
   }
 
   async function openDetail(eventId: string) {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
     detailLoading = true
     try {
@@ -115,7 +116,7 @@
   }
 
   async function handleEditSubmit() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !actionEventId) return
     editLoading = true
     editError = null
@@ -156,7 +157,7 @@
   }
 
   async function handleApprove() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !actionEventId) return
     actionLoading = true
     try {
@@ -173,7 +174,7 @@
   }
 
   async function handleReject() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !actionEventId) return
     actionLoading = true
     try {
@@ -190,7 +191,7 @@
   }
 
   async function handleDelete() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !actionEventId) return
     actionLoading = true
     try {
@@ -227,7 +228,7 @@
     bulkResult = null
     bulkTemplateId = ''
     if (action === 'applyTemplate') {
-      const orgId = $activeOrg?.id
+      const orgId = $activeWorkspaceId
       if (orgId) {
         try {
           const r = await listTemplates(orgId, 1, 100)
@@ -239,7 +240,7 @@
   }
 
   async function handleBulk() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
@@ -305,7 +306,7 @@
   }
 
   $effect(() => {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     setPageTitle(m.ingestManagementTitle())
     if (orgId) { untrack(() => load()) } else { loading = false }
   })
@@ -391,9 +392,9 @@
   <div class="d-flex align-items-center mb-3">
     <div class="flex-grow-1">
       <h1 class="page-header mb-0">{m.ingestManagementTitle()}</h1>
-      {#if $activeOrg}
+      {#if $activeWorkspace}
         <small class="text-inverse text-opacity-50">
-          <i class="bi bi-building me-1"></i>{$activeOrg.name} &mdash; {m.ingestManagementSubtitle()}
+          <i class="bi bi-building me-1"></i>{$activeWorkspace.name} &mdash; {m.ingestManagementSubtitle()}
         </small>
       {/if}
     </div>
@@ -406,12 +407,12 @@
     </div>
   {/if}
 
-  {#if !$activeOrg}
+  {#if !$activeWorkspaceId}
     <div class="alert alert-warning">
       <i class="bi bi-exclamation-circle me-2"></i>
-      {m.orgSelectOrgPre()}
-      <a href="/orgs" class="alert-link">{m.navOrgs()}</a>
-      {m.orgSelectOrgPost()}
+      {m.workspaceSelectPre()}
+      <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+      {m.workspaceSelectPost()}
     </div>
   {:else}
     <!-- Filter bar -->

@@ -22,28 +22,6 @@ export interface IngestConfig {
   }
 }
 
-export type OrgUnitRelation = 'viewer' | 'editor' | 'deleter'
-
-export interface OrgUnit {
-  id: string
-  name: string
-  parentId?: string
-  description?: string
-  isRoot: boolean
-  children?: OrgUnit[]
-  memberCount?: number
-  createdAt: string
-  updatedAt?: string
-}
-
-export interface OrgUnitMember {
-  userId: string
-  role: string
-  firstName: string
-  lastName: string
-  enabled: boolean
-}
-
 export type TargetType = 'webhook' | 'line' | 'telegram' | 'discord'
 
 export interface DeliveryTarget {
@@ -81,19 +59,6 @@ export interface DiscordConfig {
   signingEnabled?: boolean
 }
 
-export interface TargetPermissionProfile {
-  id: string
-  orgId: string
-  name: string
-  description?: string
-  status: OrgStatus
-  orgUnitIds: string[]
-  targetIds: string[]
-  relations: OrgUnitRelation[]
-  createdAt: string
-  updatedAt?: string
-}
-
 export interface ApiResponse<T> {
   code: string
   message?: string
@@ -102,7 +67,7 @@ export interface ApiResponse<T> {
   detail?: T     // singular — single object endpoints (r.detail)
   pagination?: {
     page: number
-    perPages: number
+    perPage: number
     totalRecords: number
     totalPages: number
     sortField?: string
@@ -114,7 +79,7 @@ export interface PaginatedResponse<T> {
   items: T[]
   total: number
   page?: number
-  perPages?: number
+  perPage?: number
   totalPages?: number
 }
 

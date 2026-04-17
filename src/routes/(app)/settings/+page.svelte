@@ -570,7 +570,6 @@
   <div
     class="modal d-block"
     style="background:rgba(0,0,0,0.5)"
-    onclick={(e) => { if (e.target === e.currentTarget) showRestoreConfirm = false }}
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">

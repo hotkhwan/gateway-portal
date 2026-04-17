@@ -4,7 +4,7 @@
   import { resolve } from '$app/paths'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId } from '$lib/stores/activeWorkspace'
   import { getDashboardStats } from '$lib/api/ingest'
   import type { DashboardStats } from '$lib/api/ingest'
 
@@ -47,7 +47,7 @@
   const asApex = (v: unknown) => v as ApexOptions
 
   async function loadEvents() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) {
       loading = false
       return
@@ -127,7 +127,7 @@
   }
 
   $effect(() => {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     setPageTitle('Dashboard')
     if (orgId) {
       untrack(() => loadEvents())
@@ -168,12 +168,12 @@
   }
 </script>
 
-{#if !$activeOrg}
+{#if !$activeWorkspaceId}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    {m.dashboardAlertSelectOrg()}
-    <a href={resolve('/orgs')} class="alert-link">{m.dashboardAlertOrgLink()}</a>
-    {m.dashboardAlertContinue()}
+    {m.workspaceSelectPre()}
+    <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+    {m.workspaceSelectPost()}
   </div>
 {:else}
   <!-- Filter Bar -->

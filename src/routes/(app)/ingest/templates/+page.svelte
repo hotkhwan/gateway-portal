@@ -1,9 +1,10 @@
 <!-- src/routes/(app)/ingest/templates/+page.svelte -->
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import { untrack } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId, activeWorkspace } from '$lib/stores/activeWorkspace'
   import {
     listTemplates,
     createTemplate,
@@ -12,9 +13,11 @@
     listSourceProfiles
   } from '$lib/api/ingest'
   import { listTargets } from '$lib/api/target'
+  import { aiSuggest, createDraftFromPrompt, refineDraft, dryRunDraft, saveDraft } from '$lib/api/aiMapping'
   import type { MappingTemplate, MatchCondition, FieldMapping, TemplateDeliveryTarget, MessageTemplate } from '$lib/api/ingest'
   import type { SourceProfile } from '$lib/types/ingest'
   import type { DeliveryTarget } from '$lib/types/org'
+  import type { AISuggestResult, ConfigDraft, DryRunResult } from '$lib/types/aiMapping'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
 
@@ -59,6 +62,30 @@
   let deleteId = $state<string | null>(null)
   let deleteLoading = $state(false)
 
+  // ── AI Suggest modal ──
+  let showAISuggestModal = $state(false)
+  let aiSuggestStep = $state<'input' | 'result'>('input')
+  let aiSuggestLoading = $state(false)
+  let aiSuggestError = $state<string | null>(null)
+  let aiSuggestSourceFamily = $state('')
+  let aiSuggestPayload = $state('')
+  let aiSuggestResult = $state<AISuggestResult | null>(null)
+
+  // ── Prompt to Draft modal ──
+  let showPromptModal = $state(false)
+  let promptStep = $state<'input' | 'draft'>('input')
+  let promptLoading = $state(false)
+  let promptError = $state<string | null>(null)
+  let promptText = $state('')
+  let promptDraft = $state<ConfigDraft | null>(null)
+  let refineAnswers = $state<Record<string, string>>({})
+  let refineLoading = $state(false)
+  let dryRunPayload = $state('')
+  let dryRunResult = $state<DryRunResult | null>(null)
+  let dryRunLoading = $state(false)
+  let promptSaveLoading = $state(false)
+  let promptSaved = $state(false)
+
   const OPERATORS = ['eq', 'in', 'contains', 'prefix'] as const
   const MESSAGING_TYPES = new Set(['line', 'telegram', 'discord'])
 
@@ -71,7 +98,7 @@
   const SUGGESTED_MSG_FIELDS = ['sourceFamily', 'deviceName', 'lat', 'lng', 'eventType', 'imageUrl']
 
   async function load(page = 1) {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -106,7 +133,7 @@
   }
 
   async function loadFormDeps() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
     try { sourceProfiles = await listSourceProfiles(orgId) } catch { sourceProfiles = [] }
     try { availableTargets = await listTargets(orgId) } catch { availableTargets = [] }
@@ -137,7 +164,7 @@
 
   async function handleSubmit() {
     if (!formName.trim()) { formError = m.ingestTemplateNameRequired(); return }
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
 
     const payload = {
@@ -175,7 +202,7 @@
   }
 
   async function handleDelete() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !deleteId) return
     deleteLoading = true
     try {
@@ -266,8 +293,197 @@
     catch { return d }
   }
 
+  // ── AI Suggest handlers ──
+  function openAISuggest() {
+    aiSuggestStep = 'input'
+    aiSuggestSourceFamily = ''
+    aiSuggestPayload = ''
+    aiSuggestResult = null
+    aiSuggestError = null
+    showAISuggestModal = true
+  }
+
+  async function handleAISuggest() {
+    const orgId = $activeWorkspaceId
+    if (!orgId || !aiSuggestSourceFamily.trim()) {
+      aiSuggestError = 'Source Family is required'
+      return
+    }
+    aiSuggestLoading = true
+    aiSuggestError = null
+    try {
+      aiSuggestResult = await aiSuggest(orgId, {
+        sourceFamily: aiSuggestSourceFamily.trim(),
+        samplePayload: aiSuggestPayload.trim() || undefined
+      })
+      aiSuggestStep = 'result'
+    } catch (e: unknown) {
+      aiSuggestError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      aiSuggestLoading = false
+    }
+  }
+
+  function applyAISuggest() {
+    if (!aiSuggestResult) return
+    resetForm()
+    formMode = 'create'
+    formSourceFamily = aiSuggestSourceFamily
+    formMappings = aiSuggestResult.fieldMappings.map(fm => ({
+      sourcePath: fm.sourcePath,
+      targetPath: fm.targetPath,
+      valueCodes: fm.valueCodes,
+      required: false
+    }))
+    formMatchAll = aiSuggestResult.matchRules.map(r => ({
+      field: r.field,
+      operator: r.operator as typeof OPERATORS[number],
+      values: [r.value]
+    }))
+    if (aiSuggestResult.suggestedEventType) {
+      formName = aiSuggestResult.suggestedEventType
+    }
+    showAISuggestModal = false
+    loadFormDeps().then(() => { showFormModal = true })
+  }
+
+  function originBadge(origin: string): string {
+    const map: Record<string, string> = {
+      system: 'bg-secondary',
+      ai: 'bg-theme',
+      merged: 'bg-info text-dark'
+    }
+    return map[origin] ?? 'bg-secondary'
+  }
+
+  function originLabel(origin: string): string {
+    if (origin === 'ai') return m.aiSuggestOriginAi()
+    if (origin === 'merged') return m.aiSuggestOriginMerged()
+    return m.aiSuggestOriginSystem()
+  }
+
+  function suggestModeBadge(mode: string): string {
+    if (mode === 'aiAssisted') return 'bg-success'
+    if (mode === 'aiFailedFallback') return 'bg-warning text-dark'
+    return 'bg-secondary'
+  }
+
+  function suggestModeLabel(mode: string): string {
+    if (mode === 'aiAssisted') return m.aiSuggestModeAi()
+    if (mode === 'aiFailedFallback') return m.aiSuggestModeFallback()
+    return m.aiSuggestModeSystem()
+  }
+
+  // ── Prompt to Draft handlers ──
+  function openPromptModal() {
+    promptStep = 'input'
+    promptText = ''
+    promptDraft = null
+    promptError = null
+    refineAnswers = {}
+    dryRunPayload = ''
+    dryRunResult = null
+    promptSaved = false
+    showPromptModal = true
+  }
+
+  async function handleGenerateDraft() {
+    const orgId = $activeWorkspaceId
+    if (!orgId || !promptText.trim()) {
+      promptError = 'Please describe what you want to configure'
+      return
+    }
+    promptLoading = true
+    promptError = null
+    try {
+      promptDraft = await createDraftFromPrompt(orgId, { prompt: promptText.trim() })
+      refineAnswers = {}
+      dryRunResult = null
+      promptStep = 'draft'
+    } catch (e: unknown) {
+      promptError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      promptLoading = false
+    }
+  }
+
+  async function handleRefine() {
+    const orgId = $activeWorkspaceId
+    if (!orgId || !promptDraft) return
+    const answersToSend = Object.fromEntries(
+      Object.entries(refineAnswers).filter(([, v]) => v.trim() !== '')
+    )
+    if (Object.keys(answersToSend).length === 0) return
+    refineLoading = true
+    promptError = null
+    try {
+      promptDraft = await refineDraft(orgId, promptDraft.draftId, answersToSend)
+      refineAnswers = {}
+      dryRunResult = null
+    } catch (e: unknown) {
+      promptError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      refineLoading = false
+    }
+  }
+
+  async function handleDryRun() {
+    const orgId = $activeWorkspaceId
+    if (!orgId || !promptDraft) return
+    let payload: Record<string, unknown> = {}
+    if (dryRunPayload.trim()) {
+      try {
+        payload = JSON.parse(dryRunPayload)
+      } catch {
+        promptError = 'Sample payload must be valid JSON'
+        return
+      }
+    }
+    dryRunLoading = true
+    promptError = null
+    try {
+      dryRunResult = await dryRunDraft(orgId, promptDraft.draftId, payload)
+    } catch (e: unknown) {
+      promptError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      dryRunLoading = false
+    }
+  }
+
+  async function handleSaveDraft() {
+    const orgId = $activeWorkspaceId
+    if (!orgId || !promptDraft) return
+    promptSaveLoading = true
+    promptError = null
+    try {
+      promptDraft = await saveDraft(orgId, promptDraft.draftId)
+      promptSaved = true
+    } catch (e: unknown) {
+      promptError = (e as { message?: string })?.message ?? m.commonError()
+    } finally {
+      promptSaveLoading = false
+    }
+  }
+
+  function draftStatusBadge(status: string): string {
+    if (status === 'ready') return 'bg-success'
+    if (status === 'incomplete') return 'bg-warning text-dark'
+    if (status === 'reviewed') return 'bg-info text-dark'
+    if (status === 'published' || status === 'deployed') return 'bg-theme'
+    return 'bg-secondary'
+  }
+
+  function draftStatusLabel(status: string): string {
+    if (status === 'ready') return m.aiPromptStatusDryRanOk()
+    if (status === 'incomplete') return m.aiPromptStatusDraft()
+    if (status === 'reviewed') return 'Reviewed'
+    if (status === 'published') return 'Published'
+    if (status === 'deployed') return m.aiPromptStatusSaved()
+    return status
+  }
+
   $effect(() => {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     setPageTitle(m.ingestTemplatesTitle())
     if (orgId) { untrack(() => load()) } else { loading = false }
   })
@@ -276,25 +492,31 @@
 <div class="d-flex align-items-center mb-3">
   <div class="flex-grow-1">
     <h1 class="page-header mb-0">{m.ingestTemplatesTitle()}</h1>
-    {#if $activeOrg}
+    {#if $activeWorkspace}
       <small class="text-inverse text-opacity-50">
-        <i class="bi bi-building me-1"></i>{$activeOrg.name} &mdash; {m.ingestTemplatesSubtitle()}
+        <i class="bi bi-building me-1"></i>{$activeWorkspace.name} &mdash; {m.ingestTemplatesSubtitle()}
       </small>
     {/if}
   </div>
-  {#if $activeOrg}
+  {#if $activeWorkspaceId}
+    <button class="btn btn-sm btn-outline-secondary me-2" onclick={openPromptModal} title={m.aiPromptTitle()}>
+      <i class="bi bi-magic me-1"></i>{m.aiPromptBtn()}
+    </button>
+    <button class="btn btn-sm btn-outline-theme me-2" onclick={openAISuggest} title={m.aiSuggestTitle()}>
+      <i class="bi bi-stars me-1"></i>{m.aiSuggestBtn()}
+    </button>
     <button class="btn btn-sm btn-theme" onclick={openCreate}>
       <i class="bi bi-plus-lg me-1"></i>{m.ingestTemplateCreate()}
     </button>
   {/if}
 </div>
 
-{#if !$activeOrg}
+{#if !$activeWorkspaceId}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    {m.orgSelectOrgPre()}
-    <a href="/orgs" class="alert-link">{m.navOrgs()}</a>
-    {m.orgSelectOrgPost()}
+    {m.workspaceSelectPre()}
+    <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+    {m.workspaceSelectPost()}
   </div>
 {:else}
   <!-- Filter bar -->
@@ -447,7 +669,7 @@
             ] as tab}
               <li class="nav-item">
                 <button class="nav-link" class:active={formTab === tab.key}
-                  onclick={() => (formTab = tab.key as typeof formTab)}>
+                  onclick={() => { formTab = tab.key as 'basic' | 'match' | 'mapping' | 'target' }}>
                   {tab.label}
                 </button>
               </li>
@@ -785,6 +1007,426 @@
             {#if deleteLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
             {m.actionDelete()}
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- ═══════════════════════════════════════════════════════════
+     AI Suggest Modal
+════════════════════════════════════════════════════════════ -->
+{#if showAISuggestModal}
+  <div
+    class="modal d-block"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-stars me-2 text-theme"></i>{m.aiSuggestTitle()}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            onclick={() => (showAISuggestModal = false)}
+            disabled={aiSuggestLoading}
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          {#if aiSuggestStep === 'input'}
+            {#if aiSuggestError}
+              <div class="alert alert-danger small py-2">{aiSuggestError}</div>
+            {/if}
+            <!-- Source Family -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                {m.aiSuggestSourceFamily()} <span class="text-danger">*</span>
+              </label>
+              {#if sourceProfiles.length > 0}
+                <select class="form-select" bind:value={aiSuggestSourceFamily} disabled={aiSuggestLoading}>
+                  <option value="">— Select —</option>
+                  {#each sourceProfiles as sp}
+                    <option value={sp.sourceFamily}>{sp.displayName ?? sp.sourceFamily}</option>
+                  {/each}
+                </select>
+              {:else}
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="e.g. AIBOX"
+                  bind:value={aiSuggestSourceFamily}
+                  disabled={aiSuggestLoading}
+                />
+              {/if}
+            </div>
+            <!-- Sample Payload -->
+            <div class="mb-1">
+              <label class="form-label fw-semibold">{m.aiSuggestSamplePayload()}</label>
+              <textarea
+                class="form-control font-monospace small"
+                rows="6"
+                placeholder={'{\n  "alarmType": 2,\n  "eventAttribute": { "gender": 1 }\n}'}
+                bind:value={aiSuggestPayload}
+                disabled={aiSuggestLoading}
+              ></textarea>
+            </div>
+
+          {:else if aiSuggestStep === 'result' && aiSuggestResult}
+            <!-- Mode badge -->
+            <div class="mb-3 d-flex align-items-center gap-2">
+              <span class="badge {suggestModeBadge(aiSuggestResult.mode)}">
+                {suggestModeLabel(aiSuggestResult.mode)}
+              </span>
+              {#if aiSuggestResult.aiProvider}
+                <span class="badge bg-outline-secondary border text-inverse text-opacity-60 fw-normal small">
+                  {aiSuggestResult.aiProvider} / {aiSuggestResult.aiModel ?? ''}
+                </span>
+              {/if}
+            </div>
+
+            {#if aiSuggestResult.fallbackReason}
+              <div class="alert alert-warning small py-2 mb-3">
+                <i class="bi bi-exclamation-triangle me-1"></i>{aiSuggestResult.fallbackReason}
+              </div>
+            {/if}
+
+            <!-- Suggested Event Type -->
+            {#if aiSuggestResult.suggestedEventType}
+              <div class="mb-3">
+                <div class="small fw-semibold text-inverse text-opacity-60 mb-1">{m.aiSuggestEventType()}</div>
+                <code class="text-theme">{aiSuggestResult.suggestedEventType}</code>
+              </div>
+            {/if}
+
+            <!-- Match Rules -->
+            {#if aiSuggestResult.matchRules.length > 0}
+              <div class="mb-3">
+                <div class="small fw-semibold text-inverse text-opacity-60 mb-2">{m.aiSuggestMatchRules()} ({aiSuggestResult.matchRules.length})</div>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0 small">
+                    <thead><tr>
+                      <th>Field</th><th>Operator</th><th>Value</th><th>Origin</th>
+                    </tr></thead>
+                    <tbody>
+                      {#each aiSuggestResult.matchRules as rule}
+                        <tr>
+                          <td class="font-monospace">{rule.field}</td>
+                          <td>{rule.operator}</td>
+                          <td class="font-monospace">{rule.value}</td>
+                          <td><span class="badge {originBadge(rule.origin)}">{originLabel(rule.origin)}</span></td>
+                        </tr>
+                      {/each}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            {/if}
+
+            <!-- Field Mappings -->
+            <div class="mb-2">
+              <div class="small fw-semibold text-inverse text-opacity-60 mb-2">{m.aiSuggestFieldMappings()} ({aiSuggestResult.fieldMappings.length})</div>
+              {#if aiSuggestResult.fieldMappings.length === 0}
+                <p class="text-muted small">{m.aiSuggestNoMappings()}</p>
+              {:else}
+                <div class="table-responsive" style="max-height:240px;overflow-y:auto">
+                  <table class="table table-sm align-middle mb-0 small">
+                    <thead><tr>
+                      <th>Source</th><th>Target</th><th>{m.aiSuggestValueCodes()}</th><th>Origin</th>
+                    </tr></thead>
+                    <tbody>
+                      {#each aiSuggestResult.fieldMappings as fm}
+                        <tr>
+                          <td class="font-monospace">{fm.sourcePath}</td>
+                          <td class="font-monospace">{fm.targetPath}</td>
+                          <td>
+                            {#if fm.valueCodes && Object.keys(fm.valueCodes).length > 0}
+                              <span class="badge bg-secondary fw-normal">{Object.keys(fm.valueCodes).length} codes</span>
+                            {:else}
+                              <span class="text-muted">—</span>
+                            {/if}
+                          </td>
+                          <td><span class="badge {originBadge(fm.origin)}">{originLabel(fm.origin)}</span></td>
+                        </tr>
+                      {/each}
+                    </tbody>
+                  </table>
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
+
+        <div class="modal-footer">
+          <button
+            class="btn btn-secondary"
+            onclick={() => (showAISuggestModal = false)}
+            disabled={aiSuggestLoading}
+          >{m.aiSuggestDiscard()}</button>
+
+          {#if aiSuggestStep === 'input'}
+            <button
+              class="btn btn-theme"
+              onclick={handleAISuggest}
+              disabled={aiSuggestLoading || !aiSuggestSourceFamily.trim()}
+            >
+              {#if aiSuggestLoading}
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                {m.aiSuggestLoading()}
+              {:else}
+                <i class="bi bi-stars me-1"></i>{m.aiSuggestBtn()}
+              {/if}
+            </button>
+          {:else}
+            <button class="btn btn-outline-secondary" onclick={() => { aiSuggestStep = 'input' }} disabled={aiSuggestLoading}>
+              <i class="bi bi-arrow-left me-1"></i>Back
+            </button>
+            <button class="btn btn-theme" onclick={applyAISuggest}>
+              <i class="bi bi-check-lg me-1"></i>{m.aiSuggestApply()}
+            </button>
+          {/if}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- ═══════════════════════════════════════════════════════════
+     Prompt to Draft Modal
+════════════════════════════════════════════════════════════ -->
+{#if showPromptModal}
+  <div
+    class="modal d-block"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-magic me-2 text-theme"></i>{m.aiPromptTitle()}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            onclick={() => (showPromptModal = false)}
+            disabled={promptLoading || refineLoading || dryRunLoading || promptSaveLoading}
+          ></button>
+        </div>
+
+        <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+          {#if promptError}
+            <div class="alert alert-danger small py-2 mb-3">
+              <button type="button" class="btn-close btn-close-sm float-end" onclick={() => (promptError = null)}></button>
+              {promptError}
+            </div>
+          {/if}
+
+          {#if promptStep === 'input'}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">{m.aiPromptLabel()}</label>
+              <textarea
+                class="form-control"
+                rows="5"
+                placeholder={m.aiPromptPlaceholder()}
+                bind:value={promptText}
+                disabled={promptLoading}
+              ></textarea>
+            </div>
+
+          {:else if promptStep === 'draft' && promptDraft}
+            <!-- Draft status header -->
+            <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+              <span class="badge {draftStatusBadge(promptDraft.status)}">
+                {draftStatusLabel(promptDraft.status)}
+              </span>
+              {#if promptDraft.sourceFamily}
+                <span class="badge bg-secondary fw-normal">{promptDraft.sourceFamily}</span>
+              {/if}
+              {#if promptSaved}
+                <span class="badge bg-success">
+                  <i class="bi bi-check-circle me-1"></i>{m.aiPromptStatusSaved()}
+                </span>
+              {/if}
+            </div>
+
+            <!-- Prompt as parsed -->
+            {#if promptDraft.redactedPrompt}
+              <div class="mb-3 p-2 rounded bg-inverse-subtle border small text-inverse text-opacity-75">
+                <i class="bi bi-chat-quote me-1 text-theme"></i>{promptDraft.redactedPrompt}
+              </div>
+            {/if}
+
+            <!-- Warnings -->
+            {#if promptDraft.warnings?.length}
+              <div class="alert alert-warning small py-2 mb-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <ul class="mb-0 mt-1 ps-3">
+                  {#each promptDraft.warnings as w}<li>{w}</li>{/each}
+                </ul>
+              </div>
+            {/if}
+
+            <!-- Match Conditions -->
+            <div class="mb-3">
+              <div class="fw-semibold small mb-2">{m.aiSuggestMatchRules()}</div>
+              {#if promptDraft.matchConditions?.length}
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0 small">
+                    <thead><tr><th>Field</th><th>Operator</th><th>Value</th></tr></thead>
+                    <tbody>
+                      {#each promptDraft.matchConditions as cond}
+                        <tr>
+                          <td class="font-monospace">{cond.field}</td>
+                          <td>{cond.operator}</td>
+                          <td class="font-monospace">{String(cond.value ?? '—')}</td>
+                        </tr>
+                      {/each}
+                    </tbody>
+                  </table>
+                </div>
+              {:else}
+                <p class="text-muted small mb-0">No conditions detected</p>
+              {/if}
+            </div>
+
+            <!-- Missing Fields — show answer form -->
+            {#if promptDraft.missingFields?.length}
+              <div class="mb-3 border-top pt-3">
+                <div class="fw-semibold small mb-2 text-warning">
+                  <i class="bi bi-exclamation-circle me-1"></i>
+                  Missing information — please fill in the fields below then click Refine
+                </div>
+                {#each promptDraft.missingFields as hint}
+                  <div class="mb-2">
+                    <label class="form-label small mb-1">
+                      <code class="text-theme">{hint.field}</code>
+                      <span class="text-muted ms-1">— {hint.reason}</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Enter value for {hint.field}..."
+                      bind:value={refineAnswers[hint.field]}
+                      disabled={refineLoading}
+                    />
+                  </div>
+                {/each}
+              </div>
+            {/if}
+
+            <!-- Review Summary -->
+            {#if promptDraft.reviewSummary?.length}
+              <div class="mb-3">
+                <div class="fw-semibold small mb-1">Review</div>
+                <ul class="small mb-0 ps-3">
+                  {#each promptDraft.reviewSummary as line}<li>{line}</li>{/each}
+                </ul>
+              </div>
+            {/if}
+
+            <!-- Dry Run section (show only when ready) -->
+            {#if promptDraft.status === 'ready' || promptDraft.status === 'reviewed'}
+              <div class="border-top pt-3 mb-3">
+                <div class="fw-semibold small mb-2">{m.aiPromptDryRun()}</div>
+                <textarea
+                  class="form-control form-control-sm font-monospace mb-2"
+                  rows="3"
+                  placeholder={`{"type": "generalDetect", "value": 1}`}
+                  bind:value={dryRunPayload}
+                  disabled={dryRunLoading}
+                ></textarea>
+                <button
+                  class="btn btn-sm btn-outline-secondary"
+                  onclick={handleDryRun}
+                  disabled={dryRunLoading || !dryRunPayload.trim()}
+                >
+                  {#if dryRunLoading}
+                    <span class="spinner-border spinner-border-sm me-1"></span>{m.aiPromptDryRunning()}
+                  {:else}
+                    <i class="bi bi-play me-1"></i>{m.aiPromptDryRun()}
+                  {/if}
+                </button>
+              </div>
+            {/if}
+
+            <!-- Dry Run Result -->
+            {#if dryRunResult}
+              <div class="alert {dryRunResult.matched ? 'alert-success' : 'alert-warning'} small py-2 mb-3">
+                <i class="bi {dryRunResult.matched ? 'bi-check-circle' : 'bi-x-circle'} me-2"></i>
+                {dryRunResult.matched ? m.aiPromptDryRunOk() : m.aiPromptDryRunFail()}
+                {#if dryRunResult.webhookTargetsCount || dryRunResult.lineTargetsCount || dryRunResult.discordTargetsCount}
+                  <span class="ms-2 text-muted">
+                    webhook:{dryRunResult.webhookTargetsCount}
+                    line:{dryRunResult.lineTargetsCount}
+                    discord:{dryRunResult.discordTargetsCount}
+                  </span>
+                {/if}
+                {#if dryRunResult.evaluationDetails?.length}
+                  <ul class="mb-0 mt-1 ps-3">
+                    {#each dryRunResult.evaluationDetails as d}<li>{d}</li>{/each}
+                  </ul>
+                {/if}
+                {#if dryRunResult.incompleteTargets?.length}
+                  <div class="mt-1 text-danger small">Incomplete targets: {dryRunResult.incompleteTargets.join(', ')}</div>
+                {/if}
+              </div>
+            {/if}
+          {/if}
+        </div>
+
+        <div class="modal-footer flex-wrap gap-2">
+          <button
+            class="btn btn-secondary"
+            onclick={() => (showPromptModal = false)}
+            disabled={promptLoading || refineLoading || dryRunLoading || promptSaveLoading}
+          >{m.actionCancel()}</button>
+
+          {#if promptStep === 'input'}
+            <button
+              class="btn btn-theme ms-auto"
+              onclick={handleGenerateDraft}
+              disabled={promptLoading || !promptText.trim()}
+            >
+              {#if promptLoading}
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                {m.aiPromptGenerating()}
+              {:else}
+                <i class="bi bi-magic me-1"></i>{m.aiPromptGenerate()}
+              {/if}
+            </button>
+
+          {:else if promptDraft && !promptSaved}
+            {#if promptDraft.missingFields?.length}
+              <button
+                class="btn btn-outline-theme btn-sm"
+                onclick={handleRefine}
+                disabled={refineLoading || Object.values(refineAnswers).every(v => !v?.trim())}
+              >
+                {#if refineLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
+                <i class="bi bi-pencil me-1"></i>{m.aiPromptRefine()}
+              </button>
+            {/if}
+            <button
+              class="btn btn-theme ms-auto"
+              onclick={handleSaveDraft}
+              disabled={promptSaveLoading || refineLoading || dryRunLoading || promptDraft.status === 'incomplete'}
+            >
+              {#if promptSaveLoading}
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                {m.aiPromptSaving()}
+              {:else}
+                <i class="bi bi-floppy me-1"></i>{m.aiPromptSave()}
+              {/if}
+            </button>
+          {/if}
         </div>
       </div>
     </div>

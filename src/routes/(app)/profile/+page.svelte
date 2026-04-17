@@ -4,7 +4,7 @@
   import { page } from '$app/stores'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { introspectUser, updateUser, updateUserPassword } from '$lib/api/user'
+  import { introspectUser, updateUser, updateUserPassword, uploadAvatar } from '$lib/api/user'
   import type { UserProfile } from '$lib/api/user'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
@@ -25,6 +25,22 @@
   let avatar = $state('')
   let locale = $state('th')
 
+  // ── Avatar upload ──────────────────────────
+  let avatarFile = $state<File | null>(null)
+  let avatarPreview = $state<string | null>(null)
+  let avatarUploading = $state(false)
+  let avatarInputEl = $state<HTMLInputElement | null>(null)
+
+  function handleAvatarChange(e: Event) {
+    const file = (e.currentTarget as HTMLInputElement).files?.[0] ?? null
+    avatarFile = file
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (ev) => { avatarPreview = ev.target?.result as string }
+      reader.readAsDataURL(file)
+    }
+  }
+
   // ── Map / Preferences form ─────────────────
   let prefLoading = $state(false)
   let prefSuccess = $state(false)
@@ -32,7 +48,7 @@
   let mapLat = $state<number>(13.7563)
   let mapLng = $state<number>(100.5018)
   let zoomLevel = $state(13)
-  let perPages = $state(10)
+  let perPage = $state(10)
   let showMap = $state(false)
 
   // ── Password form ──────────────────────────
@@ -62,7 +78,7 @@
       mapLat = isNaN(lat) ? 13.7563 : lat
       mapLng = isNaN(lng) ? 100.5018 : lng
       zoomLevel = profile.zoomLevel ?? 13
-      perPages = profile.perPages ?? 10
+      perPage = profile.perPage ?? 10
       setTimeout(() => { showMap = true }, 150)
     } catch (e: unknown) {
       error = (e as { message?: string })?.message ?? m.commonError()
@@ -78,6 +94,18 @@
     profileSuccess = false
     profileError = null
     try {
+      if (avatarFile) {
+        avatarUploading = true
+        try {
+          const uploaded = await uploadAvatar(userId, avatarFile)
+          if (uploaded) avatar = uploaded
+        } finally {
+          avatarUploading = false
+          avatarFile = null
+          avatarPreview = null
+          if (avatarInputEl) avatarInputEl.value = ''
+        }
+      }
       await updateUser(userId, {
         firstName: firstName || undefined,
         lastName: lastName || undefined,
@@ -104,7 +132,7 @@
       await updateUser(userId, {
         mapLocation: { lat: String(mapLat), lng: String(mapLng) },
         zoomLevel,
-        perPages
+        perPage
       })
       prefSuccess = true
       setTimeout(() => { prefSuccess = false }, 3000)
@@ -186,22 +214,65 @@
             </div>
           {/if}
 
-          <!-- Avatar preview -->
-          {#if avatar}
-            <div class="d-flex align-items-center mb-3 gap-3">
-              <img
-                src={avatar}
-                alt="avatar"
-                class="rounded-circle"
-                style="width:64px;height:64px;object-fit:cover;border:2px solid var(--bs-border-color)"
-                onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '' }}
-              />
+          <!-- Avatar upload -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold d-block" for="avatarInput">{m.profileAvatar()}</label>
+            <div class="d-flex align-items-center gap-3">
+              <button
+                type="button"
+                class="p-0 border-0 bg-transparent position-relative"
+                style="cursor:{profileLoading ? 'not-allowed' : 'pointer'}"
+                disabled={profileLoading}
+                onclick={() => !profileLoading && avatarInputEl?.click()}
+                title={m.profileAvatarHint()}
+              >
+                {#if avatarPreview || avatar}
+                  <img
+                    src={avatarPreview ?? avatar}
+                    alt="avatar"
+                    class="rounded-circle"
+                    style="width:80px;height:80px;object-fit:cover;border:2px solid var(--bs-border-color)"
+                    onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '' }}
+                  />
+                {:else}
+                  <div
+                    class="rounded-circle d-flex align-items-center justify-content-center bg-secondary"
+                    style="width:80px;height:80px;border:2px solid var(--bs-border-color)"
+                  >
+                    <i class="bi bi-person-fill text-white fs-2"></i>
+                  </div>
+                {/if}
+                <span
+                  class="position-absolute bottom-0 end-0 rounded-circle bg-theme d-flex align-items-center justify-content-center"
+                  style="width:24px;height:24px;pointer-events:none"
+                >
+                  {#if avatarUploading}
+                    <span class="spinner-border spinner-border-sm text-white" style="width:12px;height:12px"></span>
+                  {:else}
+                    <i class="bi bi-camera-fill text-white" style="font-size:11px"></i>
+                  {/if}
+                </span>
+              </button>
               <div>
                 <div class="fw-semibold small">{firstName} {lastName}</div>
                 <div class="text-inverse text-opacity-50 small">{profile?.role ?? ''}</div>
+                {#if avatarFile}
+                  <div class="text-theme small mt-1">
+                    <i class="bi bi-image me-1"></i>{avatarFile.name}
+                  </div>
+                {/if}
               </div>
             </div>
-          {/if}
+            <input
+              id="avatarInput"
+              bind:this={avatarInputEl}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              class="d-none"
+              onchange={handleAvatarChange}
+            />
+            <small class="text-inverse text-opacity-50 d-block mt-1">{m.profileAvatarHint()}</small>
+          </div>
 
           <div class="row g-3">
             <div class="col-sm-6">
@@ -236,18 +307,6 @@
                 disabled={profileLoading}
                 placeholder={m.profileEmailPlaceholder()}
               />
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold" for="avatar">{m.profileAvatar()}</label>
-              <input
-                id="avatar"
-                type="text"
-                class="form-control font-monospace small"
-                bind:value={avatar}
-                disabled={profileLoading}
-                placeholder="https://..."
-              />
-              <small class="text-inverse text-opacity-50">{m.profileAvatarHint()}</small>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold" for="locale">{m.profileLocale()}</label>
@@ -370,8 +429,8 @@
               />
             </div>
             <div class="col-sm-6">
-              <label class="form-label fw-semibold" for="perPages">{m.profilePerPage()}</label>
-              <select id="perPages" class="form-select" bind:value={perPages} disabled={prefLoading}>
+              <label class="form-label fw-semibold" for="perPage">{m.profilePerPage()}</label>
+              <select id="perPage" class="form-select" bind:value={perPage} disabled={prefLoading}>
                 {#each [10, 20, 50, 100] as n}
                   <option value={n}>{n}</option>
                 {/each}

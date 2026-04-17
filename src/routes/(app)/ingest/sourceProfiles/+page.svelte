@@ -3,7 +3,7 @@
   import { untrack } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId } from '$lib/stores/activeWorkspace'
   import { listSourceProfiles, createSourceProfile, updateSourceProfile } from '$lib/api/ingest'
   import type { SourceProfile } from '$lib/types/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
@@ -29,7 +29,7 @@
   let actionSuccess = $state<string | null>(null)
 
   async function load() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -91,7 +91,7 @@
   }
 
   async function handleFormSubmit() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
     if (!formSourceFamily.trim()) { formError = m.ingestSourceProfileSourceFamilyRequired(); return }
     if (!formDisplayName.trim()) { formError = m.ingestSourceProfileDisplayNameRequired(); return }
@@ -122,7 +122,7 @@
   }
 
   $effect(() => {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     setPageTitle(m.ingestSourceProfilesTitle())
     if (orgId) { untrack(() => load()) } else { loading = false }
   })

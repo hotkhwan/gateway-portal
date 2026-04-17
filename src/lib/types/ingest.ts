@@ -160,25 +160,59 @@ export interface DeviceImportResult {
 // Approved Event (canonical, post-normalization)
 // ────────────────────────────────────────────
 
+export interface ApprovedEventBinaryRef {
+	objectId: string
+	bucket: string
+	contentType: string
+	fieldName?: string
+	kind: string
+	role: string
+	sourceIndex: number
+}
+
 export interface ApprovedEvent {
+	id: string
 	eventId: string
-	orgId: string
-	templateId?: string
-	sourceFamily?: string
-	eventType?: string
-	finalEventType?: string
-	status: string
-	deviceId?: string
-	lat?: number
-	lng?: number
-	site?: string
-	zone?: string
+	tenantId: string
+	eventType: string
+	source: {
+		deviceId: string
+		deviceType: string
+		deviceName?: string
+		workspaceId: string
+	}
+	location: {
+		lat: number
+		lng: number
+		zone: string
+	}
+	geo?: {
+		countryCode: string
+		adminLevel: number
+		adminName: string
+		adminCode: string
+		idScheme: string
+	}
+	geoCell?: {
+		scheme: string
+		precision: number
+		cell: string
+	}
 	payload?: Record<string, unknown>
-	normalized?: Record<string, unknown>
+	binaryRefs?: ApprovedEventBinaryRef[]
+	meta?: {
+		schemaVersion: string
+		traceId: string
+		templateId: string
+		normalizedAt: string
+	}
+	occurredAt: string
 	createdAt: string
 	updatedAt: string
-	approvedAt?: string
-	approvedBy?: string
+	workspaceId: string
+	name?: string
+	lat: number
+	lng: number
 }
 
 // ────────────────────────────────────────────

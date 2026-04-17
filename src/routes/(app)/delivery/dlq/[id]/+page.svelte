@@ -4,7 +4,7 @@
   import { page as pageStore } from '$app/stores'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId } from '$lib/stores/activeWorkspace'
   import { getDlqDetail, retryDlq, replayDlq, abandonDlq } from '$lib/api/ingest'
   import type { DlqMessage } from '$lib/api/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
@@ -29,7 +29,7 @@
   let isReadOnly = $derived(msg?.status === 'resolved' || msg?.status === 'abandoned')
 
   async function loadDetail() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !messageId) { loading = false; return }
     loading = true
     error = null
@@ -43,7 +43,7 @@
   }
 
   async function handleRetry() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !messageId) return
     actionLoading = true
     try {
@@ -59,7 +59,7 @@
   }
 
   async function handleReplay() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !messageId) return
     actionLoading = true
     try {
@@ -75,7 +75,7 @@
   }
 
   async function handleAbandon() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !messageId) return
     actionLoading = true
     try {

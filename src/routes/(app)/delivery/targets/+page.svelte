@@ -3,7 +3,7 @@
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId } from '$lib/stores/activeWorkspace'
   import {
     listTargets,
     createTarget,
@@ -81,7 +81,7 @@
   }
 
   async function loadData() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -156,7 +156,7 @@
   }
 
   async function handleSave() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !fName.trim()) return
     modalLoading = true
     modalError = null
@@ -188,7 +188,7 @@
   }
 
   async function handleDelete() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !deleteTarget_id) return
     deleteLoading = true
     try {
@@ -238,7 +238,7 @@
   })
 
   $effect(() => {
-    if ($activeOrg?.id) loadData()
+    if ($activeWorkspaceId) loadData()
   })
 </script>
 
@@ -272,18 +272,18 @@
     <h1 class="page-header mb-0">{m.deliveryTargetsTitle()}</h1>
     <small class="text-inverse text-opacity-50">{m.deliveryTargetsSubtitle()}</small>
   </div>
-  <button class="btn btn-outline-theme btn-sm" onclick={openCreate} disabled={!$activeOrg}>
+  <button class="btn btn-outline-theme btn-sm" onclick={openCreate} disabled={!$activeWorkspaceId}>
     <i class="bi bi-plus-lg me-1"></i>
     {m.deliveryTargetsCreate()}
   </button>
 </div>
 
-{#if !$activeOrg}
+{#if !$activeWorkspaceId}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    {m.orgSelectOrgPre()}
-    <a href={resolve('/orgs')} class="alert-link">{m.navOrgs()}</a>
-    {m.orgSelectOrgPost()}
+    {m.workspaceSelectPre()}
+    <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+    {m.workspaceSelectPost()}
   </div>
 {:else if loading}
   <div class="text-center py-5">

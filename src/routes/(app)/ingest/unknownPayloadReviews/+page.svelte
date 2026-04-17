@@ -5,7 +5,7 @@
   import { resolve } from '$app/paths'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId, activeWorkspace } from '$lib/stores/activeWorkspace'
   import {
     listUnknownPayloadReviews,
     rejectUnknownPayload,
@@ -39,7 +39,7 @@
   let actionSuccess = $state<string | null>(null)
 
   async function load(page = 1) {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -72,7 +72,7 @@
   }
 
   async function handleReject() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !rejectId) return
     rejectLoading = true
     try {
@@ -96,7 +96,7 @@
   }
 
   async function handleDelete() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !deleteId) return
     deleteLoading = true
     try {
@@ -137,7 +137,7 @@
   }
 
   $effect(() => {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     setPageTitle(m.ingestUnknownPayloadReviewsTitle())
     if (orgId) { untrack(() => load()) } else { loading = false }
   })
@@ -146,9 +146,9 @@
 <div class="d-flex align-items-center mb-3">
   <div class="flex-grow-1">
     <h1 class="page-header mb-0">{m.ingestUnknownPayloadReviewsTitle()}</h1>
-    {#if $activeOrg}
+    {#if $activeWorkspace}
       <small class="text-inverse text-opacity-50">
-        <i class="bi bi-building me-1"></i>{$activeOrg.name} &mdash; {m.ingestUnknownPayloadReviewsSubtitle()}
+        <i class="bi bi-building me-1"></i>{$activeWorkspace.name} &mdash; {m.ingestUnknownPayloadReviewsSubtitle()}
       </small>
     {/if}
   </div>
@@ -170,12 +170,12 @@
   </button>
 </div>
 
-{#if !$activeOrg}
+{#if !$activeWorkspaceId}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    {m.orgSelectOrgPre()}
-    <a href={resolve('/orgs')} class="alert-link">{m.navOrgs()}</a>
-    {m.orgSelectOrgPost()}
+    {m.workspaceSelectPre()}
+    <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+    {m.workspaceSelectPost()}
   </div>
 {:else}
   {#if actionSuccess}

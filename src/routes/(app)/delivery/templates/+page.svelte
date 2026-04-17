@@ -3,7 +3,7 @@
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId } from '$lib/stores/activeWorkspace'
   import { listTemplates } from '$lib/api/ingest'
   import type { MappingTemplate, MessageTemplate } from '$lib/api/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
@@ -15,7 +15,7 @@
   let allMsgTemplates = $state<Array<MessageTemplate & { parentName: string; parentId: string }>>([])
 
   async function loadData() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -41,7 +41,7 @@
   })
 
   $effect(() => {
-    if ($activeOrg?.id) loadData()
+    if ($activeWorkspaceId) loadData()
   })
 </script>
 
@@ -52,12 +52,12 @@
   </div>
 </div>
 
-{#if !$activeOrg}
+{#if !$activeWorkspaceId}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    {m.orgSelectOrgPre()}
-    <a href={resolve('/orgs')} class="alert-link">{m.navOrgs()}</a>
-    {m.orgSelectOrgPost()}
+    {m.workspaceSelectPre()}
+    <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+    {m.workspaceSelectPost()}
   </div>
 {:else if loading}
   <div class="text-center py-5">
