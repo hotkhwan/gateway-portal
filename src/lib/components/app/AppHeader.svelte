@@ -6,7 +6,7 @@
   import { page } from '$app/state'
   import { goto } from '$app/navigation'
   import { m } from '$lib/i18n/messages'
-  import { listOrgs } from '$lib/api/org'
+  import { listWorkspaces } from '$lib/api/workspace'
   import { onMount } from 'svelte'
 
   // Prefer user from server load (layout/+layout.server.ts) -> page.data.user
@@ -22,17 +22,16 @@
 
   onMount(async () => {
     try {
-      const { setOrgList } = await import('$lib/stores/activeOrg')
-      const orgs = await Promise.race([
-        listOrgs(),
+      const { setWorkspaceList } = await import('$lib/stores/activeWorkspace')
+      const workspaces = await Promise.race([
+        listWorkspaces(),
         new Promise<[]>((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout fetching orgs')), 10000)
+          setTimeout(() => reject(new Error('Timeout')), 10000)
         )
       ])
-      setOrgList(orgs)
+      setWorkspaceList(workspaces)
     } catch (e) {
-      // silently ignore — user may not have orgs yet or API is down
-      console.error('Failed to load orgs:', e)
+      console.error('Failed to load workspaces:', e)
     }
   })
 

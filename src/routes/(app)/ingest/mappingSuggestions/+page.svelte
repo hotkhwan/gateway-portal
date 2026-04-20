@@ -1,10 +1,11 @@
 <!-- src/routes/(app)/ingest/mappingSuggestions/+page.svelte -->
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import { untrack } from 'svelte'
   import { goto } from '$app/navigation'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId, activeWorkspace } from '$lib/stores/activeWorkspace'
   import { listMappingSuggestions } from '$lib/api/ingest'
   import type { MappingSuggestion } from '$lib/types/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
@@ -17,7 +18,7 @@
   let selectedSuggestion = $state<MappingSuggestion | null>(null)
 
   async function load(page = 1) {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -47,7 +48,7 @@
   }
 
   $effect(() => {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     setPageTitle(m.ingestMappingSuggestionsTitle())
     if (orgId) { untrack(() => load()) } else { loading = false }
   })
@@ -56,9 +57,9 @@
 <div class="d-flex align-items-center mb-3">
   <div class="flex-grow-1">
     <h1 class="page-header mb-0">{m.ingestMappingSuggestionsTitle()}</h1>
-    {#if $activeOrg}
+    {#if $activeWorkspace}
       <small class="text-inverse text-opacity-50">
-        <i class="bi bi-building me-1"></i>{$activeOrg.name} &mdash; {m.ingestMappingSuggestionsSubtitle()}
+        <i class="bi bi-building me-1"></i>{$activeWorkspace.name} &mdash; {m.ingestMappingSuggestionsSubtitle()}
       </small>
     {/if}
   </div>
@@ -70,12 +71,12 @@
   </button>
 </div>
 
-{#if !$activeOrg}
+{#if !$activeWorkspaceId}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    {m.orgSelectOrgPre()}
-    <a href="/orgs" class="alert-link">{m.navOrgs()}</a>
-    {m.orgSelectOrgPost()}
+    {m.workspaceSelectPre()}
+    <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+    {m.workspaceSelectPost()}
   </div>
 {:else}
   {#if error}

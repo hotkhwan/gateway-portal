@@ -13,7 +13,7 @@ async function apiFetch<T>(
   const res = await fetch(`${BASE}${path}`, {
     headers: {
       'content-type': 'application/json',
-      ...(orgId ? { 'x-active-org': orgId } : {}),
+      ...(orgId ? { 'x-active-workspace': orgId } : {}),
       ...init?.headers
     },
     ...init
@@ -110,8 +110,8 @@ export async function deleteOrg(id: string): Promise<void> {
 // ────────────────────────────────────────────
 export async function getIngestConfig(orgId: string): Promise<IngestConfig> {
   const r = await apiFetch<IngestConfig>('/ingest', undefined, orgId)
-  if (!r.detail) throw new Error('ingest config not found')
-  return r.detail
+  if (!r.details) throw new Error('ingest config not found')
+  return r.details
 }
 
 export async function rotateIngestSecret(orgId: string): Promise<IngestConfig> {
@@ -127,7 +127,7 @@ export async function listOrgMembers(
   orgId: string,
   params?: {
     page?: number
-    perPages?: number
+    perPage?: number
     sortField?: string
     sortOrder?: 'asc' | 'desc'
     search?: string
@@ -136,7 +136,7 @@ export async function listOrgMembers(
   const queryParams = new URLSearchParams()
   if (params) {
     if (params.page !== undefined) queryParams.set('page', String(params.page))
-    if (params.perPages !== undefined) queryParams.set('perPages', String(params.perPages))
+    if (params.perPage !== undefined) queryParams.set('perPage', String(params.perPage))
     if (params.sortField) queryParams.set('sortField', params.sortField)
     if (params.sortOrder) queryParams.set('sortOrder', params.sortOrder)
     if (params.search) queryParams.set('search', params.search)
@@ -152,7 +152,7 @@ export async function listOrgMembers(
     items: r.details ?? [],
     total: r.pagination?.totalRecords ?? 0,
     page: r.pagination?.page ?? 1,
-    perPages: r.pagination?.perPages ?? 10,
+    perPage: r.pagination?.perPage ?? 10,
     totalPages: r.pagination?.totalPages ?? 1
   }
 }

@@ -4,7 +4,7 @@
   import { m } from '$lib/i18n/messages'
   import { appOptions } from '$lib/stores/appOptions'
   import { appSidebarMenus } from '$lib/stores/appSidebarMenus'
-  import { orgList, activeOrg, activeOrgId, setActiveOrg } from '$lib/stores/activeOrg'
+  import { workspaceList, activeWorkspace, activeWorkspaceId, setActiveWorkspace } from '$lib/stores/activeWorkspace'
 
   import { page } from '$app/state'
   import { afterNavigate } from '$app/navigation'
@@ -61,7 +61,8 @@
     return _resolve(`/${url}`)
   }
 
-  function t(key: string): string {
+  function t(key: string | number | symbol): string {
+    if (typeof key !== 'string') return String(key)
     const fn = (m as Record<string, unknown>)[key]
     return typeof fn === 'function' ? (fn as () => string)() : key
   }
@@ -106,44 +107,44 @@
 <div id="sidebar" class="app-sidebar">
   <PerfectScrollbar class="app-sidebar-content">
     <div class="menu">
-      <!-- Org Switcher -->
-      {#if $orgList.length > 0}
+      <!-- Workspace Switcher -->
+      {#if $workspaceList.length > 0}
         <div class="menu-item dropdown">
           <a
             href="#/"
-            aria-label={m.orgSwitchLabel()}
+            aria-label={m.workspaceSwitchLabel()}
             data-bs-toggle="dropdown"
             data-bs-display="static"
             class="menu-link d-flex align-items-center gap-2"
           >
-            <i class="bi bi-building menu-icon"></i>
+            <i class="bi bi-grid menu-icon"></i>
             <span class="menu-text text-truncate">
-              {$activeOrg?.name ?? m.orgSwitchPlaceholder()}
+              {$activeWorkspace?.name ?? m.workspaceSwitchPlaceholder()}
             </span>
             <i class="bi bi-chevron-down menu-caret"></i>
           </a>
           <div class="dropdown-menu dropdown-menu-end ms-1 fs-11px" style="min-width:200px">
-            <h6 class="dropdown-header fs-10px mb-1">{m.orgSwitchLabel()}</h6>
+            <h6 class="dropdown-header fs-10px mb-1">{m.workspaceSwitchLabel()}</h6>
             <div class="dropdown-divider mt-1"></div>
-            {#each $orgList as org}
+            {#each $workspaceList as workspace}
               <button
                 type="button"
                 class="dropdown-item d-flex align-items-center gap-2"
-                class:fw-bold={$activeOrgId === org.id}
-                onclick={() => setActiveOrg(org.id)}
+                class:fw-bold={$activeWorkspaceId === workspace.id}
+                onclick={() => setActiveWorkspace(workspace.id)}
               >
-                {#if $activeOrgId === org.id}
+                {#if $activeWorkspaceId === workspace.id}
                   <i class="bi bi-check-circle-fill text-theme"></i>
                 {:else}
                   <i class="bi bi-circle text-inverse text-opacity-25"></i>
                 {/if}
-                <span class="flex-grow-1 text-truncate">{org.name}</span>
+                <span class="flex-grow-1 text-truncate">{workspace.name}</span>
               </button>
             {/each}
             <div class="dropdown-divider"></div>
-            <a href={withBase('/orgs')} class="dropdown-item small">
+            <a href={withBase('/workspaces')} class="dropdown-item small">
               <i class="bi bi-sliders me-2"></i>
-              {m.orgTitle()}
+              {m.workspaceTitle()}
             </a>
           </div>
         </div>

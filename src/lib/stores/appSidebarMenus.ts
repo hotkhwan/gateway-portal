@@ -13,28 +13,38 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		kind: 'link',
 		id: 'dashboard',
 		url: 'dashboard',
-		icon: 'bi bi-cpu',
+		icon: 'bi bi-speedometer2',
 		textKey: 'navDashboard'
 	},
+
+	// Events — operational items (review, feed)
 	{
 		kind: 'link',
-		id: 'ingest',
-		url: 'ingest/templates',
-		icon: 'bi bi-bar-chart',
+		id: 'events',
+		icon: 'bi bi-collection',
 		textKey: 'navEvents',
 		children: [
-			{ id: 'ingestManagement', url: 'ingest/management', textKey: 'ingestManagementTitle' },
-			{ id: 'ingestTemplates', url: 'ingest/templates', textKey: 'ingestTemplatesTitle' },
-			{ id: 'ingestUnknownPayloadReviews', url: 'ingest/unknownPayloadReviews', textKey: 'ingestUnknownPayloadReviewsTitle' },
-			{ id: 'ingestSourceProfiles', url: 'ingest/sourceProfiles', textKey: 'ingestSourceProfilesTitle' },
-			{ id: 'ingestDeviceManagement', url: 'ingest/deviceManagement', textKey: 'ingestDeviceManagementTitle' },
-			{ id: 'ingestRejectedPayloadPatterns', url: 'ingest/rejectedPayloadPatterns', textKey: 'ingestRejectedPayloadPatternsTitle' },
-			{ id: 'ingestMappingSuggestions', url: 'ingest/mappingSuggestions', textKey: 'ingestMappingSuggestionsTitle' },
-			{ id: 'ingestDetails', url: 'ingest/details', textKey: 'ingestDetailsTitle' }
+			{ id: 'ingestDetails',              url: 'ingest/details',               textKey: 'navEventFeed' },
+			{ id: 'ingestManagement',           url: 'ingest/management',            textKey: 'navPendingReview' },
+			{ id: 'ingestUnknownPayloadReviews',url: 'ingest/unknownPayloadReviews', textKey: 'navUnknownPayloads' }
 		]
 	},
 
-	// ===== Delivery =====
+	// Configuration — setup items (templates, profiles, devices)
+	{
+		kind: 'link',
+		id: 'configuration',
+		icon: 'bi bi-sliders',
+		textKey: 'navConfiguration',
+		children: [
+			{ id: 'ingestTemplates',       url: 'ingest/templates',       textKey: 'ingestTemplatesTitle' },
+			{ id: 'ingestSourceProfiles',  url: 'ingest/sourceProfiles',  textKey: 'ingestSourceProfilesTitle' },
+			{ id: 'ingestDeviceManagement',url: 'ingest/deviceManagement',textKey: 'navDevices' },
+			{ id: 'ingestAiConfig',        url: 'ingest/aiConfig',        textKey: 'navAiConfig' }
+		]
+	},
+
+	// Delivery — targets, DLQ
 	{
 		kind: 'link',
 		id: 'delivery',
@@ -42,57 +52,43 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		textKey: 'navDelivery',
 		children: [
 			{ id: 'deliveryTargets', url: 'delivery/targets', textKey: 'deliveryTargetsTitle' },
-			{ id: 'deliveryTemplates', url: 'delivery/templates', textKey: 'deliveryTemplatesTitle' },
-			{ id: 'deliveryDlq', url: 'delivery/dlq', textKey: 'deliveryDlqTitle' }
+			{ id: 'deliveryDlq',     url: 'delivery/dlq',     textKey: 'deliveryDlqTitle' }
 		]
 	},
 
-	// ===== Tenancy =====
-	{
-		kind: 'link',
-		id: 'orgs',
-		url: 'orgs',
-		icon: 'bi bi-building',
-		textKey: 'navOrgs'
-	},
-	{
-		kind: 'link',
-		id: 'orgTanancy',
-		icon: 'bi bi-diagram-3',
-		textKey: 'navTenancy',
-		children: [
-			{ id: 'orgUsers', url: 'orgs/users', textKey: 'orgUsersTitle' },
-			{ id: 'orgUnits', url: 'orgs/units', textKey: 'navOrgUnits' },
-			{ id: 'orgPermissions', url: 'orgs/permissions', textKey: 'navOrgPermissions' },
-			{ id: 'orgAccess', url: 'orgs/access', textKey: 'navOrgAccess' }
-		]
-	},
+	{ kind: 'divider', id: 'divWorkspace' },
 
-		{ kind: 'divider', id: 'divMain' },
-
-	// ===== User =====
-	// {
-	// 	kind: 'link',
-	// 	id: 'pos',
-	// 	icon: 'bi bi-bag-check',
-	// 	textKey: 'navPosSystem',
-	// 	children: [
-	// 		{ id: 'posCustomer', url: 'pos/customer-order', textKey: 'navPosCustomer' },
-	// 		{ id: 'posKitchen', url: 'pos/kitchen-order', textKey: 'navPosKitchen' },
-	// 		{ id: 'posCounter', url: 'pos/counter-checkout', textKey: 'navPosCounter' },
-	// 		{ id: 'posTable', url: 'pos/table-booking', textKey: 'navPosTable' },
-	// 		{ id: 'posStock', url: 'pos/menu-stock', textKey: 'navPosStock' }
-	// 	]
-	// },
-
-	{ kind: 'divider', id: 'divUser' },
-
-	// ===== User =====
+	// ===== Workspace =====
 	{
 		kind: 'header',
-		id: 'usersHeader',
-		textKey: 'navUsers'
+		id: 'workspaceHeader',
+		textKey: 'navWorkspace'
 	},
+	{
+		kind: 'link',
+		id: 'workspaceMembers',
+		url: 'workspaces/members',
+		icon: 'bi bi-people',
+		textKey: 'navMembers'
+	},
+	{
+		kind: 'link',
+		id: 'workspaceRoles',
+		url: 'workspaces/roles',
+		icon: 'bi bi-shield-check',
+		textKey: 'navRoles'
+	},
+	{
+		kind: 'link',
+		id: 'usageLimits',
+		url: 'subscriptions/current',
+		icon: 'bi bi-gem',
+		textKey: 'navUsageLimits'
+	},
+
+	{ kind: 'divider', id: 'divAccount' },
+
+	// ===== Account =====
 	{
 		kind: 'link',
 		id: 'profile',
@@ -106,15 +102,5 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		url: 'settings',
 		icon: 'bi bi-gear',
 		textKey: 'navSettings'
-	},
-	{
-		kind: 'link',
-		id: 'subscription',
-		icon: 'bi bi-gem',
-		textKey: 'navSubscription',
-		children: [
-			{ id: 'subscriptionPackages', url: 'subscriptions/packages', textKey: 'subscriptionPackagesTitle' },
-			{ id: 'subscriptionCurrent', url: 'subscriptions/current', textKey: 'subscriptionCurrentTitle' }
-		]
 	}
 ])

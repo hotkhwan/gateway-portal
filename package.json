@@ -1,7 +1,7 @@
 {
   "name": "app",
   "private": true,
-  "version": "1.1.0",
+  "version": "2.1.1",
   "type": "module",
   "scripts": {
     "dev": "bun run i18n:merge && set -a && source .env && set +a && bun run vite dev",

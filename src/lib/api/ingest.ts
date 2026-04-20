@@ -23,6 +23,7 @@ import type {
 	RejectedPayloadPattern,
 	MappingSuggestion,
 	ApprovedEvent,
+	ApprovedEventBinaryRef,
 	PendingEvent,
 	EventUpdateInput,
 	BulkResult,
@@ -51,6 +52,7 @@ export type {
 	RejectedPayloadPattern,
 	MappingSuggestion,
 	ApprovedEvent,
+	ApprovedEventBinaryRef,
 	PendingEvent,
 	EventUpdateInput,
 	BulkResult,
@@ -68,7 +70,7 @@ async function apiFetch<T>(
 	const res = await fetch(`${BASE}${path}`, {
 		headers: {
 			'content-type': 'application/json',
-			'x-active-org': orgId,
+			'x-active-workspace': orgId,
 			...init?.headers
 		},
 		...init
@@ -140,18 +142,18 @@ export async function listPendingEvents(
 	if (params?.eventType) q.set('eventType', params.eventType)
 
 	const res = await fetch(`${BASE}/ingest/management?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: PendingEvent[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -245,7 +247,7 @@ export async function listTemplates(
 ): Promise<TemplateListResponse> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage),
+		perPage: String(perPage),
 		sortField: 'createdAt',
 		sortOrder: 'desc'
 	})
@@ -254,18 +256,18 @@ export async function listTemplates(
 	if (params?.enabled !== undefined) q.set('enabled', String(params.enabled))
 
 	const res = await fetch(`${BASE}/ingest/mappingTemplates?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: MappingTemplate[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -351,7 +353,7 @@ export async function listDlq(
 ): Promise<{ details: DlqMessage[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage),
+		perPage: String(perPage),
 		sortField: 'createdAt',
 		sortOrder: 'desc'
 	})
@@ -363,18 +365,18 @@ export async function listDlq(
 	if (params?.to) q.set('to', params.to)
 
 	const res = await fetch(`${BASE}/ingest/dlq?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: DlqMessage[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -457,23 +459,23 @@ export async function listDeviceManagement(
 ): Promise<{ details: DeviceManagement[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage)
+		perPage: String(perPage)
 	})
 	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
 
 	const res = await fetch(`${BASE}/ingest/deviceManagement?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: DeviceManagement[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -529,7 +531,7 @@ export async function deleteDeviceManagement(orgId: string, id: string): Promise
 
 export async function downloadDeviceTemplate(orgId: string): Promise<Blob> {
 	const res = await fetch(`${BASE}/ingest/deviceManagement/template`, {
-		headers: { 'x-active-org': orgId }
+		headers: { 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	if (!res.ok) throw new Error('failed to download template')
@@ -545,7 +547,7 @@ export async function exportDevices(
 	if (params?.entityType) q.set('entityType', params.entityType)
 	const url = `/ingest/deviceManagement/export${q.toString() ? `?${q}` : ''}`
 	const res = await fetch(`${BASE}${url}`, {
-		headers: { 'x-active-org': orgId }
+		headers: { 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	if (!res.ok) throw new Error('failed to export devices')
@@ -562,7 +564,7 @@ export async function importDevices(
 	if (dryRun) formData.append('dryRun', 'true')
 	const res = await fetch(`${BASE}/ingest/deviceManagement/import`, {
 		method: 'POST',
-		headers: { 'x-active-org': orgId },
+		headers: { 'x-active-workspace': orgId },
 		body: formData
 	})
 	guardAuth(res)
@@ -583,7 +585,7 @@ export async function listUnknownPayloadReviews(
 ): Promise<{ details: UnknownPayloadReview[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage),
+		perPage: String(perPage),
 		sortField: 'lastSeenAt',
 		sortOrder: 'desc'
 	})
@@ -591,18 +593,18 @@ export async function listUnknownPayloadReviews(
 	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
 
 	const res = await fetch(`${BASE}/ingest/unknownPayloadReviews?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: UnknownPayloadReview[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -676,25 +678,25 @@ export async function listRejectedPayloadPatterns(
 ): Promise<{ details: RejectedPayloadPattern[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage),
+		perPage: String(perPage),
 		sortField: 'createdAt',
 		sortOrder: 'desc'
 	})
 	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
 
 	const res = await fetch(`${BASE}/ingest/rejectedPayloadPatterns?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: RejectedPayloadPattern[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -725,23 +727,23 @@ export async function listMappingSuggestions(
 ): Promise<{ details: MappingSuggestion[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage)
+		perPage: String(perPage)
 	})
 	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
 
 	const res = await fetch(`${BASE}/ingest/mappingSuggestions?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: MappingSuggestion[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -765,7 +767,7 @@ export async function listApprovedEvents(
 ): Promise<{ details: ApprovedEvent[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
-		perPages: String(perPage),
+		perPage: String(perPage),
 		sortField: 'createdAt',
 		sortOrder: 'desc'
 	})
@@ -774,18 +776,18 @@ export async function listApprovedEvents(
 	if (params?.search) q.set('search', params.search)
 
 	const res = await fetch(`${BASE}/ingest/details?${q}`, {
-		headers: { 'content-type': 'application/json', 'x-active-org': orgId }
+		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
 	})
 	guardAuth(res)
 	const json = await res.json() as {
 		details: ApprovedEvent[]
-		pagination: { page: number; perPages: number; totalRecords: number; totalPages: number }
+		pagination: { page: number; perPage: number; totalRecords: number; totalPages: number }
 	}
 	if (!res.ok) throw json
 	return {
 		details: json.details ?? [],
 		page: json.pagination?.page ?? page,
-		perPage: json.pagination?.perPages ?? perPage,
+		perPage: json.pagination?.perPage ?? perPage,
 		total: json.pagination?.totalRecords ?? 0,
 		totalPages: json.pagination?.totalPages ?? 0
 	}
@@ -795,4 +797,8 @@ export async function getApprovedEvent(orgId: string, eventId: string): Promise<
 	const r = await apiFetch<ApprovedEvent>(`/ingest/details/${eventId}`, orgId)
 	if (!r.details) throw new Error('approved event not found')
 	return r.details
+}
+
+export function getImageUrl(bucket: string, objectId: string): string {
+	return `${BASE}/files/${bucket}/${objectId}`
 }

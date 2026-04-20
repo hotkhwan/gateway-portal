@@ -6,7 +6,7 @@
   "_comments_general": "General settings section",
   "settingsGeneralTitle": "General",
   "settingsSystemName": "System Name",
-  "settingsSystemNamePlaceholder": "e.g. AISOM Platform",
+  "settingsSystemNamePlaceholder": "e.g. PHIBEK Platform",
   "settingsSystemDescription": "Description",
   "settingsSystemDescriptionPlaceholder": "Short description of this system",
   "settingsSystemLogoUrl": "Logo URL",

@@ -11,6 +11,7 @@ declare global {
         name?: string
         roles: string[]
         permissions?: string[]
+        platformRole?: string
         accessToken?: string
       }
     }

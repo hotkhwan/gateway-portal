@@ -9,6 +9,7 @@ export function userFromToken(token: string) {
     email: payload.email,
     name: payload.name,
     roles: payload.roles ?? [],
-    permissions: payload.permissions ?? []
+    permissions: payload.permissions ?? [],
+    platformRole: payload.role ?? undefined
   }
 }

@@ -1,6 +1,6 @@
 {
   "_comments_dcomponents": "ป้ายกำกับส่วนประกอบ",
-  "appFooterCopyright": "© {year} AISOM สงวนลิขสิทธิ์",
+  "appFooterCopyright": "© {year} PHIBEK Platform สงวนลิขสิทธิ์",
 
   "themePanelToggleAriaLabel": "สลับแผงธีม",
 
@@ -35,5 +35,9 @@
   "themeCover6": "พื้นหลัง 6",
   "themeCover7": "พื้นหลัง 7",
   "themeCover8": "พื้นหลัง 8",
-  "themeCover9": "พื้นหลัง 9"
+  "themeCover9": "พื้นหลัง 9",
+
+  "_comments_map": "ป้ายกำกับคอมโพเนนต์แผนที่",
+  "mapFullscreenExpand": "ขยายเต็มจอ",
+  "mapFullscreenMinimize": "ย่อแผนที่ (Esc)"
 }

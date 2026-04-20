@@ -30,7 +30,7 @@ export interface UserProfile {
   locale?: string
   mapLocation?: { lat: string | number; lng: string | number }
   zoomLevel?: number
-  perPages?: number
+  perPage?: number
   enabled: boolean
   createdAt: string
 }
@@ -44,7 +44,7 @@ export interface UpdateUserPayload {
   locale?: string
   mapLocation?: { lat: string; lng: string }
   zoomLevel?: number
-  perPages?: number
+  perPage?: number
 }
 
 export interface UpdatePasswordPayload {
@@ -65,7 +65,7 @@ interface IntrospectResponse {
   locale?: string
   mapLocation?: { lat: string | number; lng: string | number }
   zoomLevel?: number
-  perPages?: number
+  perPage?: number
   [key: string]: unknown
 }
 
@@ -75,13 +75,13 @@ interface IntrospectResponse {
 
 export async function listUsers(params?: {
   page?: number
-  perPages?: number
+  perPage?: number
   sortOrder?: 'asc' | 'desc'
   search?: string
 }): Promise<PaginatedResponse<User>> {
   const q = new URLSearchParams()
   if (params?.page !== undefined) q.set('page', String(params.page))
-  if (params?.perPages !== undefined) q.set('perPages', String(params.perPages))
+  if (params?.perPage !== undefined) q.set('perPage', String(params.perPage))
   if (params?.sortOrder) q.set('sortOrder', params.sortOrder)
   if (params?.search) q.set('search', params.search)
 
@@ -91,7 +91,7 @@ export async function listUsers(params?: {
     items: r.details ?? [],
     total: r.pagination?.totalRecords ?? 0,
     page: r.pagination?.page ?? 1,
-    limit: r.pagination?.perPages ?? 10
+    limit: r.pagination?.perPage ?? 10
   }
 }
 
@@ -111,7 +111,7 @@ export async function introspectUser(): Promise<UserProfile> {
     locale: r.locale,
     mapLocation: r.mapLocation,
     zoomLevel: r.zoomLevel,
-    perPages: r.perPages,
+    perPage: r.perPage,
     enabled: true,
     createdAt: ''
   }
@@ -122,6 +122,19 @@ export async function updateUser(userId: string, data: UpdateUserPayload): Promi
     method: 'PATCH',
     body: JSON.stringify(data)
   })
+}
+
+export async function uploadAvatar(userId: string, file: File): Promise<string> {
+  const form = new FormData()
+  form.append('avatar', file)
+  const res = await fetch(`${BASE}/users/${userId}`, {
+    method: 'PATCH',
+    body: form
+  })
+  guardAuth(res)
+  const json = await res.json()
+  if (!res.ok) throw json
+  return (json.details ?? json)?.avatar ?? ''
 }
 
 export async function updateUserPassword(userId: string, data: UpdatePasswordPayload): Promise<void> {

@@ -13,7 +13,7 @@ async function apiFetch<T>(
   const res = await fetch(`${BASE}${path}`, {
     headers: {
       'content-type': 'application/json',
-      'x-active-org': orgId,
+      'x-active-workspace': orgId,
       ...init?.headers
     },
     ...init

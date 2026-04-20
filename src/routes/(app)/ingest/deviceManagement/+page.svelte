@@ -1,9 +1,10 @@
 <!-- src/routes/(app)/ingest/deviceManagement/+page.svelte -->
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import { untrack } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeOrg } from '$lib/stores/activeOrg'
+  import { activeWorkspaceId, activeWorkspace } from '$lib/stores/activeWorkspace'
   import {
     listDeviceManagement,
     createDeviceManagement,
@@ -58,7 +59,7 @@
   let importError = $state<string | null>(null)
 
   async function load(page = 1) {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) { loading = false; return }
     loading = true
     error = null
@@ -87,7 +88,7 @@
     formZone = ''
     formError = null
     showFormModal = true
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     try { if (orgId) sourceProfiles = await listSourceProfiles(orgId) } catch { sourceProfiles = [] }
   }
 
@@ -104,12 +105,12 @@
     formZone = record.zone ?? ''
     formError = null
     showFormModal = true
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     try { if (orgId) sourceProfiles = await listSourceProfiles(orgId) } catch { sourceProfiles = [] }
   }
 
   async function handleSubmit() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
 
     if (!formSourceFamily || !formEntityId.trim()) {
@@ -160,7 +161,7 @@
   }
 
   async function handleDelete() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !deleteId) return
     deleteLoading = true
     try {
@@ -177,7 +178,7 @@
   }
 
   async function handleDownloadTemplate() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
     try {
       const blob = await downloadDeviceTemplate(orgId)
@@ -193,7 +194,7 @@
   }
 
   async function handleExport() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId) return
     try {
       const blob = await exportDevices(orgId)
@@ -222,7 +223,7 @@
   }
 
   async function handleImport() {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     if (!orgId || !importFile) return
     importLoading = true
     importError = null
@@ -259,7 +260,7 @@
   }
 
   $effect(() => {
-    const orgId = $activeOrg?.id
+    const orgId = $activeWorkspaceId
     setPageTitle(m.ingestDeviceManagementTitle())
     if (orgId) {
       untrack(() => load())
@@ -272,13 +273,13 @@
 <div class="d-flex align-items-center mb-3">
   <div class="flex-grow-1">
     <h1 class="page-header mb-0">{m.ingestDeviceManagementTitle()}</h1>
-    {#if $activeOrg}
+    {#if $activeWorkspace}
       <small class="text-inverse text-opacity-50">
-        <i class="bi bi-building me-1"></i>{$activeOrg.name} &mdash; {m.ingestDeviceManagementSubtitle()}
+        <i class="bi bi-building me-1"></i>{$activeWorkspace.name} &mdash; {m.ingestDeviceManagementSubtitle()}
       </small>
     {/if}
   </div>
-  {#if $activeOrg}
+  {#if $activeWorkspaceId}
     <div class="d-flex gap-1">
       <button class="btn btn-sm btn-outline-secondary" onclick={handleDownloadTemplate} title={m.ingestDeviceManagementDownloadTemplate()}>
         <i class="bi bi-file-earmark-arrow-down me-1"></i>{m.ingestDeviceManagementDownloadTemplate()}
@@ -303,12 +304,12 @@
   </div>
 {/if}
 
-{#if !$activeOrg}
+{#if !$activeWorkspaceId}
   <div class="alert alert-warning">
     <i class="bi bi-exclamation-circle me-2"></i>
-    {m.orgSelectOrgPre()}
-    <a href="/orgs" class="alert-link">{m.navOrgs()}</a>
-    {m.orgSelectOrgPost()}
+    {m.workspaceSelectPre()}
+    <a href={resolve('/workspaces')} class="alert-link">{m.navWorkspaces()}</a>
+    {m.workspaceSelectPost()}
   </div>
 {:else if loading}
   <div class="text-center py-5">
