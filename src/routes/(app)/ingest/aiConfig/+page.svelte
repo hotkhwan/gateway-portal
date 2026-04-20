@@ -311,10 +311,10 @@
     <div class="col-lg-5">
       <Card>
         <CardBody>
-          <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle me-2 text-theme"></i>Provider Info</h6>
+          <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle me-2 text-theme"></i>{m.aiConfigProviderInfo()}</h6>
           {#if formProvider === 'gemini'}
             <p class="small text-inverse text-opacity-75 mb-2">
-              รับ API key ได้ที่:
+              {m.aiConfigApiKeyGetAt()}
             </p>
             <a
               href="https://aistudio.google.com/apikey"
@@ -325,11 +325,11 @@
               <i class="bi bi-box-arrow-up-right me-2"></i>aistudio.google.com/apikey
             </a>
             <p class="small text-inverse text-opacity-75 mb-0">
-              แนะนำ <code>gemini-2.5-flash</code> — รุ่นใหม่ล่าสุด รองรับ billing ทุก account
+              {@html m.aiConfigGeminiRecommend()}
             </p>
           {:else if formProvider === 'openai'}
             <p class="small text-inverse text-opacity-75 mb-2">
-              รับ API key ได้ที่:
+              {m.aiConfigApiKeyGetAt()}
             </p>
             <a
               href="https://platform.openai.com/api-keys"
@@ -340,11 +340,11 @@
               <i class="bi bi-box-arrow-up-right me-2"></i>platform.openai.com/api-keys
             </a>
             <p class="small text-inverse text-opacity-75 mb-0">
-              แนะนำ <code>gpt-4o-mini</code> — ประหยัดและแม่นยำสำหรับ mapping suggestion
+              {@html m.aiConfigOpenAIRecommend()}
             </p>
           {:else if formProvider === 'claude'}
             <p class="small text-inverse text-opacity-75 mb-2">
-              รับ API key ได้ที่:
+              {m.aiConfigApiKeyGetAt()}
             </p>
             <a
               href="https://platform.claude.com/settings/workspaces/default/keys"
@@ -355,7 +355,7 @@
               <i class="bi bi-box-arrow-up-right me-2"></i>platform.claude.com → API Keys
             </a>
             <p class="small text-inverse text-opacity-75 mb-0">
-              ใช้ Tool Use สำหรับ structured output — แม่นยำสูงสุด
+              {m.aiConfigClaudeRecommend()}
             </p>
           {/if}
         </CardBody>
@@ -381,7 +381,7 @@
           <button type="button" class="btn-close" onclick={() => (showClearConfirm = false)}></button>
         </div>
         <div class="modal-body">
-          <p class="mb-0">API key จะถูกลบออก ระบบจะกลับไปใช้ Gemini free tier</p>
+          <p class="mb-0">{m.aiConfigClearKeyConfirm()}</p>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick={() => (showClearConfirm = false)} disabled={clearLoading}>

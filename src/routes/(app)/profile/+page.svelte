@@ -283,7 +283,7 @@
                 class="form-control"
                 bind:value={firstName}
                 disabled={profileLoading}
-                placeholder="John"
+                placeholder={m.profileFirstNamePlaceholder()}
               />
             </div>
             <div class="col-sm-6">
@@ -294,7 +294,7 @@
                 class="form-control"
                 bind:value={lastName}
                 disabled={profileLoading}
-                placeholder="Doe"
+                placeholder={m.profileLastNamePlaceholder()}
               />
             </div>
             <div class="col-12">

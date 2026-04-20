@@ -95,7 +95,7 @@
       <small class="text-inverse text-opacity-50 font-monospace">{selectedEvent.eventId}</small>
     </div>
     <div class="d-flex gap-1">
-      <button class="btn btn-sm btn-outline-secondary" title="Previous event"
+      <button class="btn btn-sm btn-outline-secondary" title={m.ingestDetailsPrevEvent()}
         disabled={selectedIndex <= 0}
         onclick={() => { if (selectedIndex > 0) selectedEvent = events[selectedIndex - 1] }}>
         <i class="bi bi-chevron-left"></i>
@@ -103,7 +103,7 @@
       <span class="btn btn-sm btn-outline-secondary disabled px-2" style="cursor:default">
         {selectedIndex + 1} / {events.length}
       </span>
-      <button class="btn btn-sm btn-outline-secondary" title="Next event"
+      <button class="btn btn-sm btn-outline-secondary" title={m.ingestDetailsNextEvent()}
         disabled={selectedIndex >= events.length - 1}
         onclick={() => { if (selectedIndex < events.length - 1) selectedEvent = events[selectedIndex + 1] }}>
         <i class="bi bi-chevron-right"></i>
@@ -127,14 +127,14 @@
                   onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display='none' }} />
               </button>
             {/if}
-            <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-info-circle me-1"></i>Event Info</h6>
+            <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-info-circle me-1"></i>{m.ingestDetailsEventInfo()}</h6>
             <table class="table table-sm mb-0">
               <tbody>
-                <tr><th class="text-nowrap" style="width:40%">Event Type</th>
+                <tr><th class="text-nowrap" style="width:40%">{m.ingestDetailsEventType()}</th>
                   <td><span class="badge {eventTypeBadgeClass(selectedEvent.eventType)}">{selectedEvent.eventType}</span></td></tr>
-                <tr><th>Created At</th><td class="small">{formatDate(selectedEvent.createdAt)}</td></tr>
+                <tr><th>{m.ingestDetailsCreatedAt()}</th><td class="small">{formatDate(selectedEvent.createdAt)}</td></tr>
                 {#if selectedEvent.meta?.templateId}
-                  <tr><th>Template</th><td class="small font-monospace">{selectedEvent.meta.templateId}</td></tr>
+                  <tr><th>{m.ingestDetailsTemplate()}</th><td class="small font-monospace">{selectedEvent.meta.templateId}</td></tr>
                 {/if}
               </tbody>
             </table>
@@ -145,12 +145,12 @@
     <div class="col-lg-4 d-flex">
       <Card class="w-100">
         <CardBody>
-          <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-camera-video me-1"></i>Source Device</h6>
+          <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-camera-video me-1"></i>{m.ingestDetailsSourceDevice()}</h6>
           <table class="table table-sm mb-0">
             <tbody>
-              <tr><th style="width:40%">Device Name</th><td>{selectedEvent.source.deviceName || '-'}</td></tr>
-              <tr><th>Device ID</th><td class="font-monospace small">{selectedEvent.source.deviceId}</td></tr>
-              <tr><th>Device Type</th><td><span class="badge bg-secondary">{selectedEvent.source.deviceType}</span></td></tr>
+              <tr><th style="width:40%">{m.ingestDetailsDeviceName()}</th><td>{selectedEvent.source.deviceName || '-'}</td></tr>
+              <tr><th>{m.ingestDetailsDeviceId()}</th><td class="font-monospace small">{selectedEvent.source.deviceId}</td></tr>
+              <tr><th>{m.ingestDetailsDeviceType()}</th><td><span class="badge bg-secondary">{selectedEvent.source.deviceType}</span></td></tr>
             </tbody>
           </table>
         </CardBody>
@@ -159,19 +159,19 @@
     <div class="col-lg-4 d-flex">
       <Card class="w-100">
         <CardBody>
-          <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-geo-alt me-1"></i>Location</h6>
+          <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-geo-alt me-1"></i>{m.ingestDetailsLocation()}</h6>
           <table class="table table-sm mb-0">
             <tbody>
-              <tr><th style="width:40%">Zone</th><td>{selectedEvent.location.zone || '-'}</td></tr>
+              <tr><th style="width:40%">{m.ingestDetailsZone()}</th><td>{selectedEvent.location.zone || '-'}</td></tr>
               {#if selectedEvent.location.lat !== 0 || selectedEvent.location.lng !== 0}
-                <tr><th>Coordinates</th><td class="small font-monospace">{selectedEvent.location.lat.toFixed(6)}, {selectedEvent.location.lng.toFixed(6)}</td></tr>
+                <tr><th>{m.ingestDetailsCoordinates()}</th><td class="small font-monospace">{selectedEvent.location.lat.toFixed(6)}, {selectedEvent.location.lng.toFixed(6)}</td></tr>
               {/if}
               {#if selectedEvent.geo?.adminName}
-                <tr><th>Area</th><td>{selectedEvent.geo.adminName} ({selectedEvent.geo.countryCode})</td></tr>
-                <tr><th>Admin Code</th><td class="small font-monospace">{selectedEvent.geo.adminCode}</td></tr>
+                <tr><th>{m.ingestDetailsArea()}</th><td>{selectedEvent.geo.adminName} ({selectedEvent.geo.countryCode})</td></tr>
+                <tr><th>{m.ingestDetailsAdminCode()}</th><td class="small font-monospace">{selectedEvent.geo.adminCode}</td></tr>
               {/if}
               {#if selectedEvent.geoCell?.cell}
-                <tr><th>Geohash</th><td class="small font-monospace">{selectedEvent.geoCell.cell}</td></tr>
+                <tr><th>{m.ingestDetailsGeohash()}</th><td class="small font-monospace">{selectedEvent.geoCell.cell}</td></tr>
               {/if}
             </tbody>
           </table>
@@ -186,7 +186,7 @@
     {#if selectedEvent.payload && Object.keys(selectedEvent.payload).length > 0}
       <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
         <div class="card-body" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;padding:1rem">
-          <h6 class="mb-2 text-inverse text-opacity-75 flex-shrink-0"><i class="bi bi-file-earmark-code me-1"></i>Payload</h6>
+          <h6 class="mb-2 text-inverse text-opacity-75 flex-shrink-0"><i class="bi bi-file-earmark-code me-1"></i>{m.ingestDetailsPayloadSection()}</h6>
           <pre class="bg-dark text-light p-3 rounded small mb-0 overflow-auto" style="flex:1;min-height:0">{JSON.stringify(selectedEvent.payload, null, 2)}</pre>
         </div>
         <div class="card-arrow">
@@ -200,7 +200,7 @@
       <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
         <div class="card-body" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;padding:1rem">
           <h6 class="mb-2 text-inverse text-opacity-75 flex-shrink-0">
-            <i class="bi bi-images me-1"></i>Captures
+            <i class="bi bi-images me-1"></i>{m.ingestDetailsCaptures()}
           </h6>
           <div class="position-relative rounded overflow-hidden bg-dark"
             style="flex:1;min-height:0;cursor:zoom-in"
@@ -239,7 +239,7 @@
     <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
       style="background:rgba(0,0,0,0.92);z-index:1055">
       <button class="btn-close btn-close-white position-absolute top-0 end-0 m-3" style="z-index:1"
-        onclick={() => (lightboxIndex = null)} aria-label="ปิด"></button>
+        onclick={() => (lightboxIndex = null)} aria-label={m.actionClose()}></button>
 
       <!-- Prev / Next -->
       {#if refs.length > 1}

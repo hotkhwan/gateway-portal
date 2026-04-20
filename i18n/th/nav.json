@@ -4,7 +4,7 @@
   "langTh": "Thai (ภาษาไทย)",
 
   "_comments_nav_sidebar": "ป้ายกำกับ Sidebar navigation",
-  "landingHome": "AISOM",
+  "landingHome": "PHIBEK Platform",
   "navNavigation": "การนำทาง",
   "navDashboard": "แดชบอร์ด",
 
@@ -60,6 +60,12 @@
   "aiConfigModeFree": "Free Tier",
   "aiConfigModeUserKey": "API Key ของคุณ",
   "aiConfigSaved": "บันทึกการตั้งค่า AI แล้ว",
+  "aiConfigProviderInfo": "ข้อมูล Provider",
+  "aiConfigApiKeyGetAt": "รับ API key ได้ที่:",
+  "aiConfigGeminiRecommend": "แนะนำ <code>gemini-2.5-flash</code> — รุ่นใหม่ล่าสุด รองรับ billing ทุก account",
+  "aiConfigOpenAIRecommend": "แนะนำ <code>gpt-4o-mini</code> — ประหยัดและแม่นยำสำหรับ mapping suggestion",
+  "aiConfigClaudeRecommend": "ใช้ Tool Use สำหรับ structured output — แม่นยำสูงสุด",
+  "aiConfigClearKeyConfirm": "API key จะถูกลบออก ระบบจะกลับไปใช้ Gemini free tier",
 
   "_comments_nav_ai_suggest": "ป้ายกำกับ AI suggest modal",
   "aiSuggestBtn": "AI แนะนำ",

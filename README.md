@@ -1,13 +1,13 @@
-# AISOM Gateway Portal
+# PHIBEK Platform Gateway Portal
 
-> Internal admin web portal for the AISOM platform
+> Internal admin web portal for the PHIBEK Platform
 > Stack: SvelteKit 2 · Svelte 5 · TypeScript · Bootstrap 5 · Paraglide i18n · Bun
 
 ---
 
 ## What This Is
 
-Gateway Portal is the operator-facing frontend for managing the AISOM event ingestion platform. It connects to **gateway-api** (Go backend) via a BFF proxy and Keycloak for authentication.
+Gateway Portal is the operator-facing frontend for managing the PHIBEK Platform event ingestion. It connects to **gateway-api** (Go backend) via a BFF proxy and Keycloak for authentication.
 
 **Key modules:**
 - **Ingest Management** — review, map, approve/reject device events

@@ -381,15 +381,130 @@
   const LINE_CARD_DEFAULTS: Record<string, string> = {
     imageType: 'fullframe',
     tagEnabled: 'true',
+    tagText: '{{.source.deviceId}}',
+    tagColor: 'gray',
     addressEnabled: 'true',
+    addressText: '{{.geo.adminName}}',
     additionalInfoEnabled: 'true',
     additionalInfoType: 'Hours',
+    additionalInfoText: '{{.occurredAt}}',
     action1Enabled: 'false',
     action1Label: '',
     action1Url: '',
     action2Enabled: 'false',
     action2Label: '',
     action2Url: ''
+  }
+
+  // Go text/template variables exposed by the backend renderContext().
+  // Keep in sync with internal/kafka/deliverycons/render.go :: renderContext.
+  const TEMPLATE_VARIABLES: Array<{ value: string; hint: string }> = [
+    { value: '{{.eventId}}',             hint: 'event UUID' },
+    { value: '{{.tenantId}}',            hint: 'tenant (e.g. klynx)' },
+    { value: '{{.eventType}}',           hint: 'e.g. pedestrian.detected' },
+    { value: '{{.eventCategory}}',       hint: 'e.g. pedestrian' },
+    { value: '{{.eventAction}}',         hint: 'e.g. detected' },
+    { value: '{{.eventClass}}',          hint: 'canonical eventClass' },
+    { value: '{{.eventSeverity}}',       hint: 'canonical eventSeverity' },
+    { value: '{{.sourceFamily}}',        hint: 'e.g. AIBOX' },
+    { value: '{{.occurredAt}}',          hint: 'RFC3339 timestamp' },
+    { value: '{{.source.deviceId}}',     hint: 'device ID (e.g. 51)' },
+    { value: '{{.source.deviceType}}',   hint: 'device type / family' },
+    { value: '{{.source.subType}}',      hint: 'sub-type' },
+    { value: '{{.source.workspaceId}}',  hint: 'workspace UUID' },
+    { value: '{{.source.vendor}}',       hint: 'vendor' },
+    { value: '{{.location.zone}}',       hint: 'zone (e.g. PHK)' },
+    { value: '{{.location.site}}',       hint: 'site name' },
+    { value: '{{.location.lat}}',        hint: 'latitude' },
+    { value: '{{.location.lng}}',        hint: 'longitude' },
+    { value: '{{.geo.adminName}}',       hint: 'province / district name' },
+    { value: '{{.geo.adminCode}}',       hint: 'ISO-3166-2 code (e.g. TH-73)' },
+    { value: '{{.geo.countryCode}}',     hint: 'ISO alpha-2 country' },
+    { value: '{{.payload.alarmType_label}}', hint: 'payload field (labelled enum)' }
+  ]
+
+  // Tag color palette — matches backend tagColorPalette in
+  // internal/kafka/deliverycons/flex.go
+  const TAG_COLORS: Array<{ key: string; bg: string; text: string }> = [
+    { key: 'gray',   bg: '#6B7280', text: '#FFFFFF' },
+    { key: 'white',  bg: '#FFFFFF', text: '#111827' },
+    { key: 'red',    bg: '#EF4444', text: '#FFFFFF' },
+    { key: 'orange', bg: '#F97316', text: '#FFFFFF' },
+    { key: 'green',  bg: '#10B981', text: '#FFFFFF' },
+    { key: 'blue',   bg: '#3B82F6', text: '#FFFFFF' }
+  ]
+  function tagPaletteFor(key: string): { bg: string; text: string } {
+    const c = TAG_COLORS.find(c => c.key === key)
+    return c ?? TAG_COLORS[0]
+  }
+
+  // ── Variable picker (type-ahead + click-to-open) ──
+  // Tracks which input currently shows the suggestion menu. Key format:
+  // "{field}-{msgTemplateIndex}" (e.g. "tag-0", "addr-0", "info-0").
+  // Only one picker is open at a time; focus/input opens, blur closes (deferred).
+  let openVarPicker = $state<string | null>(null)
+  let varPickerFilter = $state('')
+
+  // Filter TEMPLATE_VARIABLES by substring match across value + hint.
+  // Empty filter shows the full list; this matches native datalist behaviour
+  // on an empty input but in a styled dropdown we control.
+  const filteredTemplateVars = $derived.by(() => {
+    const q = varPickerFilter.trim().toLowerCase()
+    if (!q) return TEMPLATE_VARIABLES
+    return TEMPLATE_VARIABLES.filter(tv =>
+      tv.value.toLowerCase().includes(q) || tv.hint.toLowerCase().includes(q)
+    )
+  })
+
+  function openPicker(key: string, currentValue: string): void {
+    openVarPicker = key
+    varPickerFilter = currentValue
+  }
+
+  function toggleVarPicker(key: string, currentValue: string): void {
+    if (openVarPicker === key) {
+      openVarPicker = null
+    } else {
+      openPicker(key, currentValue)
+    }
+  }
+
+  // closePickerDeferred waits briefly before closing so that a mousedown on a
+  // dropdown item still fires (blur races with click in some browsers).
+  function closePickerDeferred(key: string): void {
+    setTimeout(() => {
+      if (openVarPicker === key) openVarPicker = null
+    }, 150)
+  }
+
+  // onVarInput updates the extras field and keeps the picker open with the new
+  // filter (so suggestions narrow as the user types, like an autocomplete).
+  function onVarInput(i: number, extrasKey: string, key: string, value: string): void {
+    updateMsgTemplate(i, m => setE(m, extrasKey, value))
+    varPickerFilter = value
+    openVarPicker = key
+  }
+
+  // insertTemplateVar replaces the extras field with the chosen variable and
+  // closes the picker. Full-replace is intentional for the quick-pick UX —
+  // users can still type manually if they want to compose from multiple vars.
+  function insertTemplateVar(i: number, extrasKey: string, variable: string): void {
+    updateMsgTemplate(i, m => setE(m, extrasKey, variable))
+    varPickerFilter = ''
+    openVarPicker = null
+  }
+
+  // Title picker helpers — operate on the direct MessageTemplate.title field
+  // (not extras). Header and the generic Discord/Telegram title both use this.
+  function onTitleInput(i: number, key: string, value: string): void {
+    updateMsgTemplate(i, m => ({ ...m, title: value }))
+    varPickerFilter = value
+    openVarPicker = key
+  }
+  function insertTitleVar(i: number, variable: string): void {
+    updateMsgTemplate(i, m => ({ ...m, title: variable }))
+    varPickerFilter = ''
+    openVarPicker = null
   }
 
   function formatDate(d: string): string {
@@ -481,7 +596,7 @@
 
   // ── Prompt chat handlers ──
   function initChat() {
-    chatMsgs = [{ role: 'ai', content: 'สวัสดีครับ 👋 บอกได้เลยว่าอยากให้แจ้งเตือน event ไหน ผ่านช่องทางไหน\nเช่น "ส่งสิ่งที่ไม่ใช่พาหนะ ผ่าน LINE" หรือ "แจ้งเตือนเมื่อมีคนเข้าพื้นที่หวงห้าม ผ่าน Telegram"' }]
+    chatMsgs = [{ role: 'ai', content: m.ingestTemplateChatWelcome() }]
     chatInput = ''
     chatWaiting = false
     chatPendingField = null
@@ -494,7 +609,7 @@
     }
     if (draft.matchConditions?.length) {
       const conds = draft.matchConditions.map(c => `${c.field} = "${String(c.value ?? '')}"`).join(', ')
-      msgs.push({ role: 'ai', content: `เข้าใจแล้วครับ จะ match เมื่อ: ${conds}` })
+      msgs.push({ role: 'ai', content: m.ingestTemplateChatUnderstand({ conditions: conds }) })
     }
     if (draft.missingFields?.length) {
       const first = draft.missingFields[0]
@@ -505,12 +620,12 @@
       } else if (first.field.toLowerCase().includes('target') && availableTargets.length > 0) {
         options = availableTargets.map(t => ({ label: `${t.name} (${t.type})`, value: t.id }))
       }
-      msgs.push({ role: 'ai', content: first.reason || `ต้องการข้อมูลเพิ่ม: ${first.field}`, options })
+      msgs.push({ role: 'ai', content: first.reason || m.ingestTemplateChatNeedInfo({ field: first.field }), options })
     } else if (draft.status === 'ready' || draft.status === 'reviewed') {
       chatPendingField = null
-      msgs.push({ role: 'ai', content: '✅ พร้อมแล้วครับ กด "บันทึก Template" ได้เลย' })
+      msgs.push({ role: 'ai', content: m.ingestTemplateChatReady() })
     } else {
-      msgs.push({ role: 'ai', content: 'ช่วยให้ข้อมูลเพิ่มเติมได้เลยครับ' })
+      msgs.push({ role: 'ai', content: m.ingestTemplateChatAskMore() })
     }
     return msgs
   }
@@ -535,7 +650,7 @@
       }
       chatMsgs = [...chatMsgs, ...draftToAIMsgs(promptDraft)]
     } catch (e: unknown) {
-      chatMsgs = [...chatMsgs, { role: 'ai', content: `เกิดข้อผิดพลาด: ${(e as { message?: string })?.message ?? 'Unknown error'}` }]
+      chatMsgs = [...chatMsgs, { role: 'ai', content: m.ingestTemplateChatError({ error: (e as { message?: string })?.message ?? 'Unknown error' }) }]
     } finally {
       chatWaiting = false
     }
@@ -843,7 +958,7 @@
             <!-- AI tip -->
             <div class="alert alert-theme border-0 py-2 px-3 mb-2 small d-flex align-items-center gap-2" style="background:var(--bs-theme-rgb, 26 188 156 / 0.08)">
               <i class="bi bi-stars text-theme fs-6"></i>
-              <span>ใช้ <strong>AI Suggest</strong> หรือ <strong>Prompt</strong> (ปุ่มด้านบน) ให้ AI สร้าง match rules จาก sample payload ให้อัตโนมัติ</span>
+              <span>{@html m.ingestTemplateAISuggestHint()}</span>
             </div>
 
             <!-- Field type legend: canonical (source.*) vs raw payload -->
@@ -874,16 +989,16 @@
             <div class="mb-4">
               <div class="d-flex align-items-center mb-2">
                 <span class="badge bg-success me-2 px-2 py-1" style="font-size:11px">AND</span>
-                <span class="fw-semibold small">ต้องตรงทุกเงื่อนไข</span>
+                <span class="fw-semibold small">{m.ingestTemplateMatchAllLabel()}</span>
                 <small class="text-inverse text-opacity-50 ms-2 d-none d-md-inline">{m.ingestTemplateMatchAllHint()}</small>
                 <button class="btn btn-xs btn-outline-success ms-auto" onclick={() => (formMatchAll = addCondition(formMatchAll))}>
-                  <i class="bi bi-plus me-1"></i>เพิ่มเงื่อนไข
+                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddCondition()}
                 </button>
               </div>
 
               {#if formMatchAll.length === 0}
                 <div class="border border-dashed rounded px-3 py-3 text-center text-inverse text-opacity-40 small">
-                  ยังไม่มีเงื่อนไข — กด <strong>เพิ่มเงื่อนไข</strong> หรือใช้ AI Suggest
+                  {@html m.ingestTemplateNoConditionsHint()}
                 </div>
               {:else}
                 {#each formMatchAll as cond, i}
@@ -895,7 +1010,7 @@
                   <div class="d-flex gap-2 align-items-center p-2 rounded mb-1" style="border-left: 3px solid var(--bs-success); background:var(--bs-success-bg-subtle, rgba(25,135,84,0.06))">
                     <div style="min-width:0; flex:2">
                       <input type="text" list="match-fields-list" class="form-control form-control-sm font-monospace"
-                        placeholder="source.deviceId หรือ raw.fieldName"
+                        placeholder={m.ingestTemplateConditionFieldPlaceholderMatch()}
                         bind:value={cond.field} disabled={formLoading} />
                     </div>
                     {#if cond.field.trim()}
@@ -912,7 +1027,7 @@
                     <span class="text-inverse text-opacity-40 small px-1">=</span>
                     <div style="min-width:0; flex:2">
                       <input type="text" class="form-control form-control-sm"
-                        placeholder="value (คั่นด้วย , สำหรับหลายค่า)"
+                        placeholder={m.ingestTemplateConditionValuesPlaceholder()}
                         value={cond.values.join(', ')}
                         oninput={(e) => onMatchAllValueInput(e, i)}
                         disabled={formLoading} />
@@ -932,16 +1047,16 @@
             <div class="mb-4">
               <div class="d-flex align-items-center mb-2">
                 <span class="badge bg-warning text-dark me-2 px-2 py-1" style="font-size:11px">OR</span>
-                <span class="fw-semibold small">ตรงอย่างน้อยหนึ่งเงื่อนไข</span>
+                <span class="fw-semibold small">{m.ingestTemplateMatchAnyLabel()}</span>
                 <small class="text-inverse text-opacity-50 ms-2 d-none d-md-inline">{m.ingestTemplateMatchAnyHint()}</small>
                 <button class="btn btn-xs btn-outline-warning ms-auto" onclick={() => (formMatchAny = addCondition(formMatchAny))}>
-                  <i class="bi bi-plus me-1"></i>เพิ่มเงื่อนไข
+                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddCondition()}
                 </button>
               </div>
 
               {#if formMatchAny.length === 0}
                 <div class="border border-dashed rounded px-3 py-3 text-center text-inverse text-opacity-40 small">
-                  ยังไม่มีเงื่อนไข (optional)
+                  {m.ingestTemplateNoConditionsOptional()}
                 </div>
               {:else}
                 {#each formMatchAny as cond, i}
@@ -953,7 +1068,7 @@
                   <div class="d-flex gap-2 align-items-center p-2 rounded mb-1" style="border-left: 3px solid var(--bs-warning); background:var(--bs-warning-bg-subtle, rgba(255,193,7,0.06))">
                     <div style="min-width:0; flex:2">
                       <input type="text" list="match-fields-list" class="form-control form-control-sm font-monospace"
-                        placeholder="source.deviceId หรือ raw.fieldName"
+                        placeholder={m.ingestTemplateConditionFieldPlaceholderMatch()}
                         bind:value={cond.field} disabled={formLoading} />
                     </div>
                     {#if cond.field.trim()}
@@ -970,7 +1085,7 @@
                     <span class="text-inverse text-opacity-40 small px-1">=</span>
                     <div style="min-width:0; flex:2">
                       <input type="text" class="form-control form-control-sm"
-                        placeholder="value (คั่นด้วย , สำหรับหลายค่า)"
+                        placeholder={m.ingestTemplateConditionValuesPlaceholder()}
                         value={cond.values.join(', ')}
                         oninput={(e) => onMatchAnyValueInput(e, i)}
                         disabled={formLoading} />
@@ -995,6 +1110,15 @@
               {/each}
               {#each mappingSourcePaths as sp}
                 <option value={sp} label="📦 raw payload"></option>
+              {/each}
+            </datalist>
+
+            <!-- Autocomplete for Go text/template variables used in LINE card fields.
+                 Same semantics as match-fields-list: browser shows typeahead suggestions
+                 when user focuses an <input list="tmpl-vars-list">. -->
+            <datalist id="tmpl-vars-list">
+              {#each TEMPLATE_VARIABLES as tv}
+                <option value={tv.value} label="✨ {tv.hint}"></option>
               {/each}
             </datalist>
 
@@ -1117,7 +1241,8 @@
                             <!-- Image area -->
                             <div class="position-relative d-flex align-items-center justify-content-center" style="background:#5a8fa0; height:130px">
                               {#if getE(mt,'tagEnabled','true') === 'true'}
-                                <span class="position-absolute top-0 start-0 m-2 px-2 py-1 rounded fw-semibold" style="background:#ff6b35; color:#fff; font-size:10px">{'{{.eventAction}}'}</span>
+                                <span class="position-absolute top-0 start-0 m-2 px-2 py-1 rounded fw-semibold"
+                                  style="background:{tagPaletteFor(getE(mt,'tagColor','gray')).bg}; color:{tagPaletteFor(getE(mt,'tagColor','gray')).text}; font-size:10px; border:1px solid rgba(0,0,0,0.12)">{getE(mt,'tagText','{{.source.deviceId}}') || '{{.source.deviceId}}'}</span>
                               {/if}
                               {#if getE(mt,'imageType','fullframe') === 'fullframe'}
                                 <span class="text-white opacity-50" style="font-size:48px; font-weight:bold">A</span>
@@ -1136,10 +1261,10 @@
                             <div class="p-2">
                               <div class="fw-bold" style="font-size:13px">{mt.title || 'Enter header'}</div>
                               {#if getE(mt,'addressEnabled','true') === 'true'}
-                                <div class="text-secondary mt-1" style="font-size:11px"><i class="bi bi-geo-alt-fill me-1"></i>{'{{.lat}}, {{.lng}}'}</div>
+                                <div class="text-secondary mt-1" style="font-size:11px"><i class="bi bi-geo-alt-fill me-1"></i>{getE(mt,'addressText','{{.geo.adminName}}') || mt.body || '{{.geo.adminName}}'}</div>
                               {/if}
                               {#if getE(mt,'additionalInfoEnabled','true') === 'true'}
-                                <div class="text-secondary" style="font-size:11px"><i class="bi bi-clock me-1"></i>{'{{.createdAt}}'}</div>
+                                <div class="text-secondary" style="font-size:11px"><i class="bi bi-clock me-1"></i>{getE(mt,'additionalInfoText','{{.occurredAt}}') || '{{.occurredAt}}'}</div>
                               {/if}
                               {#if getE(mt,'action1Enabled','true') === 'true'}
                                 <div class="text-center border-top mt-1 pt-1" style="color:#06c755; font-size:12px">{getE(mt,'action1Label','') || 'Enter action label'}</div>
@@ -1184,21 +1309,85 @@
                               <label class="form-check-label small fw-semibold" for="tag-{i}">Tag</label>
                             </div>
                             {#if getE(mt,'tagEnabled','true') === 'true'}
-                              <div class="mt-1">
-                                <span class="form-control form-control-sm text-muted small" style="cursor:default; background:var(--bs-tertiary-bg)">{'{{.eventAction}}'}</span>
+                              <div class="mt-1 position-relative">
+                                <div class="input-group input-group-sm">
+                                  <input type="text" class="form-control font-monospace"
+                                    placeholder="{'{{.source.deviceId}}'}"
+                                    value={getE(mt,'tagText','{{.source.deviceId}}')}
+                                    onfocus={() => openPicker(`tag-${i}`, getE(mt,'tagText',''))}
+                                    oninput={(e) => onVarInput(i, 'tagText', `tag-${i}`, (e.target as HTMLInputElement).value)}
+                                    onblur={() => closePickerDeferred(`tag-${i}`)}
+                                    disabled={formLoading} />
+                                  <button type="button" class="btn btn-outline-secondary" aria-label="Suggest variables"
+                                    title="Suggest template variables"
+                                    onclick={() => toggleVarPicker(`tag-${i}`, getE(mt,'tagText',''))} disabled={formLoading}>
+                                    <i class="bi bi-stars"></i>
+                                  </button>
+                                </div>
+                                {#if openVarPicker === `tag-${i}` && filteredTemplateVars.length > 0}
+                                  <ul class="dropdown-menu show position-absolute mt-1" style="min-width:100%; max-height:280px; overflow:auto; z-index:10">
+                                    {#each filteredTemplateVars as tv}
+                                      <li>
+                                        <button type="button" class="dropdown-item py-1"
+                                          onmousedown={(e) => { e.preventDefault(); insertTemplateVar(i, 'tagText', tv.value) }}>
+                                          <code class="text-theme small">{tv.value}</code>
+                                          <div class="small text-inverse text-opacity-50">✨ {tv.hint}</div>
+                                        </button>
+                                      </li>
+                                    {/each}
+                                  </ul>
+                                {/if}
+                              </div>
+                              <!-- Color palette -->
+                              <div class="mt-2 d-flex gap-2 align-items-center">
+                                <small class="text-inverse text-opacity-50">Color</small>
+                                {#each TAG_COLORS as c}
+                                  <button type="button" class="rounded-circle border-0"
+                                    title={c.key}
+                                    aria-label="tag color {c.key}"
+                                    style="width:22px; height:22px; background:{c.bg}; outline: {getE(mt,'tagColor','gray') === c.key ? '2px solid var(--bs-theme)' : '1px solid rgba(0,0,0,0.2)'}; cursor:pointer"
+                                    onclick={() => updateMsgTemplate(i, m => setE(m,'tagColor',c.key))}
+                                    disabled={formLoading}>
+                                    {#if getE(mt,'tagColor','gray') === c.key}
+                                      <i class="bi bi-check-lg" style="color:{c.text}; font-size:12px"></i>
+                                    {/if}
+                                  </button>
+                                {/each}
                               </div>
                             {/if}
                           </div>
 
                           <!-- Header -->
-                          <div class="mb-3">
+                          <div class="mb-3 position-relative">
                             <label class="form-label small fw-semibold mb-1" for="mt-header-{i}">Header <span class="text-danger">*</span></label>
                             <div class="input-group input-group-sm">
-                              <input id="mt-header-{i}" type="text" class="form-control"
-                                bind:value={mt.title} disabled={formLoading}
-                                placeholder="{'{{.eventCategory}}'}" maxlength="20" />
-                              <span class="input-group-text text-muted">{(mt.title?.length ?? 0)}/20</span>
+                              <input id="mt-header-{i}" type="text" class="form-control font-monospace"
+                                value={mt.title ?? ''}
+                                placeholder="{'{{.eventCategory}}'}"
+                                onfocus={() => openPicker(`header-${i}`, mt.title ?? '')}
+                                oninput={(e) => onTitleInput(i, `header-${i}`, (e.target as HTMLInputElement).value)}
+                                onblur={() => closePickerDeferred(`header-${i}`)}
+                                disabled={formLoading} />
+                              <button type="button" class="btn btn-outline-secondary" aria-label="Suggest variables"
+                                title="Suggest template variables"
+                                onclick={() => toggleVarPicker(`header-${i}`, mt.title ?? '')} disabled={formLoading}>
+                                <i class="bi bi-stars"></i>
+                              </button>
+                              <span class="input-group-text text-muted">{(mt.title?.length ?? 0)}/200</span>
                             </div>
+                            {#if openVarPicker === `header-${i}` && filteredTemplateVars.length > 0}
+                              <ul class="dropdown-menu show position-absolute mt-1" style="min-width:100%; max-height:280px; overflow:auto; z-index:10">
+                                {#each filteredTemplateVars as tv}
+                                  <li>
+                                    <button type="button" class="dropdown-item py-1"
+                                      onmousedown={(e) => { e.preventDefault(); insertTitleVar(i, tv.value) }}>
+                                      <code class="text-theme small">{tv.value}</code>
+                                      <div class="small text-inverse text-opacity-50">✨ {tv.hint}</div>
+                                    </button>
+                                  </li>
+                                {/each}
+                              </ul>
+                            {/if}
                           </div>
 
                           <!-- Address -->
@@ -1211,9 +1400,34 @@
                               <label class="form-check-label small fw-semibold" for="addr-{i}">Address</label>
                             </div>
                             {#if getE(mt,'addressEnabled','true') === 'true'}
-                              <div class="mt-1 d-flex gap-2 align-items-center">
-                                <span class="form-control form-control-sm text-muted small" style="cursor:default; background:var(--bs-tertiary-bg)">{'{{.lat}}, {{.lng}}'}</span>
-                                <span class="badge bg-secondary text-nowrap">Location info</span>
+                              <div class="mt-1 position-relative">
+                                <div class="input-group input-group-sm">
+                                  <input type="text" class="form-control font-monospace"
+                                    placeholder="{'{{.geo.adminName}}'}"
+                                    value={getE(mt,'addressText','{{.geo.adminName}}')}
+                                    onfocus={() => openPicker(`addr-${i}`, getE(mt,'addressText',''))}
+                                    oninput={(e) => onVarInput(i, 'addressText', `addr-${i}`, (e.target as HTMLInputElement).value)}
+                                    onblur={() => closePickerDeferred(`addr-${i}`)}
+                                    disabled={formLoading} />
+                                  <button type="button" class="btn btn-outline-secondary" aria-label="Suggest variables"
+                                    title="Suggest template variables"
+                                    onclick={() => toggleVarPicker(`addr-${i}`, getE(mt,'addressText',''))} disabled={formLoading}>
+                                    <i class="bi bi-stars"></i>
+                                  </button>
+                                </div>
+                                {#if openVarPicker === `addr-${i}` && filteredTemplateVars.length > 0}
+                                  <ul class="dropdown-menu show position-absolute mt-1" style="min-width:100%; max-height:280px; overflow:auto; z-index:10">
+                                    {#each filteredTemplateVars as tv}
+                                      <li>
+                                        <button type="button" class="dropdown-item py-1"
+                                          onmousedown={(e) => { e.preventDefault(); insertTemplateVar(i, 'addressText', tv.value) }}>
+                                          <code class="text-theme small">{tv.value}</code>
+                                          <div class="small text-inverse text-opacity-50">✨ {tv.hint}</div>
+                                        </button>
+                                      </li>
+                                    {/each}
+                                  </ul>
+                                {/if}
                               </div>
                             {/if}
                           </div>
@@ -1228,8 +1442,8 @@
                               <label class="form-check-label small fw-semibold" for="addinfo-{i}">Additional info</label>
                             </div>
                             {#if getE(mt,'additionalInfoEnabled','true') === 'true'}
-                              <div class="mt-1 d-flex gap-2 align-items-center">
-                                <select class="form-select form-select-sm" style="max-width:110px"
+                              <div class="mt-1 d-flex gap-2 align-items-start">
+                                <select class="form-select form-select-sm" style="max-width:110px; flex:0 0 auto"
                                   value={getE(mt,'additionalInfoType','Hours')}
                                   onchange={(e) => updateMsgTemplate(i, m => setE(m,'additionalInfoType',(e.target as HTMLSelectElement).value))}
                                   disabled={formLoading}>
@@ -1237,7 +1451,35 @@
                                   <option value="Days">Days</option>
                                   <option value="Custom">Custom</option>
                                 </select>
-                                <span class="form-control form-control-sm text-muted small" style="cursor:default; background:var(--bs-tertiary-bg)">{'{{.createdAt}}'}</span>
+                                <div class="position-relative flex-grow-1">
+                                  <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control font-monospace"
+                                      placeholder="{'{{.occurredAt}}'}"
+                                      value={getE(mt,'additionalInfoText','{{.occurredAt}}')}
+                                      onfocus={() => openPicker(`info-${i}`, getE(mt,'additionalInfoText',''))}
+                                      oninput={(e) => onVarInput(i, 'additionalInfoText', `info-${i}`, (e.target as HTMLInputElement).value)}
+                                      onblur={() => closePickerDeferred(`info-${i}`)}
+                                      disabled={formLoading} />
+                                    <button type="button" class="btn btn-outline-secondary" aria-label="Suggest variables"
+                                      title="Suggest template variables"
+                                      onclick={() => toggleVarPicker(`info-${i}`, getE(mt,'additionalInfoText',''))} disabled={formLoading}>
+                                      <i class="bi bi-stars"></i>
+                                    </button>
+                                  </div>
+                                  {#if openVarPicker === `info-${i}` && filteredTemplateVars.length > 0}
+                                    <ul class="dropdown-menu show position-absolute mt-1" style="min-width:100%; max-height:280px; overflow:auto; z-index:10">
+                                      {#each filteredTemplateVars as tv}
+                                        <li>
+                                          <button type="button" class="dropdown-item py-1"
+                                            onmousedown={(e) => { e.preventDefault(); insertTemplateVar(i, 'additionalInfoText', tv.value) }}>
+                                            <code class="text-theme small">{tv.value}</code>
+                                            <div class="small text-inverse text-opacity-50">✨ {tv.hint}</div>
+                                          </button>
+                                        </li>
+                                      {/each}
+                                    </ul>
+                                  {/if}
+                                </div>
                               </div>
                             {/if}
                           </div>
@@ -1423,16 +1665,16 @@
             </div>
             <!-- Event description (natural language) -->
             <div class="mb-1">
-              <label class="form-label fw-semibold" for="ai-suggest-desc">อธิบาย event ที่ต้องการ <span class="text-inverse text-opacity-50 fw-normal">(optional)</span></label>
+              <label class="form-label fw-semibold" for="ai-suggest-desc">{m.ingestTemplateAISuggestDescLabel()} <span class="text-inverse text-opacity-50 fw-normal">{m.ingestTemplateAISuggestDescOptional()}</span></label>
               <textarea
                 id="ai-suggest-desc"
                 class="form-control"
                 rows="4"
-                placeholder={'เช่น "ตรวจจับคนเข้าออกประตู จาก AIBOX" หรือ "motion detection เมื่อมีการเคลื่อนไหวในพื้นที่หวงห้าม"'}
+                placeholder={m.ingestTemplateAISuggestDescPlaceholder()}
                 bind:value={aiSuggestPayload}
                 disabled={aiSuggestLoading}
               ></textarea>
-              <div class="form-text">พิมพ์เป็นภาษาไทยหรืออังกฤษก็ได้ — AI จะสร้าง match rules และ field mappings ให้อัตโนมัติ</div>
+              <div class="form-text">{m.ingestTemplateAISuggestDescHelp()}</div>
             </div>
 
           {:else if aiSuggestStep === 'result' && aiSuggestResult}
@@ -1566,9 +1808,9 @@
         <!-- Header -->
         <div class="modal-header border-0 pb-2">
           <h6 class="modal-title fw-semibold">
-            <i class="bi bi-stars me-2 text-theme"></i>สร้าง Template ด้วย AI
+            <i class="bi bi-stars me-2 text-theme"></i>{m.ingestTemplatePromptTitle()}
           </h6>
-          <button type="button" class="btn-close" aria-label="ปิด"
+          <button type="button" class="btn-close" aria-label={m.actionClose()}
             onclick={() => (showPromptModal = false)} disabled={chatWaiting || promptSaveLoading}></button>
         </div>
 
@@ -1576,7 +1818,7 @@
         <div class="flex-grow-1 overflow-y-auto px-3 py-2 d-flex flex-column gap-3">
           {#if promptError}
             <div class="alert alert-danger small py-2">
-              <button type="button" class="btn-close btn-close-sm float-end" onclick={() => (promptError = null)} aria-label="ปิด"></button>
+              <button type="button" class="btn-close btn-close-sm float-end" onclick={() => (promptError = null)} aria-label={m.actionClose()}></button>
               {promptError}
             </div>
           {/if}
@@ -1627,14 +1869,14 @@
               </div>
               <div class="rounded-3 px-3 py-2 small" style="background:var(--bs-tertiary-bg)">
                 <span class="spinner-border spinner-border-sm me-1" style="width:10px;height:10px"></span>
-                กำลังคิด...
+                {m.ingestTemplatePromptThinking()}
               </div>
             </div>
           {/if}
 
           {#if promptSaved}
             <div class="alert alert-success py-2 small text-center mb-0">
-              <i class="bi bi-check-circle me-1"></i>บันทึก Template เรียบร้อยแล้วครับ
+              <i class="bi bi-check-circle me-1"></i>{m.ingestTemplatePromptSaveSuccess()}
             </div>
           {/if}
         </div>
@@ -1644,9 +1886,9 @@
           <div class="px-3 py-2 border-top">
             <button class="btn btn-theme w-100 btn-sm" onclick={handleSaveDraft} disabled={promptSaveLoading}>
               {#if promptSaveLoading}
-                <span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...
+                <span class="spinner-border spinner-border-sm me-1"></span>{m.ingestTemplatePromptSaving()}
               {:else}
-                <i class="bi bi-floppy me-1"></i>บันทึก Template
+                <i class="bi bi-floppy me-1"></i>{m.ingestTemplatePromptSave()}
               {/if}
             </button>
           </div>
@@ -1658,19 +1900,19 @@
             <textarea
               class="form-control form-control-sm"
               rows="2"
-              placeholder="เช่น 'ส่งสิ่งที่ไม่ใช่พาหนะ ผ่าน LINE'"
+              placeholder={m.ingestTemplatePromptInputPlaceholder()}
               bind:value={chatInput}
               disabled={chatWaiting || promptSaved}
               style="resize:none; font-size:13px"
               onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMsg() } }}
             ></textarea>
-            <button class="btn btn-theme btn-sm px-3" aria-label="ส่ง"
+            <button class="btn btn-theme btn-sm px-3" aria-label={m.ingestTemplatePromptSendAria()}
               onclick={() => sendChatMsg()}
               disabled={chatWaiting || !chatInput.trim() || promptSaved}>
               <i class="bi bi-send-fill"></i>
             </button>
           </div>
-          <div class="text-inverse text-opacity-30 mt-1" style="font-size:10px">Enter เพื่อส่ง · Shift+Enter ขึ้นบรรทัดใหม่</div>
+          <div class="text-inverse text-opacity-30 mt-1" style="font-size:10px">{m.ingestTemplatePromptInputHint()}</div>
         </div>
 
       </div>

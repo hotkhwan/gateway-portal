@@ -1,6 +1,7 @@
 <!-- src/lib/components/leaflet/MapPicker.svelte -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
+  import { m } from '$lib/i18n/messages'
 
   let {
     lat = undefined as number | undefined,
@@ -219,7 +220,7 @@
         class="map-fs-btn"
         type="button"
         onclick={toggleFullscreen}
-        title={isFullscreen ? 'ย่อแผนที่ (Esc)' : 'ขยายเต็มจอ'}
+        title={isFullscreen ? m.mapFullscreenMinimize() : m.mapFullscreenExpand()}
       >
         {#if isFullscreen}
           <i class="bi bi-fullscreen-exit"></i>

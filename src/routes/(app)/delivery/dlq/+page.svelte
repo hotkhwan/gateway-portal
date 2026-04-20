@@ -199,7 +199,7 @@
           <button class="btn btn-sm btn-theme flex-fill" onclick={applyFilters}>
             <i class="bi bi-search me-1"></i>{m.actionSearch()}
           </button>
-          <button class="btn btn-sm btn-outline-secondary" onclick={clearFilters} title="Clear filters">
+          <button class="btn btn-sm btn-outline-secondary" onclick={clearFilters} title={m.deliveryDlqClearFilters()}>
             <i class="bi bi-x-lg"></i>
           </button>
         </div>

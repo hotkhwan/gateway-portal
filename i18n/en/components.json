@@ -1,6 +1,6 @@
 {
   "_comments_dcomponents": "Components labels",
-  "appFooterCopyright": "© {year} AISOM All Rights Reserved",
+  "appFooterCopyright": "© {year} PHIBEK Platform All Rights Reserved",
 
   "themePanelToggleAriaLabel": "Theme panel toggle",
 
@@ -35,5 +35,9 @@
   "themeCover6": "Cover 6",
   "themeCover7": "Cover 7",
   "themeCover8": "Cover 8",
-  "themeCover9": "Cover 9"
+  "themeCover9": "Cover 9",
+
+  "_comments_map": "Map component labels",
+  "mapFullscreenExpand": "Expand to fullscreen",
+  "mapFullscreenMinimize": "Minimize map (Esc)"
 }

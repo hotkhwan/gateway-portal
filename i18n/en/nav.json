@@ -4,7 +4,7 @@
   "langTh": "Thai (ภาษาไทย)",
 
   "_comments_nav_sidebar": "Sidebar navigation labels",
-  "landingHome": "AISOM",
+  "landingHome": "PHIBEK Platform",
   "navNavigation": "Navigation",
   "navDashboard": "Dashboard",
 
@@ -60,6 +60,12 @@
   "aiConfigModeFree": "Free Shared Tier",
   "aiConfigModeUserKey": "Your API Key",
   "aiConfigSaved": "AI configuration saved",
+  "aiConfigProviderInfo": "Provider Info",
+  "aiConfigApiKeyGetAt": "Get API key at:",
+  "aiConfigGeminiRecommend": "Recommended <code>gemini-2.5-flash</code> — latest model, supports billing on all accounts",
+  "aiConfigOpenAIRecommend": "Recommended <code>gpt-4o-mini</code> — economical and accurate for mapping suggestion",
+  "aiConfigClaudeRecommend": "Uses Tool Use for structured output — highest accuracy",
+  "aiConfigClearKeyConfirm": "The API key will be removed. The system will fall back to Gemini free tier.",
 
   "_comments_nav_ai_suggest": "AI suggest modal labels",
   "aiSuggestBtn": "AI Suggest",

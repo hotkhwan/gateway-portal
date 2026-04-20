@@ -118,5 +118,6 @@
   "deliveryDlqFilterAll": "All",
 
   "deliveryFilterOperatorEq": "equals",
-  "deliveryFilterOperatorIn": "in list"
+  "deliveryFilterOperatorIn": "in list",
+  "deliveryDlqClearFilters": "Clear filters"
 }

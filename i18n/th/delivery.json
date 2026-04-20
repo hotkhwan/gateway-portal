@@ -118,5 +118,6 @@
   "deliveryDlqFilterAll": "ทั้งหมด",
 
   "deliveryFilterOperatorEq": "เท่ากับ",
-  "deliveryFilterOperatorIn": "ในรายการ"
+  "deliveryFilterOperatorIn": "ในรายการ",
+  "deliveryDlqClearFilters": "ล้างตัวกรอง"
 }
