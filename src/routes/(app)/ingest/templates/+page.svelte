@@ -43,6 +43,8 @@
   // Basic tab
   let formName = $state('')
   let formSourceFamily = $state('')
+  let formFinalEventType = $state('')
+  let formPriority = $state<number | ''>('')
   let formEnabled = $state(true)
 
   // Match tab
@@ -71,23 +73,38 @@
   let aiSuggestPayload = $state('')
   let aiSuggestResult = $state<AISuggestResult | null>(null)
 
-  // ── Prompt to Draft modal ──
+  // ── Prompt chat modal ──
+  type ChatMsg = { role: 'user' | 'ai'; content: string; options?: { label: string; value: string }[] }
   let showPromptModal = $state(false)
-  let promptStep = $state<'input' | 'draft'>('input')
-  let promptLoading = $state(false)
-  let promptError = $state<string | null>(null)
-  let promptText = $state('')
+  let chatMsgs = $state<ChatMsg[]>([])
+  let chatInput = $state('')
+  let chatWaiting = $state(false)
+  let chatPendingField = $state<string | null>(null)
   let promptDraft = $state<ConfigDraft | null>(null)
-  let refineAnswers = $state<Record<string, string>>({})
-  let refineLoading = $state(false)
-  let dryRunPayload = $state('')
-  let dryRunResult = $state<DryRunResult | null>(null)
-  let dryRunLoading = $state(false)
+  let promptError = $state<string | null>(null)
   let promptSaveLoading = $state(false)
   let promptSaved = $state(false)
 
   const OPERATORS = ['eq', 'in', 'contains', 'prefix'] as const
   const MESSAGING_TYPES = new Set(['line', 'telegram', 'discord'])
+
+  // Canonical fields exposed by backend buildMatchBag — match against these
+  // ตรงกับสิ่งที่ user เห็นใน UI (เช่น Device ID 51) แทนที่จะอ้างอิง raw field name (channelId)
+  const CANONICAL_FIELDS: Array<{ value: string; sample: string }> = [
+    { value: 'source.deviceId',     sample: '"51"' },
+    { value: 'source.deviceType',   sample: '"channel" | "camera" | "device"' },
+    { value: 'source.deviceMgmtId', sample: '"eaf2f1da-..."' },
+    { value: 'source.sn',           sample: '"6016600d431d6040"' },
+    { value: 'source.sourceFamily', sample: '"AIBOX"' },
+    { value: 'source.zone',         sample: '"PHK"' },
+    { value: 'source.site',         sample: '"BANGKOK"' },
+    { value: 'source.name',         sample: '"หน้าบ้าน"' }
+  ]
+
+  // ตรวจว่า field path เป็น canonical (source.*) หรือ raw payload
+  function isCanonicalField(field: string): boolean {
+    return field.trim().startsWith('source.')
+  }
 
   // Derived: sourcePaths from formMappings for match condition field selector
   let mappingSourcePaths = $derived(
@@ -96,6 +113,13 @@
 
   // Suggested message template fields based on mappings
   const SUGGESTED_MSG_FIELDS = ['sourceFamily', 'deviceName', 'lat', 'lng', 'eventType', 'imageUrl']
+
+  function onMatchAllValueInput(e: Event, i: number) {
+    formMatchAll = formMatchAll.map((c, idx) => idx === i ? updateConditionValues(c, (e.target as HTMLInputElement).value) : c)
+  }
+  function onMatchAnyValueInput(e: Event, i: number) {
+    formMatchAny = formMatchAny.map((c, idx) => idx === i ? updateConditionValues(c, (e.target as HTMLInputElement).value) : c)
+  }
 
   async function load(page = 1) {
     const orgId = $activeWorkspaceId
@@ -118,9 +142,13 @@
     }
   }
 
+  function setTab(key: string) { formTab = key as typeof formTab }
+
   function resetForm() {
     formName = ''
     formSourceFamily = ''
+    formFinalEventType = ''
+    formPriority = ''
     formEnabled = true
     formMatchAll = []
     formMatchAny = []
@@ -152,6 +180,8 @@
     editingId = template.templateId
     formName = template.name
     formSourceFamily = template.sourceFamily ?? ''
+    formFinalEventType = template.finalEventType ?? ''
+    formPriority = template.priority ?? ''
     formEnabled = template.enabled ?? true
     formMatchAll = (template.matchAll ?? []).map(c => ({ ...c, values: [...c.values] }))
     formMatchAny = (template.matchAny ?? []).map(c => ({ ...c, values: [...c.values] }))
@@ -167,12 +197,31 @@
     const orgId = $activeWorkspaceId
     if (!orgId) return
 
+    // กรองเงื่อนไขที่ field ว่าง หรือ values ว่างทั้งหมด — ป้องกัน junk เข้า DB
+    const cleanMatchAll = formMatchAll.filter(c => c.field.trim() && c.values.some(v => v.trim()))
+    const cleanMatchAny = formMatchAny.filter(c => c.field.trim() && c.values.some(v => v.trim()))
+    const droppedAll = formMatchAll.length - cleanMatchAll.length
+    const droppedAny = formMatchAny.length - cleanMatchAny.length
+
+    // เตือน user ถ้ามีเงื่อนไขที่ถูกตัดออก (กัน save พลาด)
+    if (droppedAll > 0 || droppedAny > 0) {
+      const ok = confirm(m.ingestTemplateMatchEmptyConfirm({
+        count: String(droppedAll + droppedAny)
+      }))
+      if (!ok) return
+    }
+
+    // matchAll/matchAny: ส่งเป็น "replace pattern" เสมอ — สิ่งที่ user เห็นในฟอร์ม = สิ่งที่จะถูกบันทึก
+    // (ลบเงื่อนไขทิ้งหมดแล้วบันทึก = ส่ง [] = backend จะล้างเงื่อนไข)
+    // finalEventType / priority: ส่งเฉพาะตอนมีค่า เพื่อไม่ทับค่าเดิม (semantics nil = คงเดิม)
     const payload = {
       name: formName.trim(),
       enabled: formEnabled,
       sourceFamily: formSourceFamily || undefined,
-      matchAll: formMatchAll.length ? formMatchAll : undefined,
-      matchAny: formMatchAny.length ? formMatchAny : undefined,
+      finalEventType: formFinalEventType.trim() || undefined,
+      priority: typeof formPriority === 'number' ? formPriority : undefined,
+      matchAll: cleanMatchAll,
+      matchAny: cleanMatchAny,
       mappings: formMappings,
       deliveryTargets: formDeliveryTargets.length ? formDeliveryTargets : undefined,
       messageTemplates: formMessageTemplates.length ? formMessageTemplates : undefined
@@ -225,8 +274,36 @@
     return list.filter((_, idx) => idx !== i)
   }
   function updateConditionValues(c: MatchCondition, raw: string): MatchCondition {
-    return { ...c, values: raw.split(',').map(v => v.trim()).filter(Boolean) }
+    const values = raw.split(',').map(v => v.trim()).filter(Boolean)
+    const operator = values.length > 1 ? 'in' : 'eq'
+    return { ...c, values, operator }
   }
+
+  const OPERATOR_LABELS: Record<string, string> = {
+    eq: 'equals',
+    in: 'is one of',
+    contains: 'contains',
+    prefix: 'starts with'
+  }
+
+  function conditionText(c: MatchCondition): string {
+    if (!c.field) return ''
+    const op = OPERATOR_LABELS[c.operator] ?? c.operator
+    const val = c.values.length === 0 ? '?' : c.values.length === 1 ? `"${c.values[0]}"` : `[${c.values.map(v => `"${v}"`).join(', ')}]`
+    return `${c.field} ${op} ${val}`
+  }
+
+  let rulePreview = $derived(
+    (() => {
+      const all = formMatchAll.filter(c => c.field).map(conditionText)
+      const any = formMatchAny.filter(c => c.field).map(conditionText)
+      if (!all.length && !any.length) return ''
+      const parts: string[] = []
+      if (all.length) parts.push(all.join(' AND '))
+      if (any.length) parts.push(`(${any.join(' OR ')})`)
+      return parts.join(' AND ')
+    })()
+  )
 
   // Field mapping helpers
   function addMapping(): void {
@@ -272,8 +349,9 @@
           key: targetId,
           channelType,
           locale: 'th',
-          title: `{{.eventType}} - {{.deviceName}}`,
-          body: bodyLines.join('\n') || '{{.eventType}}'
+          title: `{{.eventCategory}}`,
+          body: bodyLines.join('\n') || '{{.eventType}}',
+          extras: channelType === 'line' ? { ...LINE_CARD_DEFAULTS } : undefined
         }]
       }
     }
@@ -281,10 +359,37 @@
 
   // Message template helpers
   function addMessageTemplate(): void {
-    formMessageTemplates = [...formMessageTemplates, { channelType: 'line', locale: 'th', title: '', body: '' }]
+    formMessageTemplates = [...formMessageTemplates, {
+      channelType: 'line', locale: 'th', title: '', body: '',
+      extras: { ...LINE_CARD_DEFAULTS }
+    }]
   }
   function removeMessageTemplate(i: number): void {
     formMessageTemplates = formMessageTemplates.filter((_, idx) => idx !== i)
+  }
+
+  // ── LINE card extras helpers ──
+  function getE(mt: MessageTemplate, key: string, def = ''): string {
+    return mt.extras?.[key] ?? def
+  }
+  function setE(mt: MessageTemplate, key: string, value: string): MessageTemplate {
+    return { ...mt, extras: { ...(mt.extras ?? {}), [key]: value } }
+  }
+  function updateMsgTemplate(i: number, updater: (mt: MessageTemplate) => MessageTemplate): void {
+    formMessageTemplates = formMessageTemplates.map((mt, idx) => idx === i ? updater(mt) : mt)
+  }
+  const LINE_CARD_DEFAULTS: Record<string, string> = {
+    imageType: 'fullframe',
+    tagEnabled: 'true',
+    addressEnabled: 'true',
+    additionalInfoEnabled: 'true',
+    additionalInfoType: 'Hours',
+    action1Enabled: 'false',
+    action1Label: '',
+    action1Url: '',
+    action2Enabled: 'false',
+    action2Label: '',
+    action2Url: ''
   }
 
   function formatDate(d: string): string {
@@ -374,80 +479,76 @@
     return m.aiSuggestModeSystem()
   }
 
-  // ── Prompt to Draft handlers ──
+  // ── Prompt chat handlers ──
+  function initChat() {
+    chatMsgs = [{ role: 'ai', content: 'สวัสดีครับ 👋 บอกได้เลยว่าอยากให้แจ้งเตือน event ไหน ผ่านช่องทางไหน\nเช่น "ส่งสิ่งที่ไม่ใช่พาหนะ ผ่าน LINE" หรือ "แจ้งเตือนเมื่อมีคนเข้าพื้นที่หวงห้าม ผ่าน Telegram"' }]
+    chatInput = ''
+    chatWaiting = false
+    chatPendingField = null
+  }
+
+  function draftToAIMsgs(draft: ConfigDraft): ChatMsg[] {
+    const msgs: ChatMsg[] = []
+    if (draft.warnings?.length) {
+      msgs.push({ role: 'ai', content: `⚠️ ${draft.warnings.join('\n')}` })
+    }
+    if (draft.matchConditions?.length) {
+      const conds = draft.matchConditions.map(c => `${c.field} = "${String(c.value ?? '')}"`).join(', ')
+      msgs.push({ role: 'ai', content: `เข้าใจแล้วครับ จะ match เมื่อ: ${conds}` })
+    }
+    if (draft.missingFields?.length) {
+      const first = draft.missingFields[0]
+      chatPendingField = first.field
+      let options: ChatMsg['options']
+      if (first.field === 'sourceFamily' && sourceProfiles.length > 0) {
+        options = sourceProfiles.map(sp => ({ label: sp.displayName ?? sp.sourceFamily, value: sp.sourceFamily }))
+      } else if (first.field.toLowerCase().includes('target') && availableTargets.length > 0) {
+        options = availableTargets.map(t => ({ label: `${t.name} (${t.type})`, value: t.id }))
+      }
+      msgs.push({ role: 'ai', content: first.reason || `ต้องการข้อมูลเพิ่ม: ${first.field}`, options })
+    } else if (draft.status === 'ready' || draft.status === 'reviewed') {
+      chatPendingField = null
+      msgs.push({ role: 'ai', content: '✅ พร้อมแล้วครับ กด "บันทึก Template" ได้เลย' })
+    } else {
+      msgs.push({ role: 'ai', content: 'ช่วยให้ข้อมูลเพิ่มเติมได้เลยครับ' })
+    }
+    return msgs
+  }
+
+  async function sendChatMsg(text?: string) {
+    const orgId = $activeWorkspaceId
+    if (!orgId) return
+    const msg = (text ?? chatInput).trim()
+    if (!msg || chatWaiting) return
+    chatInput = ''
+    chatMsgs = [...chatMsgs, { role: 'user', content: msg }]
+    chatWaiting = true
+    promptError = null
+    try {
+      if (!promptDraft) {
+        promptDraft = await createDraftFromPrompt(orgId, { prompt: msg })
+      } else {
+        const field = chatPendingField ?? promptDraft.missingFields?.[0]?.field
+        if (field) {
+          promptDraft = await refineDraft(orgId, promptDraft.draftId, { [field]: msg })
+        }
+      }
+      chatMsgs = [...chatMsgs, ...draftToAIMsgs(promptDraft)]
+    } catch (e: unknown) {
+      chatMsgs = [...chatMsgs, { role: 'ai', content: `เกิดข้อผิดพลาด: ${(e as { message?: string })?.message ?? 'Unknown error'}` }]
+    } finally {
+      chatWaiting = false
+    }
+  }
+
   function openPromptModal() {
-    promptStep = 'input'
-    promptText = ''
     promptDraft = null
     promptError = null
-    refineAnswers = {}
-    dryRunPayload = ''
-    dryRunResult = null
     promptSaved = false
+    promptSaveLoading = false
+    initChat()
     showPromptModal = true
-  }
-
-  async function handleGenerateDraft() {
-    const orgId = $activeWorkspaceId
-    if (!orgId || !promptText.trim()) {
-      promptError = 'Please describe what you want to configure'
-      return
-    }
-    promptLoading = true
-    promptError = null
-    try {
-      promptDraft = await createDraftFromPrompt(orgId, { prompt: promptText.trim() })
-      refineAnswers = {}
-      dryRunResult = null
-      promptStep = 'draft'
-    } catch (e: unknown) {
-      promptError = (e as { message?: string })?.message ?? m.commonError()
-    } finally {
-      promptLoading = false
-    }
-  }
-
-  async function handleRefine() {
-    const orgId = $activeWorkspaceId
-    if (!orgId || !promptDraft) return
-    const answersToSend = Object.fromEntries(
-      Object.entries(refineAnswers).filter(([, v]) => v.trim() !== '')
-    )
-    if (Object.keys(answersToSend).length === 0) return
-    refineLoading = true
-    promptError = null
-    try {
-      promptDraft = await refineDraft(orgId, promptDraft.draftId, answersToSend)
-      refineAnswers = {}
-      dryRunResult = null
-    } catch (e: unknown) {
-      promptError = (e as { message?: string })?.message ?? m.commonError()
-    } finally {
-      refineLoading = false
-    }
-  }
-
-  async function handleDryRun() {
-    const orgId = $activeWorkspaceId
-    if (!orgId || !promptDraft) return
-    let payload: Record<string, unknown> = {}
-    if (dryRunPayload.trim()) {
-      try {
-        payload = JSON.parse(dryRunPayload)
-      } catch {
-        promptError = 'Sample payload must be valid JSON'
-        return
-      }
-    }
-    dryRunLoading = true
-    promptError = null
-    try {
-      dryRunResult = await dryRunDraft(orgId, promptDraft.draftId, payload)
-    } catch (e: unknown) {
-      promptError = (e as { message?: string })?.message ?? m.commonError()
-    } finally {
-      dryRunLoading = false
-    }
+    if (availableTargets.length === 0 || sourceProfiles.length === 0) loadFormDeps()
   }
 
   async function handleSaveDraft() {
@@ -599,7 +700,7 @@
                 {/if}
               </td>
               <td>
-                {#if tpl.enabled}
+                {#if tpl.enabled !== false}
                   <span class="badge bg-success">{m.ingestTemplateEnabled()}</span>
                 {:else}
                   <span class="badge bg-secondary">{m.ingestTemplateDisableSuccess()}</span>
@@ -664,12 +765,11 @@
             {#each [
               { key: 'basic', label: m.ingestTemplateTabBasic() },
               { key: 'match', label: m.ingestTemplateTabMatchRule() },
-              { key: 'mapping', label: m.ingestTemplateTabFieldMapping() },
               { key: 'target', label: m.ingestTemplateTabTarget() }
             ] as tab}
               <li class="nav-item">
                 <button class="nav-link" class:active={formTab === tab.key}
-                  onclick={() => { formTab = tab.key as 'basic' | 'match' | 'mapping' | 'target' }}>
+                  onclick={() => setTab(tab.key)}>
                   {tab.label}
                 </button>
               </li>
@@ -701,6 +801,37 @@
                 <div class="form-text">{m.ingestTemplateSourceFamilyHint()}</div>
               </div>
             {/if}
+            <div class="row g-3 mb-3">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold" for="tplFinalEventType">
+                  {m.ingestTemplateFinalEventType()}
+                </label>
+                <input
+                  id="tplFinalEventType"
+                  type="text"
+                  class="form-control font-monospace"
+                  bind:value={formFinalEventType}
+                  disabled={formLoading}
+                  placeholder="e.g. motion.detected"
+                />
+                <div class="form-text">{m.ingestTemplateFinalEventTypeHint()}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="tplPriority">
+                  {m.ingestTemplatePriority()}
+                </label>
+                <input
+                  id="tplPriority"
+                  type="number"
+                  class="form-control"
+                  bind:value={formPriority}
+                  disabled={formLoading}
+                  placeholder="0"
+                  min="0"
+                />
+                <div class="form-text">{m.ingestTemplatePriorityHint()}</div>
+              </div>
+            </div>
             <div class="form-check form-switch">
               <input id="tplEnabled" type="checkbox" class="form-check-input" bind:checked={formEnabled} disabled={formLoading} />
               <label class="form-check-label" for="tplEnabled">{m.ingestTemplateEnabled()}</label>
@@ -709,151 +840,169 @@
 
           <!-- Tab: Match Rule -->
           {#if formTab === 'match'}
+            <!-- AI tip -->
+            <div class="alert alert-theme border-0 py-2 px-3 mb-2 small d-flex align-items-center gap-2" style="background:var(--bs-theme-rgb, 26 188 156 / 0.08)">
+              <i class="bi bi-stars text-theme fs-6"></i>
+              <span>ใช้ <strong>AI Suggest</strong> หรือ <strong>Prompt</strong> (ปุ่มด้านบน) ให้ AI สร้าง match rules จาก sample payload ให้อัตโนมัติ</span>
+            </div>
+
+            <!-- Field type legend: canonical (source.*) vs raw payload -->
+            <div class="alert alert-secondary border-0 py-2 px-3 mb-4 small">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-info-circle text-info fs-6 mt-1"></i>
+                <div class="flex-grow-1">
+                  <div class="fw-semibold mb-1">{m.ingestTemplateMatchFieldGuide()}</div>
+                  <div class="d-flex flex-wrap gap-3">
+                    <div>
+                      <span class="badge bg-info bg-opacity-25 text-info fw-normal me-1">
+                        <i class="bi bi-stars me-1"></i>canonical
+                      </span>
+                      <span class="text-inverse text-opacity-75">{m.ingestTemplateMatchFieldCanonicalHint()}</span>
+                    </div>
+                    <div>
+                      <span class="badge bg-warning bg-opacity-25 text-warning fw-normal me-1">
+                        <i class="bi bi-box me-1"></i>raw
+                      </span>
+                      <span class="text-inverse text-opacity-75">{m.ingestTemplateMatchFieldRawHint()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Match ALL block -->
             <div class="mb-4">
               <div class="d-flex align-items-center mb-2">
-                <h6 class="mb-0 me-2">{m.ingestTemplateMatchAll()}</h6>
-                <small class="text-inverse text-opacity-50">{m.ingestTemplateMatchAllHint()}</small>
-                <button class="btn btn-xs btn-outline-theme ms-auto" onclick={() => (formMatchAll = addCondition(formMatchAll))}>
-                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddCondition()}
+                <span class="badge bg-success me-2 px-2 py-1" style="font-size:11px">AND</span>
+                <span class="fw-semibold small">ต้องตรงทุกเงื่อนไข</span>
+                <small class="text-inverse text-opacity-50 ms-2 d-none d-md-inline">{m.ingestTemplateMatchAllHint()}</small>
+                <button class="btn btn-xs btn-outline-success ms-auto" onclick={() => (formMatchAll = addCondition(formMatchAll))}>
+                  <i class="bi bi-plus me-1"></i>เพิ่มเงื่อนไข
                 </button>
               </div>
-              {#each formMatchAll as cond, i}
-                <div class="row g-2 mb-2 align-items-center">
-                  <div class="col-md-4">
-                    {#if mappingSourcePaths.length > 0}
-                      <select class="form-select form-select-sm font-monospace" bind:value={cond.field} disabled={formLoading}>
-                        <option value="">— {m.ingestTemplateConditionField()} —</option>
-                        {#each mappingSourcePaths as sp}
-                          <option value={sp}>{sp}</option>
-                        {/each}
-                      </select>
-                    {:else}
-                      <input type="text" class="form-control form-control-sm font-monospace"
-                        placeholder={m.ingestTemplateConditionFieldPlaceholder()}
-                        bind:value={cond.field} disabled={formLoading} />
-                    {/if}
-                  </div>
-                  <div class="col-md-3">
-                    <select class="form-select form-select-sm" bind:value={cond.operator} disabled={formLoading}>
-                      {#each OPERATORS as op}
-                        <option value={op}>{op}</option>
-                      {/each}
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <input type="text" class="form-control form-control-sm"
-                      placeholder="value1, value2"
-                      value={cond.values.join(', ')}
-                      oninput={(e) => { formMatchAll = formMatchAll.map((c, idx) => idx === i ? updateConditionValues(c, (e.target as HTMLInputElement).value) : c) }}
-                      disabled={formLoading} />
-                  </div>
-                  <div class="col-md-1">
-                    <button class="btn btn-sm btn-outline-danger" aria-label={m.actionDelete()} onclick={() => (formMatchAll = removeCondition(formMatchAll, i))}>
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </div>
-              {/each}
+
               {#if formMatchAll.length === 0}
-                <p class="text-inverse text-opacity-50 small">{m.ingestTemplateNoConditions()}</p>
-              {/if}
-            </div>
-
-            <div>
-              <div class="d-flex align-items-center mb-2">
-                <h6 class="mb-0 me-2">{m.ingestTemplateMatchAny()}</h6>
-                <small class="text-inverse text-opacity-50">{m.ingestTemplateMatchAnyHint()}</small>
-                <button class="btn btn-xs btn-outline-theme ms-auto" onclick={() => (formMatchAny = addCondition(formMatchAny))}>
-                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddCondition()}
-                </button>
-              </div>
-              {#each formMatchAny as cond, i}
-                <div class="row g-2 mb-2 align-items-center">
-                  <div class="col-md-4">
-                    {#if mappingSourcePaths.length > 0}
-                      <select class="form-select form-select-sm font-monospace" bind:value={cond.field} disabled={formLoading}>
-                        <option value="">— {m.ingestTemplateConditionField()} —</option>
-                        {#each mappingSourcePaths as sp}
-                          <option value={sp}>{sp}</option>
-                        {/each}
-                      </select>
-                    {:else}
-                      <input type="text" class="form-control form-control-sm font-monospace"
-                        placeholder={m.ingestTemplateConditionFieldPlaceholder()}
+                <div class="border border-dashed rounded px-3 py-3 text-center text-inverse text-opacity-40 small">
+                  ยังไม่มีเงื่อนไข — กด <strong>เพิ่มเงื่อนไข</strong> หรือใช้ AI Suggest
+                </div>
+              {:else}
+                {#each formMatchAll as cond, i}
+                  {#if i > 0}
+                    <div class="d-flex align-items-center my-1 px-1">
+                      <span class="badge bg-success bg-opacity-25 text-success" style="font-size:10px">AND</span>
+                    </div>
+                  {/if}
+                  <div class="d-flex gap-2 align-items-center p-2 rounded mb-1" style="border-left: 3px solid var(--bs-success); background:var(--bs-success-bg-subtle, rgba(25,135,84,0.06))">
+                    <div style="min-width:0; flex:2">
+                      <input type="text" list="match-fields-list" class="form-control form-control-sm font-monospace"
+                        placeholder="source.deviceId หรือ raw.fieldName"
                         bind:value={cond.field} disabled={formLoading} />
+                    </div>
+                    {#if cond.field.trim()}
+                      {#if isCanonicalField(cond.field)}
+                        <span class="badge bg-info bg-opacity-25 text-info fw-normal" title={m.ingestTemplateMatchFieldCanonicalHint()}>
+                          <i class="bi bi-stars me-1"></i>canonical
+                        </span>
+                      {:else}
+                        <span class="badge bg-warning bg-opacity-25 text-warning fw-normal" title={m.ingestTemplateMatchFieldRawHint()}>
+                          <i class="bi bi-box me-1"></i>raw
+                        </span>
+                      {/if}
                     {/if}
-                  </div>
-                  <div class="col-md-3">
-                    <select class="form-select form-select-sm" bind:value={cond.operator} disabled={formLoading}>
-                      {#each OPERATORS as op}
-                        <option value={op}>{op}</option>
-                      {/each}
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <input type="text" class="form-control form-control-sm"
-                      placeholder="value1, value2"
-                      value={cond.values.join(', ')}
-                      oninput={(e) => { formMatchAny = formMatchAny.map((c, idx) => idx === i ? updateConditionValues(c, (e.target as HTMLInputElement).value) : c) }}
-                      disabled={formLoading} />
-                  </div>
-                  <div class="col-md-1">
-                    <button class="btn btn-sm btn-outline-danger" aria-label={m.actionDelete()} onclick={() => (formMatchAny = removeCondition(formMatchAny, i))}>
-                      <i class="bi bi-trash"></i>
+                    <span class="text-inverse text-opacity-40 small px-1">=</span>
+                    <div style="min-width:0; flex:2">
+                      <input type="text" class="form-control form-control-sm"
+                        placeholder="value (คั่นด้วย , สำหรับหลายค่า)"
+                        value={cond.values.join(', ')}
+                        oninput={(e) => onMatchAllValueInput(e, i)}
+                        disabled={formLoading} />
+                    </div>
+                    {#if cond.operator !== 'eq' && cond.operator !== 'in'}
+                      <span class="badge bg-secondary fw-normal" title="operator: {cond.operator}">{cond.operator}</span>
+                    {/if}
+                    <button class="btn btn-sm btn-link text-danger p-0 px-1" aria-label={m.actionDelete()} onclick={() => (formMatchAll = removeCondition(formMatchAll, i))}>
+                      <i class="bi bi-x-lg"></i>
                     </button>
                   </div>
-                </div>
-              {/each}
-              {#if formMatchAny.length === 0}
-                <p class="text-inverse text-opacity-50 small">{m.ingestTemplateNoConditions()}</p>
+                {/each}
               {/if}
             </div>
-          {/if}
 
-          <!-- Tab: Field Mapping -->
-          {#if formTab === 'mapping'}
-            <div class="d-flex align-items-center mb-3">
-              <h6 class="mb-0">{m.ingestTemplateMappings()}</h6>
-              <button class="btn btn-xs btn-outline-theme ms-auto" onclick={addMapping}>
-                <i class="bi bi-plus me-1"></i>{m.actionAdd()}
-              </button>
+            <!-- Match ANY block -->
+            <div class="mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <span class="badge bg-warning text-dark me-2 px-2 py-1" style="font-size:11px">OR</span>
+                <span class="fw-semibold small">ตรงอย่างน้อยหนึ่งเงื่อนไข</span>
+                <small class="text-inverse text-opacity-50 ms-2 d-none d-md-inline">{m.ingestTemplateMatchAnyHint()}</small>
+                <button class="btn btn-xs btn-outline-warning ms-auto" onclick={() => (formMatchAny = addCondition(formMatchAny))}>
+                  <i class="bi bi-plus me-1"></i>เพิ่มเงื่อนไข
+                </button>
+              </div>
+
+              {#if formMatchAny.length === 0}
+                <div class="border border-dashed rounded px-3 py-3 text-center text-inverse text-opacity-40 small">
+                  ยังไม่มีเงื่อนไข (optional)
+                </div>
+              {:else}
+                {#each formMatchAny as cond, i}
+                  {#if i > 0}
+                    <div class="d-flex align-items-center my-1 px-1">
+                      <span class="badge bg-warning bg-opacity-25 text-warning" style="font-size:10px">OR</span>
+                    </div>
+                  {/if}
+                  <div class="d-flex gap-2 align-items-center p-2 rounded mb-1" style="border-left: 3px solid var(--bs-warning); background:var(--bs-warning-bg-subtle, rgba(255,193,7,0.06))">
+                    <div style="min-width:0; flex:2">
+                      <input type="text" list="match-fields-list" class="form-control form-control-sm font-monospace"
+                        placeholder="source.deviceId หรือ raw.fieldName"
+                        bind:value={cond.field} disabled={formLoading} />
+                    </div>
+                    {#if cond.field.trim()}
+                      {#if isCanonicalField(cond.field)}
+                        <span class="badge bg-info bg-opacity-25 text-info fw-normal" title={m.ingestTemplateMatchFieldCanonicalHint()}>
+                          <i class="bi bi-stars me-1"></i>canonical
+                        </span>
+                      {:else}
+                        <span class="badge bg-warning bg-opacity-25 text-warning fw-normal" title={m.ingestTemplateMatchFieldRawHint()}>
+                          <i class="bi bi-box me-1"></i>raw
+                        </span>
+                      {/if}
+                    {/if}
+                    <span class="text-inverse text-opacity-40 small px-1">=</span>
+                    <div style="min-width:0; flex:2">
+                      <input type="text" class="form-control form-control-sm"
+                        placeholder="value (คั่นด้วย , สำหรับหลายค่า)"
+                        value={cond.values.join(', ')}
+                        oninput={(e) => onMatchAnyValueInput(e, i)}
+                        disabled={formLoading} />
+                    </div>
+                    {#if cond.operator !== 'eq' && cond.operator !== 'in'}
+                      <span class="badge bg-secondary fw-normal" title="operator: {cond.operator}">{cond.operator}</span>
+                    {/if}
+                    <button class="btn btn-sm btn-link text-danger p-0 px-1" aria-label={m.actionDelete()} onclick={() => (formMatchAny = removeCondition(formMatchAny, i))}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                {/each}
+              {/if}
             </div>
-            {#if formMappings.length === 0}
-              <p class="text-inverse text-opacity-50 small">{m.ingestNoMappings()}</p>
-            {:else}
-              <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>{m.ingestMappingSourcePath()}</th>
-                      <th>{m.ingestMappingTargetPath()}</th>
-                      <th class="text-center">{m.ingestMappingRequired()}</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {#each formMappings as mapping, i}
-                      <tr>
-                        <td>
-                          <input type="text" class="form-control form-control-sm font-monospace"
-                            bind:value={mapping.sourcePath} disabled={formLoading} placeholder="raw.type" />
-                        </td>
-                        <td>
-                          <input type="text" class="form-control form-control-sm font-monospace"
-                            bind:value={mapping.targetPath} disabled={formLoading} placeholder="eventType" />
-                        </td>
-                        <td class="text-center">
-                          <input type="checkbox" class="form-check-input" bind:checked={mapping.required} disabled={formLoading} />
-                        </td>
-                        <td>
-                          <button class="btn btn-sm btn-outline-danger" aria-label={m.actionDelete()} onclick={() => removeMapping(i)}>
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    {/each}
-                  </tbody>
-                </table>
+
+            <!-- Autocomplete list for match rule field inputs.
+                 Canonical fields (source.*) ขึ้นก่อน — ตรงกับสิ่งที่ user เห็นใน UI
+                 Raw payload fields (จาก template mappings) ตามมา — สำหรับ vendor-specific match -->
+            <datalist id="match-fields-list">
+              {#each CANONICAL_FIELDS as cf}
+                <option value={cf.value} label="✨ canonical · sample: {cf.sample}"></option>
+              {/each}
+              {#each mappingSourcePaths as sp}
+                <option value={sp} label="📦 raw payload"></option>
+              {/each}
+            </datalist>
+
+            <!-- Rule preview -->
+            {#if rulePreview}
+              <div class="border rounded px-3 py-2 small" style="background:var(--bs-tertiary-bg)">
+                <span class="text-inverse text-opacity-50 me-2">Preview:</span>
+                <code class="text-theme">{rulePreview}</code>
               </div>
             {/if}
           {/if}
@@ -936,7 +1085,8 @@
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
-                    <div class="row g-2">
+                    <!-- Channel / Locale / Key row -->
+                    <div class="row g-2 mb-3">
                       <div class="col-md-4">
                         <label class="form-label small mb-0" for="mt-channel-{i}">{m.ingestTemplateMessageChannel()}</label>
                         <select id="mt-channel-{i}" class="form-select form-select-sm" bind:value={mt.channelType} disabled={formLoading}>
@@ -957,22 +1107,228 @@
                         <input id="mt-key-{i}" type="text" class="form-control form-control-sm font-monospace" bind:value={mt.key} disabled={formLoading} placeholder="target-id" />
                       </div>
                     </div>
-                    <div class="mt-2">
-                      <label class="form-label small mb-0" for="mt-title-{i}">{m.ingestTemplateMessageTitle()}</label>
-                      <input id="mt-title-{i}" type="text" class="form-control form-control-sm" bind:value={mt.title} disabled={formLoading}
-                        placeholder="{'{{.eventType}} - {{.deviceName}}'}" />
-                    </div>
-                    <div class="mt-2">
-                      <label class="form-label small mb-0" for="mt-body-{i}">{m.ingestTemplateMessageBody()}</label>
-                      <textarea id="mt-body-{i}" class="form-control form-control-sm font-monospace" rows="4" bind:value={mt.body} disabled={formLoading}
-                        placeholder="{'{{.sourceFamily}}\n{{.deviceName}}\n{{.lat}}, {{.lng}}\n{{.eventType}}'}"></textarea>
-                      <div class="form-text">
-                        {m.ingestTemplateMessageTemplatePlaceholders()}:
-                        {#each SUGGESTED_MSG_FIELDS as f, fi}
-                          <code class="me-1">{`{{.${f}}}`}</code>
-                        {/each}
+
+                    {#if mt.channelType === 'line'}
+                      <!-- LINE Card Editor -->
+                      <div class="row g-3">
+                        <!-- Left: Card Preview -->
+                        <div class="col-md-5">
+                          <div class="border rounded overflow-hidden" style="max-width:260px; font-size:12px; background:#fff; color:#111">
+                            <!-- Image area -->
+                            <div class="position-relative d-flex align-items-center justify-content-center" style="background:#5a8fa0; height:130px">
+                              {#if getE(mt,'tagEnabled','true') === 'true'}
+                                <span class="position-absolute top-0 start-0 m-2 px-2 py-1 rounded fw-semibold" style="background:#ff6b35; color:#fff; font-size:10px">{'{{.eventAction}}'}</span>
+                              {/if}
+                              {#if getE(mt,'imageType','fullframe') === 'fullframe'}
+                                <span class="text-white opacity-50" style="font-size:48px; font-weight:bold">A</span>
+                              {:else}
+                                <div class="d-flex gap-1 align-items-center">
+                                  <div class="rounded" style="width:60px; height:80px; background:rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center">
+                                    <span class="text-white opacity-75" style="font-size:24px; font-weight:bold">A</span>
+                                  </div>
+                                  <div class="rounded" style="width:60px; height:80px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center">
+                                    <span class="text-white opacity-40 small">Default</span>
+                                  </div>
+                                </div>
+                              {/if}
+                            </div>
+                            <!-- Card content -->
+                            <div class="p-2">
+                              <div class="fw-bold" style="font-size:13px">{mt.title || 'Enter header'}</div>
+                              {#if getE(mt,'addressEnabled','true') === 'true'}
+                                <div class="text-secondary mt-1" style="font-size:11px"><i class="bi bi-geo-alt-fill me-1"></i>{'{{.lat}}, {{.lng}}'}</div>
+                              {/if}
+                              {#if getE(mt,'additionalInfoEnabled','true') === 'true'}
+                                <div class="text-secondary" style="font-size:11px"><i class="bi bi-clock me-1"></i>{'{{.createdAt}}'}</div>
+                              {/if}
+                              {#if getE(mt,'action1Enabled','true') === 'true'}
+                                <div class="text-center border-top mt-1 pt-1" style="color:#06c755; font-size:12px">{getE(mt,'action1Label','') || 'Enter action label'}</div>
+                              {/if}
+                              {#if getE(mt,'action2Enabled','false') === 'true'}
+                                <div class="text-center border-top mt-1 pt-1" style="color:#06c755; font-size:12px">{getE(mt,'action2Label','') || 'Enter action label'}</div>
+                              {/if}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Right: Form Fields -->
+                        <div class="col-md-7">
+                          <!-- Images -->
+                          <div class="mb-3">
+                            <div class="form-label small fw-semibold mb-1">Images</div>
+                            <div class="d-flex gap-3">
+                              <div class="form-check">
+                                <input type="radio" class="form-check-input" name="imgType-{i}" id="imgFull-{i}"
+                                  checked={getE(mt,'imageType','fullframe') === 'fullframe'}
+                                  onchange={() => updateMsgTemplate(i, m => setE(m,'imageType','fullframe'))}
+                                  disabled={formLoading} />
+                                <label class="form-check-label small" for="imgFull-{i}">Full frame</label>
+                              </div>
+                              <div class="form-check">
+                                <input type="radio" class="form-check-input" name="imgType-{i}" id="imgCrop-{i}"
+                                  checked={getE(mt,'imageType','fullframe') === 'crop'}
+                                  onchange={() => updateMsgTemplate(i, m => setE(m,'imageType','crop'))}
+                                  disabled={formLoading} />
+                                <label class="form-check-label small" for="imgCrop-{i}">Crop</label>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Tag -->
+                          <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="tag-{i}"
+                                checked={getE(mt,'tagEnabled','true') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'tagEnabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="tag-{i}">Tag</label>
+                            </div>
+                            {#if getE(mt,'tagEnabled','true') === 'true'}
+                              <div class="mt-1">
+                                <span class="form-control form-control-sm text-muted small" style="cursor:default; background:var(--bs-tertiary-bg)">{'{{.eventAction}}'}</span>
+                              </div>
+                            {/if}
+                          </div>
+
+                          <!-- Header -->
+                          <div class="mb-3">
+                            <label class="form-label small fw-semibold mb-1" for="mt-header-{i}">Header <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                              <input id="mt-header-{i}" type="text" class="form-control"
+                                bind:value={mt.title} disabled={formLoading}
+                                placeholder="{'{{.eventCategory}}'}" maxlength="20" />
+                              <span class="input-group-text text-muted">{(mt.title?.length ?? 0)}/20</span>
+                            </div>
+                          </div>
+
+                          <!-- Address -->
+                          <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="addr-{i}"
+                                checked={getE(mt,'addressEnabled','true') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'addressEnabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="addr-{i}">Address</label>
+                            </div>
+                            {#if getE(mt,'addressEnabled','true') === 'true'}
+                              <div class="mt-1 d-flex gap-2 align-items-center">
+                                <span class="form-control form-control-sm text-muted small" style="cursor:default; background:var(--bs-tertiary-bg)">{'{{.lat}}, {{.lng}}'}</span>
+                                <span class="badge bg-secondary text-nowrap">Location info</span>
+                              </div>
+                            {/if}
+                          </div>
+
+                          <!-- Additional info -->
+                          <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="addinfo-{i}"
+                                checked={getE(mt,'additionalInfoEnabled','true') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'additionalInfoEnabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="addinfo-{i}">Additional info</label>
+                            </div>
+                            {#if getE(mt,'additionalInfoEnabled','true') === 'true'}
+                              <div class="mt-1 d-flex gap-2 align-items-center">
+                                <select class="form-select form-select-sm" style="max-width:110px"
+                                  value={getE(mt,'additionalInfoType','Hours')}
+                                  onchange={(e) => updateMsgTemplate(i, m => setE(m,'additionalInfoType',(e.target as HTMLSelectElement).value))}
+                                  disabled={formLoading}>
+                                  <option value="Hours">Hours</option>
+                                  <option value="Days">Days</option>
+                                  <option value="Custom">Custom</option>
+                                </select>
+                                <span class="form-control form-control-sm text-muted small" style="cursor:default; background:var(--bs-tertiary-bg)">{'{{.createdAt}}'}</span>
+                              </div>
+                            {/if}
+                          </div>
+
+                          <!-- Action 1 -->
+                          <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="act1-{i}"
+                                checked={getE(mt,'action1Enabled','true') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'action1Enabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="act1-{i}">Action 1</label>
+                            </div>
+                            {#if getE(mt,'action1Enabled','true') === 'true'}
+                              <div class="mt-2">
+                                <div class="input-group input-group-sm mb-1">
+                                  <input type="text" class="form-control" placeholder="Enter action label"
+                                    value={getE(mt,'action1Label','')}
+                                    oninput={(e) => updateMsgTemplate(i, m => setE(m,'action1Label',(e.target as HTMLInputElement).value))}
+                                    maxlength="15" disabled={formLoading} />
+                                  <span class="input-group-text text-muted">{getE(mt,'action1Label','').length}/15</span>
+                                </div>
+                                <div class="row g-1">
+                                  <div class="col-5">
+                                    <select class="form-select form-select-sm" disabled><option>URL</option></select>
+                                  </div>
+                                  <div class="col-7">
+                                    <input type="url" class="form-control form-control-sm" placeholder="https://"
+                                      value={getE(mt,'action1Url','')}
+                                      oninput={(e) => updateMsgTemplate(i, m => setE(m,'action1Url',(e.target as HTMLInputElement).value))}
+                                      disabled={formLoading} />
+                                  </div>
+                                </div>
+                              </div>
+                            {/if}
+                          </div>
+
+                          <!-- Action 2 -->
+                          <div class="mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="act2-{i}"
+                                checked={getE(mt,'action2Enabled','false') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'action2Enabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="act2-{i}">Action 2</label>
+                            </div>
+                            {#if getE(mt,'action2Enabled','false') === 'true'}
+                              <div class="mt-2">
+                                <div class="input-group input-group-sm mb-1">
+                                  <input type="text" class="form-control" placeholder="Enter action label"
+                                    value={getE(mt,'action2Label','')}
+                                    oninput={(e) => updateMsgTemplate(i, m => setE(m,'action2Label',(e.target as HTMLInputElement).value))}
+                                    maxlength="15" disabled={formLoading} />
+                                  <span class="input-group-text text-muted">{getE(mt,'action2Label','').length}/15</span>
+                                </div>
+                                <div class="row g-1">
+                                  <div class="col-5">
+                                    <select class="form-select form-select-sm" disabled><option>URL</option></select>
+                                  </div>
+                                  <div class="col-7">
+                                    <input type="url" class="form-control form-control-sm" placeholder="https://"
+                                      value={getE(mt,'action2Url','')}
+                                      oninput={(e) => updateMsgTemplate(i, m => setE(m,'action2Url',(e.target as HTMLInputElement).value))}
+                                      disabled={formLoading} />
+                                  </div>
+                                </div>
+                              </div>
+                            {/if}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+
+                    {:else}
+                      <!-- Generic editor for Discord / Telegram -->
+                      <div class="mt-2">
+                        <label class="form-label small mb-0" for="mt-title-{i}">{m.ingestTemplateMessageTitle()}</label>
+                        <input id="mt-title-{i}" type="text" class="form-control form-control-sm" bind:value={mt.title} disabled={formLoading}
+                          placeholder="{'{{.eventType}} - {{.deviceName}}'}" />
+                      </div>
+                      <div class="mt-2">
+                        <label class="form-label small mb-0" for="mt-body-{i}">{m.ingestTemplateMessageBody()}</label>
+                        <textarea id="mt-body-{i}" class="form-control form-control-sm font-monospace" rows="4" bind:value={mt.body} disabled={formLoading}
+                          placeholder="{'{{.sourceFamily}}\n{{.deviceName}}\n{{.lat}}, {{.lng}}\n{{.eventType}}'}"></textarea>
+                        <div class="form-text">
+                          {m.ingestTemplateMessageTemplatePlaceholders()}:
+                          {#each SUGGESTED_MSG_FIELDS as f}
+                            <code class="me-1">{`{{.${f}}}`}</code>
+                          {/each}
+                        </div>
+                      </div>
+                    {/if}
                   </div>
                 </div>
               {/each}
@@ -1065,16 +1421,18 @@
                 />
               {/if}
             </div>
-            <!-- Sample Payload -->
+            <!-- Event description (natural language) -->
             <div class="mb-1">
-              <label class="form-label fw-semibold">{m.aiSuggestSamplePayload()}</label>
+              <label class="form-label fw-semibold" for="ai-suggest-desc">อธิบาย event ที่ต้องการ <span class="text-inverse text-opacity-50 fw-normal">(optional)</span></label>
               <textarea
-                class="form-control font-monospace small"
-                rows="6"
-                placeholder={'{\n  "alarmType": 2,\n  "eventAttribute": { "gender": 1 }\n}'}
+                id="ai-suggest-desc"
+                class="form-control"
+                rows="4"
+                placeholder={'เช่น "ตรวจจับคนเข้าออกประตู จาก AIBOX" หรือ "motion detection เมื่อมีการเคลื่อนไหวในพื้นที่หวงห้าม"'}
                 bind:value={aiSuggestPayload}
                 disabled={aiSuggestLoading}
               ></textarea>
+              <div class="form-text">พิมพ์เป็นภาษาไทยหรืออังกฤษก็ได้ — AI จะสร้าง match rules และ field mappings ให้อัตโนมัติ</div>
             </div>
 
           {:else if aiSuggestStep === 'result' && aiSuggestResult}
@@ -1198,236 +1556,123 @@
 {/if}
 
 <!-- ═══════════════════════════════════════════════════════════
-     Prompt to Draft Modal
+     Prompt Chat Modal
 ════════════════════════════════════════════════════════════ -->
 {#if showPromptModal}
-  <div
-    class="modal d-block"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content bg-inverse-subtle">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="bi bi-magic me-2 text-theme"></i>{m.aiPromptTitle()}
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            onclick={() => (showPromptModal = false)}
-            disabled={promptLoading || refineLoading || dryRunLoading || promptSaveLoading}
-          ></button>
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px">
+      <div class="modal-content bg-inverse-subtle d-flex flex-column" style="height:min(600px,85vh)">
+
+        <!-- Header -->
+        <div class="modal-header border-0 pb-2">
+          <h6 class="modal-title fw-semibold">
+            <i class="bi bi-stars me-2 text-theme"></i>สร้าง Template ด้วย AI
+          </h6>
+          <button type="button" class="btn-close" aria-label="ปิด"
+            onclick={() => (showPromptModal = false)} disabled={chatWaiting || promptSaveLoading}></button>
         </div>
 
-        <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <!-- Chat messages -->
+        <div class="flex-grow-1 overflow-y-auto px-3 py-2 d-flex flex-column gap-3">
           {#if promptError}
-            <div class="alert alert-danger small py-2 mb-3">
-              <button type="button" class="btn-close btn-close-sm float-end" onclick={() => (promptError = null)}></button>
+            <div class="alert alert-danger small py-2">
+              <button type="button" class="btn-close btn-close-sm float-end" onclick={() => (promptError = null)} aria-label="ปิด"></button>
               {promptError}
             </div>
           {/if}
 
-          {#if promptStep === 'input'}
-            <div class="mb-3">
-              <label class="form-label fw-semibold">{m.aiPromptLabel()}</label>
-              <textarea
-                class="form-control"
-                rows="5"
-                placeholder={m.aiPromptPlaceholder()}
-                bind:value={promptText}
-                disabled={promptLoading}
-              ></textarea>
-            </div>
-
-          {:else if promptStep === 'draft' && promptDraft}
-            <!-- Draft status header -->
-            <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
-              <span class="badge {draftStatusBadge(promptDraft.status)}">
-                {draftStatusLabel(promptDraft.status)}
-              </span>
-              {#if promptDraft.sourceFamily}
-                <span class="badge bg-secondary fw-normal">{promptDraft.sourceFamily}</span>
-              {/if}
-              {#if promptSaved}
-                <span class="badge bg-success">
-                  <i class="bi bi-check-circle me-1"></i>{m.aiPromptStatusSaved()}
-                </span>
-              {/if}
-            </div>
-
-            <!-- Prompt as parsed -->
-            {#if promptDraft.redactedPrompt}
-              <div class="mb-3 p-2 rounded bg-inverse-subtle border small text-inverse text-opacity-75">
-                <i class="bi bi-chat-quote me-1 text-theme"></i>{promptDraft.redactedPrompt}
-              </div>
-            {/if}
-
-            <!-- Warnings -->
-            {#if promptDraft.warnings?.length}
-              <div class="alert alert-warning small py-2 mb-3">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <ul class="mb-0 mt-1 ps-3">
-                  {#each promptDraft.warnings as w}<li>{w}</li>{/each}
-                </ul>
-              </div>
-            {/if}
-
-            <!-- Match Conditions -->
-            <div class="mb-3">
-              <div class="fw-semibold small mb-2">{m.aiSuggestMatchRules()}</div>
-              {#if promptDraft.matchConditions?.length}
-                <div class="table-responsive">
-                  <table class="table table-sm align-middle mb-0 small">
-                    <thead><tr><th>Field</th><th>Operator</th><th>Value</th></tr></thead>
-                    <tbody>
-                      {#each promptDraft.matchConditions as cond}
-                        <tr>
-                          <td class="font-monospace">{cond.field}</td>
-                          <td>{cond.operator}</td>
-                          <td class="font-monospace">{String(cond.value ?? '—')}</td>
-                        </tr>
-                      {/each}
-                    </tbody>
-                  </table>
+          {#each chatMsgs as msg}
+            {#if msg.role === 'ai'}
+              <div class="d-flex gap-2 align-items-start">
+                <div class="rounded-circle bg-theme d-flex align-items-center justify-content-center flex-shrink-0"
+                  style="width:28px;height:28px;margin-top:2px">
+                  <i class="bi bi-stars text-white" style="font-size:11px"></i>
                 </div>
-              {:else}
-                <p class="text-muted small mb-0">No conditions detected</p>
-              {/if}
-            </div>
-
-            <!-- Missing Fields — show answer form -->
-            {#if promptDraft.missingFields?.length}
-              <div class="mb-3 border-top pt-3">
-                <div class="fw-semibold small mb-2 text-warning">
-                  <i class="bi bi-exclamation-circle me-1"></i>
-                  Missing information — please fill in the fields below then click Refine
-                </div>
-                {#each promptDraft.missingFields as hint}
-                  <div class="mb-2">
-                    <label class="form-label small mb-1">
-                      <code class="text-theme">{hint.field}</code>
-                      <span class="text-muted ms-1">— {hint.reason}</span>
-                    </label>
-                    <input
-                      type="text"
-                      class="form-control form-control-sm"
-                      placeholder="Enter value for {hint.field}..."
-                      bind:value={refineAnswers[hint.field]}
-                      disabled={refineLoading}
-                    />
+                <div style="max-width:88%">
+                  <div class="rounded-3 rounded-top-start-0 px-3 py-2 small lh-base"
+                    style="background:var(--bs-tertiary-bg)">
+                    {#each msg.content.split('\n') as line, li}
+                      {#if li > 0}<br>{/if}{line}
+                    {/each}
                   </div>
-                {/each}
-              </div>
-            {/if}
-
-            <!-- Review Summary -->
-            {#if promptDraft.reviewSummary?.length}
-              <div class="mb-3">
-                <div class="fw-semibold small mb-1">Review</div>
-                <ul class="small mb-0 ps-3">
-                  {#each promptDraft.reviewSummary as line}<li>{line}</li>{/each}
-                </ul>
-              </div>
-            {/if}
-
-            <!-- Dry Run section (show only when ready) -->
-            {#if promptDraft.status === 'ready' || promptDraft.status === 'reviewed'}
-              <div class="border-top pt-3 mb-3">
-                <div class="fw-semibold small mb-2">{m.aiPromptDryRun()}</div>
-                <textarea
-                  class="form-control form-control-sm font-monospace mb-2"
-                  rows="3"
-                  placeholder={`{"type": "generalDetect", "value": 1}`}
-                  bind:value={dryRunPayload}
-                  disabled={dryRunLoading}
-                ></textarea>
-                <button
-                  class="btn btn-sm btn-outline-secondary"
-                  onclick={handleDryRun}
-                  disabled={dryRunLoading || !dryRunPayload.trim()}
-                >
-                  {#if dryRunLoading}
-                    <span class="spinner-border spinner-border-sm me-1"></span>{m.aiPromptDryRunning()}
-                  {:else}
-                    <i class="bi bi-play me-1"></i>{m.aiPromptDryRun()}
+                  {#if msg.options?.length}
+                    <div class="d-flex flex-wrap gap-1 mt-2">
+                      {#each msg.options as opt}
+                        <button class="btn btn-sm btn-outline-theme py-1 px-2"
+                          style="font-size:12px"
+                          onclick={() => sendChatMsg(opt.value)}
+                          disabled={chatWaiting || promptSaved}>
+                          {opt.label}
+                        </button>
+                      {/each}
+                    </div>
                   {/if}
-                </button>
+                </div>
+              </div>
+            {:else}
+              <div class="d-flex justify-content-end">
+                <div class="rounded-3 rounded-top-end-0 px-3 py-2 small lh-base bg-theme text-white"
+                  style="max-width:80%">
+                  {msg.content}
+                </div>
               </div>
             {/if}
+          {/each}
 
-            <!-- Dry Run Result -->
-            {#if dryRunResult}
-              <div class="alert {dryRunResult.matched ? 'alert-success' : 'alert-warning'} small py-2 mb-3">
-                <i class="bi {dryRunResult.matched ? 'bi-check-circle' : 'bi-x-circle'} me-2"></i>
-                {dryRunResult.matched ? m.aiPromptDryRunOk() : m.aiPromptDryRunFail()}
-                {#if dryRunResult.webhookTargetsCount || dryRunResult.lineTargetsCount || dryRunResult.discordTargetsCount}
-                  <span class="ms-2 text-muted">
-                    webhook:{dryRunResult.webhookTargetsCount}
-                    line:{dryRunResult.lineTargetsCount}
-                    discord:{dryRunResult.discordTargetsCount}
-                  </span>
-                {/if}
-                {#if dryRunResult.evaluationDetails?.length}
-                  <ul class="mb-0 mt-1 ps-3">
-                    {#each dryRunResult.evaluationDetails as d}<li>{d}</li>{/each}
-                  </ul>
-                {/if}
-                {#if dryRunResult.incompleteTargets?.length}
-                  <div class="mt-1 text-danger small">Incomplete targets: {dryRunResult.incompleteTargets.join(', ')}</div>
-                {/if}
+          {#if chatWaiting}
+            <div class="d-flex gap-2 align-items-center">
+              <div class="rounded-circle bg-theme d-flex align-items-center justify-content-center flex-shrink-0"
+                style="width:28px;height:28px">
+                <i class="bi bi-stars text-white" style="font-size:11px"></i>
               </div>
-            {/if}
+              <div class="rounded-3 px-3 py-2 small" style="background:var(--bs-tertiary-bg)">
+                <span class="spinner-border spinner-border-sm me-1" style="width:10px;height:10px"></span>
+                กำลังคิด...
+              </div>
+            </div>
+          {/if}
+
+          {#if promptSaved}
+            <div class="alert alert-success py-2 small text-center mb-0">
+              <i class="bi bi-check-circle me-1"></i>บันทึก Template เรียบร้อยแล้วครับ
+            </div>
           {/if}
         </div>
 
-        <div class="modal-footer flex-wrap gap-2">
-          <button
-            class="btn btn-secondary"
-            onclick={() => (showPromptModal = false)}
-            disabled={promptLoading || refineLoading || dryRunLoading || promptSaveLoading}
-          >{m.actionCancel()}</button>
-
-          {#if promptStep === 'input'}
-            <button
-              class="btn btn-theme ms-auto"
-              onclick={handleGenerateDraft}
-              disabled={promptLoading || !promptText.trim()}
-            >
-              {#if promptLoading}
-                <span class="spinner-border spinner-border-sm me-1"></span>
-                {m.aiPromptGenerating()}
-              {:else}
-                <i class="bi bi-magic me-1"></i>{m.aiPromptGenerate()}
-              {/if}
-            </button>
-
-          {:else if promptDraft && !promptSaved}
-            {#if promptDraft.missingFields?.length}
-              <button
-                class="btn btn-outline-theme btn-sm"
-                onclick={handleRefine}
-                disabled={refineLoading || Object.values(refineAnswers).every(v => !v?.trim())}
-              >
-                {#if refineLoading}<span class="spinner-border spinner-border-sm me-1"></span>{/if}
-                <i class="bi bi-pencil me-1"></i>{m.aiPromptRefine()}
-              </button>
-            {/if}
-            <button
-              class="btn btn-theme ms-auto"
-              onclick={handleSaveDraft}
-              disabled={promptSaveLoading || refineLoading || dryRunLoading || promptDraft.status === 'incomplete'}
-            >
+        <!-- Save button -->
+        {#if promptDraft && (promptDraft.status === 'ready' || promptDraft.status === 'reviewed') && !promptSaved}
+          <div class="px-3 py-2 border-top">
+            <button class="btn btn-theme w-100 btn-sm" onclick={handleSaveDraft} disabled={promptSaveLoading}>
               {#if promptSaveLoading}
-                <span class="spinner-border spinner-border-sm me-1"></span>
-                {m.aiPromptSaving()}
+                <span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...
               {:else}
-                <i class="bi bi-floppy me-1"></i>{m.aiPromptSave()}
+                <i class="bi bi-floppy me-1"></i>บันทึก Template
               {/if}
             </button>
-          {/if}
+          </div>
+        {/if}
+
+        <!-- Input area -->
+        <div class="px-3 pt-2 pb-3 border-top">
+          <div class="d-flex gap-2 align-items-end">
+            <textarea
+              class="form-control form-control-sm"
+              rows="2"
+              placeholder="เช่น 'ส่งสิ่งที่ไม่ใช่พาหนะ ผ่าน LINE'"
+              bind:value={chatInput}
+              disabled={chatWaiting || promptSaved}
+              style="resize:none; font-size:13px"
+              onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMsg() } }}
+            ></textarea>
+            <button class="btn btn-theme btn-sm px-3" aria-label="ส่ง"
+              onclick={() => sendChatMsg()}
+              disabled={chatWaiting || !chatInput.trim() || promptSaved}>
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </div>
+          <div class="text-inverse text-opacity-30 mt-1" style="font-size:10px">Enter เพื่อส่ง · Shift+Enter ขึ้นบรรทัดใหม่</div>
         </div>
+
       </div>
     </div>
   </div>

@@ -22,10 +22,14 @@ spec:
           image: docker.io/oven/bun:1.2-debian
           imagePullPolicy: IfNotPresent
           workingDir: /app
-          command: ["sleep", "infinity"]
+          command:
+            - /bin/bash
+            - -c
+            - |
+              apt-get update && apt-get install -y procps && sleep infinity
           ports:
             - name: http
-              containerPort: 3001
+              containerPort: 3000
           volumeMounts:
             - name: src-code
               mountPath: /app
@@ -34,7 +38,7 @@ spec:
       volumes:
         - name: src-code
           hostPath:
-            path: /home/aisom/gateway-portal
+            path: /home/phibek/gateway-portal
             type: Directory
 ---
 apiVersion: v1
@@ -48,5 +52,5 @@ spec:
   ports:
     - name: http
       port: 3000
-      targetPort: 3001
+      targetPort: 3000
       protocol: TCP

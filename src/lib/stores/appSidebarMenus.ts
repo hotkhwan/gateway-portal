@@ -44,16 +44,15 @@ export const appSidebarMenus = writable<SidebarMenu[]>([
 		]
 	},
 
-	// Delivery — targets, templates, DLQ
+	// Delivery — targets, DLQ
 	{
 		kind: 'link',
 		id: 'delivery',
 		icon: 'bi bi-send',
 		textKey: 'navDelivery',
 		children: [
-			{ id: 'deliveryTargets',   url: 'delivery/targets',   textKey: 'deliveryTargetsTitle' },
-			{ id: 'deliveryTemplates', url: 'delivery/templates', textKey: 'deliveryTemplatesTitle' },
-			{ id: 'deliveryDlq',       url: 'delivery/dlq',       textKey: 'deliveryDlqTitle' }
+			{ id: 'deliveryTargets', url: 'delivery/targets', textKey: 'deliveryTargetsTitle' },
+			{ id: 'deliveryDlq',     url: 'delivery/dlq',     textKey: 'deliveryDlqTitle' }
 		]
 	},
 

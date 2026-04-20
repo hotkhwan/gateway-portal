@@ -67,6 +67,7 @@
   "dashboardLocation": "ตำแหน่ง",
   "dashboardTotal": "ทั้งหมด",
   "dashboardNoData": "ไม่มีข้อมูล",
+  "dashboardOther": "อื่นๆ",
   "dashboardTopEventTypes": "10 ประเภทกิจกรรมยอดนิยม",
   "dashboardTopDeviceEvents": "10 อุปกรณ์ยอดนิยม",
 

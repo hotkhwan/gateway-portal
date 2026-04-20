@@ -67,6 +67,7 @@
   "dashboardLocation": "Location",
   "dashboardTotal": "total",
   "dashboardNoData": "No data",
+  "dashboardOther": "Other",
   "dashboardTopEventTypes": "Top 10 Event Types",
   "dashboardTopDeviceEvents": "Top 10 Device Events",
 

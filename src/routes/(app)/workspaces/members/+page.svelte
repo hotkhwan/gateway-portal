@@ -3,7 +3,7 @@
   import { onMount } from 'svelte'
   import { setPageTitle } from '$lib/utils'
   import { m } from '$lib/i18n/messages'
-  import { activeWorkspaceId } from '$lib/stores/activeWorkspace'
+  import { activeWorkspaceId, activeWorkspace } from '$lib/stores/activeWorkspace'
   import {
     listWorkspaceMembers,
     inviteWorkspaceUsers,
@@ -332,7 +332,15 @@
 <!-- Page header -->
 <div class="d-flex align-items-center mb-3">
   <div class="flex-grow-1">
-    <h1 class="page-header mb-0">{m.workspaceMembersTitle()}</h1>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      {#if $activeWorkspace}
+        <span class="badge bg-theme bg-opacity-15 border border-theme text-theme fw-normal px-2 py-1">
+          {$activeWorkspace.name}
+        </span>
+        <i class="bi bi-chevron-right text-inverse text-opacity-25 small"></i>
+      {/if}
+      <h1 class="page-header mb-0">{m.workspaceMembersTitle()}</h1>
+    </div>
   </div>
   <div class="d-flex gap-2">
     <button
@@ -409,7 +417,7 @@
 
     <!-- Table -->
     <div class="table-responsive">
-      <table class="table table-hover table-striped table-striped-theme mb-0">
+      <table class="table table-hover table-bordered align-middle mb-0">
         <thead>
           <tr>
             <th style="width: 40px">
