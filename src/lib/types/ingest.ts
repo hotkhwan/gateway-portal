@@ -82,8 +82,15 @@ export interface MappingTemplate {
 	enabled?: boolean
 	sourceFamily?: string
 	finalEventType?: string
+	// Normalization selector — evaluated at ingest time against raw payload
+	// to decide which template applies for normalization.
 	matchAll?: MatchCondition[]
 	matchAny?: MatchCondition[]
+	// Delivery filter — evaluated at delivery-dispatch time against the
+	// normalized event to decide whether to send to this template's targets.
+	// raw.* fields are not allowed here (backend rejects with 400).
+	deliveryMatchAll?: MatchCondition[]
+	deliveryMatchAny?: MatchCondition[]
 	priority?: number
 	mappings: FieldMapping[]
 	defaultLocale?: string

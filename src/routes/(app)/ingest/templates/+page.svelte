@@ -37,7 +37,7 @@
   let formMode = $state<'create' | 'edit'>('create')
   let formLoading = $state(false)
   let formError = $state<string | null>(null)
-  let formTab = $state<'basic' | 'match' | 'mapping' | 'target'>('basic')
+  let formTab = $state<'basic' | 'match' | 'delivery' | 'mapping' | 'target'>('basic')
   let editingId = $state<string | null>(null)
 
   // Basic tab
@@ -47,9 +47,14 @@
   let formPriority = $state<number | ''>('')
   let formEnabled = $state(true)
 
-  // Match tab
+  // Match tab — Normalization selector (evaluated at ingest time)
   let formMatchAll = $state<MatchCondition[]>([])
   let formMatchAny = $state<MatchCondition[]>([])
+
+  // Delivery tab — Delivery filter (evaluated at delivery-dispatch time).
+  // raw.* fields are NOT allowed here; backend rejects them with 400.
+  let formDeliveryMatchAll = $state<MatchCondition[]>([])
+  let formDeliveryMatchAny = $state<MatchCondition[]>([])
 
   // Field mapping tab
   let formMappings = $state<FieldMapping[]>([])
@@ -98,12 +103,17 @@
     { value: 'source.sourceFamily', sample: '"AIBOX"' },
     { value: 'source.zone',         sample: '"PHK"' },
     { value: 'source.site',         sample: '"BANGKOK"' },
-    { value: 'source.name',         sample: '"หน้าบ้าน"' }
+    { value: 'source.name',         sample: '"หน้าบ้าน"' },
+    { value: 'sourceType',          sample: '"pedestrian.detected"' },
+    { value: 'sourceCategory',      sample: '"pedestrian"' },
+    { value: 'sourceAction',        sample: '"detected"' }
   ]
+  const CANONICAL_FIELD_SET = new Set(CANONICAL_FIELDS.map(f => f.value))
 
-  // ตรวจว่า field path เป็น canonical (source.*) หรือ raw payload
+  // ตรวจว่า field path เป็น canonical (source.* หรืออยู่ใน canonical list) หรือ raw payload
   function isCanonicalField(field: string): boolean {
-    return field.trim().startsWith('source.')
+    const f = field.trim()
+    return f.startsWith('source.') || CANONICAL_FIELD_SET.has(f)
   }
 
   // Derived: sourcePaths from formMappings for match condition field selector
@@ -120,6 +130,22 @@
   function onMatchAnyValueInput(e: Event, i: number) {
     formMatchAny = formMatchAny.map((c, idx) => idx === i ? updateConditionValues(c, (e.target as HTMLInputElement).value) : c)
   }
+  function onDeliveryMatchAllValueInput(e: Event, i: number) {
+    formDeliveryMatchAll = formDeliveryMatchAll.map((c, idx) => idx === i ? updateConditionValues(c, (e.target as HTMLInputElement).value) : c)
+  }
+  function onDeliveryMatchAnyValueInput(e: Event, i: number) {
+    formDeliveryMatchAny = formDeliveryMatchAny.map((c, idx) => idx === i ? updateConditionValues(c, (e.target as HTMLInputElement).value) : c)
+  }
+
+  // Client-side guard: delivery-stage rules cannot reference raw.* fields.
+  // Backend validates this server-side (400 BAD_REQUEST) — this check is purely
+  // FE guidance so users don't submit a rule that can never match at delivery.
+  function isRawField(field: string): boolean {
+    const f = field.trim()
+    return f === 'raw' || f.startsWith('raw.')
+  }
+  let deliveryMatchAllHasRaw = $derived(formDeliveryMatchAll.some(c => isRawField(c.field)))
+  let deliveryMatchAnyHasRaw = $derived(formDeliveryMatchAny.some(c => isRawField(c.field)))
 
   async function load(page = 1) {
     const orgId = $activeWorkspaceId
@@ -152,6 +178,8 @@
     formEnabled = true
     formMatchAll = []
     formMatchAny = []
+    formDeliveryMatchAll = []
+    formDeliveryMatchAny = []
     formMappings = []
     formDeliveryTargets = []
     formMessageTemplates = []
@@ -185,6 +213,8 @@
     formEnabled = template.enabled ?? true
     formMatchAll = (template.matchAll ?? []).map(c => ({ ...c, values: [...c.values] }))
     formMatchAny = (template.matchAny ?? []).map(c => ({ ...c, values: [...c.values] }))
+    formDeliveryMatchAll = (template.deliveryMatchAll ?? []).map(c => ({ ...c, values: [...c.values] }))
+    formDeliveryMatchAny = (template.deliveryMatchAny ?? []).map(c => ({ ...c, values: [...c.values] }))
     formMappings = (template.mappings ?? []).map(m => ({ ...m }))
     formDeliveryTargets = (template.deliveryTargets ?? []).map(t => ({ ...t }))
     formMessageTemplates = (template.messageTemplates ?? []).map(mt => ({ ...mt }))
@@ -200,19 +230,32 @@
     // กรองเงื่อนไขที่ field ว่าง หรือ values ว่างทั้งหมด — ป้องกัน junk เข้า DB
     const cleanMatchAll = formMatchAll.filter(c => c.field.trim() && c.values.some(v => v.trim()))
     const cleanMatchAny = formMatchAny.filter(c => c.field.trim() && c.values.some(v => v.trim()))
+    const cleanDeliveryMatchAll = formDeliveryMatchAll.filter(c => c.field.trim() && c.values.some(v => v.trim()))
+    const cleanDeliveryMatchAny = formDeliveryMatchAny.filter(c => c.field.trim() && c.values.some(v => v.trim()))
     const droppedAll = formMatchAll.length - cleanMatchAll.length
     const droppedAny = formMatchAny.length - cleanMatchAny.length
+    const droppedDAll = formDeliveryMatchAll.length - cleanDeliveryMatchAll.length
+    const droppedDAny = formDeliveryMatchAny.length - cleanDeliveryMatchAny.length
+
+    // Block submit if delivery rules contain raw.* (backend will 400 anyway).
+    if (cleanDeliveryMatchAll.some(c => isRawField(c.field)) || cleanDeliveryMatchAny.some(c => isRawField(c.field))) {
+      formError = m.ingestTemplateDeliveryRawRejected()
+      formTab = 'delivery'
+      return
+    }
 
     // เตือน user ถ้ามีเงื่อนไขที่ถูกตัดออก (กัน save พลาด)
-    if (droppedAll > 0 || droppedAny > 0) {
-      const ok = confirm(m.ingestTemplateMatchEmptyConfirm({
-        count: String(droppedAll + droppedAny)
-      }))
+    const totalDropped = droppedAll + droppedAny + droppedDAll + droppedDAny
+    if (totalDropped > 0) {
+      const ok = confirm(m.ingestTemplateMatchEmptyConfirm({ count: String(totalDropped) }))
       if (!ok) return
     }
 
     // matchAll/matchAny: ส่งเป็น "replace pattern" เสมอ — สิ่งที่ user เห็นในฟอร์ม = สิ่งที่จะถูกบันทึก
     // (ลบเงื่อนไขทิ้งหมดแล้วบันทึก = ส่ง [] = backend จะล้างเงื่อนไข)
+    // deliveryMatchAll/deliveryMatchAny: ต่างชั้นกับ matchAll/matchAny —
+    //   matchAll/Any  = normalization selector (ingest time)
+    //   deliveryMatchAll/Any = delivery filter (dispatch time)
     // finalEventType / priority: ส่งเฉพาะตอนมีค่า เพื่อไม่ทับค่าเดิม (semantics nil = คงเดิม)
     const payload = {
       name: formName.trim(),
@@ -222,6 +265,8 @@
       priority: typeof formPriority === 'number' ? formPriority : undefined,
       matchAll: cleanMatchAll,
       matchAny: cleanMatchAny,
+      deliveryMatchAll: cleanDeliveryMatchAll,
+      deliveryMatchAny: cleanDeliveryMatchAny,
       mappings: formMappings,
       deliveryTargets: formDeliveryTargets.length ? formDeliveryTargets : undefined,
       messageTemplates: formMessageTemplates.length ? formMessageTemplates : undefined
@@ -880,6 +925,7 @@
             {#each [
               { key: 'basic', label: m.ingestTemplateTabBasic() },
               { key: 'match', label: m.ingestTemplateTabMatchRule() },
+              { key: 'delivery', label: m.ingestTemplateTabDeliveryFilter() },
               { key: 'target', label: m.ingestTemplateTabTarget() }
             ] as tab}
               <li class="nav-item">
@@ -953,8 +999,16 @@
             </div>
           {/if}
 
-          <!-- Tab: Match Rule -->
+          <!-- Tab: Match Rule (Normalization Selector) -->
           {#if formTab === 'match'}
+            <!-- Purpose banner: this tab picks which template applies at INGEST time. -->
+            <div class="alert alert-info border-0 py-2 px-3 mb-2 small d-flex align-items-start gap-2">
+              <i class="bi bi-funnel fs-6 mt-1"></i>
+              <div>
+                <div class="fw-semibold">{m.ingestTemplateMatchPurposeTitle()}</div>
+                <div class="text-inverse text-opacity-75">{m.ingestTemplateMatchPurposeHint()}</div>
+              </div>
+            </div>
             <!-- AI tip -->
             <div class="alert alert-theme border-0 py-2 px-3 mb-2 small d-flex align-items-center gap-2" style="background:var(--bs-theme-rgb, 26 188 156 / 0.08)">
               <i class="bi bi-stars text-theme fs-6"></i>
@@ -1129,6 +1183,164 @@
                 <code class="text-theme">{rulePreview}</code>
               </div>
             {/if}
+          {/if}
+
+          <!-- Tab: Delivery Filter (evaluated at delivery-dispatch time) -->
+          {#if formTab === 'delivery'}
+            <!-- Purpose banner: delivery-time gate, distinct from Match Rule -->
+            <div class="alert alert-success border-0 py-2 px-3 mb-2 small d-flex align-items-start gap-2">
+              <i class="bi bi-shield-check fs-6 mt-1"></i>
+              <div>
+                <div class="fw-semibold">{m.ingestTemplateDeliveryPurposeTitle()}</div>
+                <div class="text-inverse text-opacity-75">{m.ingestTemplateDeliveryPurposeHint()}</div>
+              </div>
+            </div>
+
+            <!-- Field scope: canonical only; raw.* rejected at delivery -->
+            <div class="alert alert-secondary border-0 py-2 px-3 mb-4 small">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-info-circle text-info fs-6 mt-1"></i>
+                <div class="flex-grow-1">
+                  <div class="fw-semibold mb-1">{m.ingestTemplateDeliveryFieldGuide()}</div>
+                  <div>
+                    <span class="badge bg-info bg-opacity-25 text-info fw-normal me-1">
+                      <i class="bi bi-stars me-1"></i>canonical
+                    </span>
+                    <span class="text-inverse text-opacity-75">{m.ingestTemplateDeliveryFieldCanonicalHint()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {#if deliveryMatchAllHasRaw || deliveryMatchAnyHasRaw}
+              <div class="alert alert-danger border-0 py-2 px-3 mb-3 small d-flex align-items-start gap-2">
+                <i class="bi bi-exclamation-triangle-fill fs-6 mt-1"></i>
+                <div>{m.ingestTemplateDeliveryRawRejected()}</div>
+              </div>
+            {/if}
+
+            <!-- Delivery MatchAll (AND) -->
+            <div class="mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <span class="badge bg-success me-2 px-2 py-1" style="font-size:11px">AND</span>
+                <span class="fw-semibold small">{m.ingestTemplateDeliveryMatchAllLabel()}</span>
+                <small class="text-inverse text-opacity-50 ms-2 d-none d-md-inline">{m.ingestTemplateDeliveryMatchAllHint()}</small>
+                <button class="btn btn-xs btn-outline-success ms-auto" onclick={() => (formDeliveryMatchAll = addCondition(formDeliveryMatchAll))}>
+                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddCondition()}
+                </button>
+              </div>
+
+              {#if formDeliveryMatchAll.length === 0}
+                <div class="border border-dashed rounded px-3 py-3 text-center text-inverse text-opacity-40 small">
+                  {m.ingestTemplateDeliveryNoConditionsHint()}
+                </div>
+              {:else}
+                {#each formDeliveryMatchAll as cond, i}
+                  {#if i > 0}
+                    <div class="d-flex align-items-center my-1 px-1">
+                      <span class="badge bg-success bg-opacity-25 text-success" style="font-size:10px">AND</span>
+                    </div>
+                  {/if}
+                  <div class="d-flex gap-2 align-items-center p-2 rounded mb-1" style="border-left: 3px solid var(--bs-success); background:var(--bs-success-bg-subtle, rgba(25,135,84,0.06))">
+                    <div style="min-width:0; flex:2">
+                      <input type="text" list="delivery-fields-list" class="form-control form-control-sm font-monospace"
+                        placeholder={m.ingestTemplateConditionFieldPlaceholderMatch()}
+                        bind:value={cond.field} disabled={formLoading} />
+                    </div>
+                    {#if cond.field.trim()}
+                      {#if isRawField(cond.field)}
+                        <span class="badge bg-danger bg-opacity-25 text-danger fw-normal" title={m.ingestTemplateDeliveryRawRejected()}>
+                          <i class="bi bi-x-circle me-1"></i>raw (not allowed)
+                        </span>
+                      {:else}
+                        <span class="badge bg-info bg-opacity-25 text-info fw-normal" title={m.ingestTemplateMatchFieldCanonicalHint()}>
+                          <i class="bi bi-stars me-1"></i>canonical
+                        </span>
+                      {/if}
+                    {/if}
+                    <span class="text-inverse text-opacity-40 small px-1">=</span>
+                    <div style="min-width:0; flex:2">
+                      <input type="text" class="form-control form-control-sm"
+                        placeholder={m.ingestTemplateConditionValuesPlaceholder()}
+                        value={cond.values.join(', ')}
+                        oninput={(e) => onDeliveryMatchAllValueInput(e, i)}
+                        disabled={formLoading} />
+                    </div>
+                    {#if cond.operator !== 'eq' && cond.operator !== 'in'}
+                      <span class="badge bg-secondary fw-normal" title="operator: {cond.operator}">{cond.operator}</span>
+                    {/if}
+                    <button class="btn btn-sm btn-link text-danger p-0 px-1" aria-label={m.actionDelete()} onclick={() => (formDeliveryMatchAll = removeCondition(formDeliveryMatchAll, i))}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                {/each}
+              {/if}
+            </div>
+
+            <!-- Delivery MatchAny (OR) -->
+            <div class="mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <span class="badge bg-warning text-dark me-2 px-2 py-1" style="font-size:11px">OR</span>
+                <span class="fw-semibold small">{m.ingestTemplateDeliveryMatchAnyLabel()}</span>
+                <small class="text-inverse text-opacity-50 ms-2 d-none d-md-inline">{m.ingestTemplateDeliveryMatchAnyHint()}</small>
+                <button class="btn btn-xs btn-outline-warning ms-auto" onclick={() => (formDeliveryMatchAny = addCondition(formDeliveryMatchAny))}>
+                  <i class="bi bi-plus me-1"></i>{m.ingestTemplateAddCondition()}
+                </button>
+              </div>
+
+              {#if formDeliveryMatchAny.length === 0}
+                <div class="border border-dashed rounded px-3 py-3 text-center text-inverse text-opacity-40 small">
+                  {m.ingestTemplateNoConditionsOptional()}
+                </div>
+              {:else}
+                {#each formDeliveryMatchAny as cond, i}
+                  {#if i > 0}
+                    <div class="d-flex align-items-center my-1 px-1">
+                      <span class="badge bg-warning bg-opacity-25 text-warning" style="font-size:10px">OR</span>
+                    </div>
+                  {/if}
+                  <div class="d-flex gap-2 align-items-center p-2 rounded mb-1" style="border-left: 3px solid var(--bs-warning); background:var(--bs-warning-bg-subtle, rgba(255,193,7,0.06))">
+                    <div style="min-width:0; flex:2">
+                      <input type="text" list="delivery-fields-list" class="form-control form-control-sm font-monospace"
+                        placeholder={m.ingestTemplateConditionFieldPlaceholderMatch()}
+                        bind:value={cond.field} disabled={formLoading} />
+                    </div>
+                    {#if cond.field.trim()}
+                      {#if isRawField(cond.field)}
+                        <span class="badge bg-danger bg-opacity-25 text-danger fw-normal" title={m.ingestTemplateDeliveryRawRejected()}>
+                          <i class="bi bi-x-circle me-1"></i>raw (not allowed)
+                        </span>
+                      {:else}
+                        <span class="badge bg-info bg-opacity-25 text-info fw-normal" title={m.ingestTemplateMatchFieldCanonicalHint()}>
+                          <i class="bi bi-stars me-1"></i>canonical
+                        </span>
+                      {/if}
+                    {/if}
+                    <span class="text-inverse text-opacity-40 small px-1">=</span>
+                    <div style="min-width:0; flex:2">
+                      <input type="text" class="form-control form-control-sm"
+                        placeholder={m.ingestTemplateConditionValuesPlaceholder()}
+                        value={cond.values.join(', ')}
+                        oninput={(e) => onDeliveryMatchAnyValueInput(e, i)}
+                        disabled={formLoading} />
+                    </div>
+                    {#if cond.operator !== 'eq' && cond.operator !== 'in'}
+                      <span class="badge bg-secondary fw-normal" title="operator: {cond.operator}">{cond.operator}</span>
+                    {/if}
+                    <button class="btn btn-sm btn-link text-danger p-0 px-1" aria-label={m.actionDelete()} onclick={() => (formDeliveryMatchAny = removeCondition(formDeliveryMatchAny, i))}>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                {/each}
+              {/if}
+            </div>
+
+            <!-- Delivery-stage field suggestions — canonical only, no raw.* -->
+            <datalist id="delivery-fields-list">
+              {#each CANONICAL_FIELDS as cf}
+                <option value={cf.value} label="✨ canonical · sample: {cf.sample}"></option>
+              {/each}
+            </datalist>
           {/if}
 
           <!-- Tab: Target & Message -->
