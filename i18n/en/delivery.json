@@ -19,6 +19,9 @@
   "deliveryTargetsTestFail": "Test delivery failed",
   "deliveryTargetsDeleteConfirm": "Delete this target?",
   "deliveryTargetsDeleteWarning": "This will remove the target and all associated bindings.",
+  "deliveryTargetsInUseTitle": "Cannot delete target",
+  "deliveryTargetsInUseMessage": "This target is still assigned to the following mapping template(s). Please unassign it from each template before deleting.",
+  "deliveryTargetsInUseGoToTemplates": "Go to Ingest Templates",
   "deliveryTargetsNoRecords": "No delivery targets yet. Create one to start distributing events.",
   "deliveryTargetsNotAvailable": "Not available on current plan",
 
@@ -43,6 +46,13 @@
   "deliveryConfigTelegramToken": "Bot Token",
   "deliveryConfigTelegramChatId": "Chat ID",
   "deliveryConfigDiscordWebhookUrl": "Discord Webhook URL",
+  "deliveryConfigWebhookUrlRequired": "Webhook URL is required.",
+  "deliveryConfigDiscordUrlRequired": "Discord webhook URL is required.",
+  "deliveryConfigLineTokenRequired": "Channel access token is required.",
+  "deliveryConfigLineRecipientsRequired": "At least one recipient is required.",
+  "deliveryConfigTelegramTokenRequired": "Bot token is required.",
+  "deliveryConfigTelegramChatIdRequired": "Chat ID is required.",
+  "deliveryConfigSecretKeepExisting": "Leave blank to keep the existing value.",
 
   "deliveryQuotaTitle": "Channel Quota",
   "deliveryQuotaUsed": "used",

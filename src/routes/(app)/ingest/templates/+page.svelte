@@ -64,6 +64,11 @@
   let formDeliveryTargets = $state<TemplateDeliveryTarget[]>([])
   let formMessageTemplates = $state<MessageTemplate[]>([])
 
+  // Count of delivery targets stripped from the form because the backing
+  // DeliveryTarget has been deleted. Shown as a one-time warning banner so
+  // the user knows the template was silently healed and needs a Save.
+  let orphanTargetCount = $state(0)
+
   // Delete confirm
   let showDeleteModal = $state(false)
   let deleteId = $state<string | null>(null)
@@ -183,6 +188,7 @@
     formMappings = []
     formDeliveryTargets = []
     formMessageTemplates = []
+    orphanTargetCount = 0
     formError = null
     formTab = 'basic'
     editingId = null
@@ -220,6 +226,19 @@
     formMessageTemplates = (template.messageTemplates ?? []).map(mt => ({ ...mt }))
     showFormModal = true
     await loadFormDeps()
+    // Self-heal: strip deliveryTargets whose DeliveryTarget has been deleted.
+    // Without this, the form submits orphan targetIds and backend either rejects
+    // the update or stores a broken reference that blocks future edits.
+    const availableIds = new Set(availableTargets.map(t => t.id))
+    const before = formDeliveryTargets.length
+    const orphanIds = formDeliveryTargets.filter(dt => !availableIds.has(dt.targetId)).map(dt => dt.targetId)
+    if (orphanIds.length > 0) {
+      formDeliveryTargets = formDeliveryTargets.filter(dt => availableIds.has(dt.targetId))
+      // Also drop message templates keyed to the missing targetIds
+      formMessageTemplates = formMessageTemplates.filter(mt => !mt.key || !orphanIds.includes(mt.key))
+      orphanTargetCount = before - formDeliveryTargets.length
+      formTab = 'target'
+    }
   }
 
   async function handleSubmit() {
@@ -390,13 +409,24 @@
         const bodyLines = SUGGESTED_MSG_FIELDS
           .filter(f => mappingSourcePaths.includes(f) || ['eventType', 'sourceFamily'].includes(f))
           .map(f => `{{.${f}}}`)
+        // Per-channel defaults: LINE renders a Flex card, Telegram uses Bot API
+        // SendMessage (with parse mode + optional inline keyboard), Discord stays
+        // generic (plain title/body).
+        const extras =
+          channelType === 'line' ? { ...LINE_CARD_DEFAULTS } :
+          channelType === 'telegram' ? { ...TELEGRAM_DEFAULTS } :
+          undefined
+        // Telegram benefits from a richer ready-to-edit sample — the plain field
+        // dump is fine for LINE/Discord but Telegram users expect formatted output.
+        const title = channelType === 'telegram' ? TELEGRAM_SAMPLE_TITLE : `{{.eventCategory}}`
+        const body = channelType === 'telegram' ? TELEGRAM_SAMPLE_BODY : (bodyLines.join('\n') || '{{.eventType}}')
         formMessageTemplates = [...formMessageTemplates, {
           key: targetId,
           channelType,
           locale: 'th',
-          title: `{{.eventCategory}}`,
-          body: bodyLines.join('\n') || '{{.eventType}}',
-          extras: channelType === 'line' ? { ...LINE_CARD_DEFAULTS } : undefined
+          title,
+          body,
+          extras
         }]
       }
     }
@@ -441,6 +471,34 @@
     action2Url: ''
   }
 
+  // Telegram extras — mirrors Bot API SendMessage / SendPhoto fields. Stored
+  // as strings (the extras map is string-keyed) so bool flags use 'true'/'false'.
+  // When imageEnabled === 'true' the delivery consumer should call sendPhoto
+  // with photo=imageUrl + caption=body; otherwise sendMessage with text=body.
+  const TELEGRAM_DEFAULTS: Record<string, string> = {
+    parseMode: 'HTML',            // 'HTML' | 'MarkdownV2' | ''
+    disablePreview: 'true',       // disable_web_page_preview
+    silent: 'false',              // disable_notification
+    imageEnabled: 'true',         // attach photo if a URL is resolvable
+    imageUrl: '{{.imageUrl}}',    // template variable — empty string at render => skip image
+    action1Enabled: 'false',
+    action1Label: '',
+    action1Url: '',
+    action2Enabled: 'false',
+    action2Label: '',
+    action2Url: ''
+  }
+
+  // Sample content inserted when user clicks "Load sample" on a Telegram editor.
+  // Uses HTML parse-mode tags since TELEGRAM_DEFAULTS.parseMode = 'HTML'.
+  const TELEGRAM_SAMPLE_TITLE = '🚨 {{.eventCategory}}'
+  const TELEGRAM_SAMPLE_BODY = [
+    '<b>{{.eventType}}</b>',
+    '📍 {{.location.zone}} / Device {{.source.deviceId}}',
+    '🕐 {{.occurredAt}}',
+    'Source: {{.sourceFamily}}'
+  ].join('\n')
+
   // Go text/template variables exposed by the backend renderContext().
   // Keep in sync with internal/kafka/deliverycons/render.go :: renderContext.
   const TEMPLATE_VARIABLES: Array<{ value: string; hint: string }> = [
@@ -465,6 +523,7 @@
     { value: '{{.geo.adminName}}',       hint: 'province / district name' },
     { value: '{{.geo.adminCode}}',       hint: 'ISO-3166-2 code (e.g. TH-73)' },
     { value: '{{.geo.countryCode}}',     hint: 'ISO alpha-2 country' },
+    { value: '{{.imageUrl}}',            hint: 'primary image URL from the event (if any)' },
     { value: '{{.payload.alarmType_label}}', hint: 'payload field (labelled enum)' }
   ]
 
@@ -550,6 +609,24 @@
     updateMsgTemplate(i, m => ({ ...m, title: variable }))
     varPickerFilter = ''
     openVarPicker = null
+  }
+
+  // Body picker helpers — body is multi-line so we append (not replace) to
+  // preserve the user's existing content. Paired with the ✨ Suggest button
+  // on the Telegram editor's body textarea.
+  function onBodyInput(i: number, value: string): void {
+    updateMsgTemplate(i, m => ({ ...m, body: value }))
+  }
+  function appendBodyVar(i: number, variable: string): void {
+    updateMsgTemplate(i, m => ({ ...m, body: m.body ? `${m.body}\n${variable}` : variable }))
+    varPickerFilter = ''
+    openVarPicker = null
+  }
+
+  // Populate title + body with a formatted Telegram sample. Used by the
+  // "Load sample" button so first-time users have a working starting point.
+  function loadTelegramSample(i: number): void {
+    updateMsgTemplate(i, m => ({ ...m, title: TELEGRAM_SAMPLE_TITLE, body: TELEGRAM_SAMPLE_BODY }))
   }
 
   function formatDate(d: string): string {
@@ -1345,6 +1422,16 @@
 
           <!-- Tab: Target & Message -->
           {#if formTab === 'target'}
+            {#if orphanTargetCount > 0}
+              <div class="alert alert-warning d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+                <div class="flex-grow-1 small">
+                  {m.ingestTemplateOrphanTargetsWarning({ count: String(orphanTargetCount) })}
+                </div>
+                <button type="button" class="btn-close btn-sm" aria-label={m.ingestTemplateOrphanTargetsRemove()} onclick={() => (orphanTargetCount = 0)}></button>
+              </div>
+            {/if}
+
             <!-- Delivery Targets -->
             <div class="mb-4">
               <div class="d-flex align-items-center mb-2">
@@ -1764,8 +1851,259 @@
                         </div>
                       </div>
 
+                    {:else if mt.channelType === 'telegram'}
+                      <!-- Telegram Editor -->
+                      <div class="row g-3">
+                        <!-- Left: message preview (Telegram-style bubble) -->
+                        <div class="col-md-5">
+                          <div class="rounded p-2" style="background:#eef3f7; max-width:280px; font-size:12px; color:#111">
+                            <div class="rounded-3 overflow-hidden" style="background:#fff; box-shadow:0 1px 1px rgba(0,0,0,0.08)">
+                              {#if getE(mt,'imageEnabled','true') === 'true' && getE(mt,'imageUrl','')}
+                                <div class="position-relative d-flex align-items-center justify-content-center" style="background:#5a8fa0; height:140px">
+                                  {#if /^https?:\/\//.test(getE(mt,'imageUrl',''))}
+                                    <img src={getE(mt,'imageUrl','')} alt="preview" style="max-width:100%; max-height:100%; object-fit:cover" onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                  {:else}
+                                    <div class="text-white opacity-75 text-center small">
+                                      <i class="bi bi-image fs-3 d-block"></i>
+                                      <code class="text-white small">{getE(mt,'imageUrl','')}</code>
+                                    </div>
+                                  {/if}
+                                </div>
+                              {/if}
+                              <div class="px-2 py-2">
+                              {#if mt.title}
+                                <div class="fw-bold mb-1" style="font-size:13px">{mt.title}</div>
+                              {/if}
+                              <pre class="mb-1" style="font-family:inherit; white-space:pre-wrap; word-break:break-word; font-size:12px">{mt.body || '(empty)'}</pre>
+                              <div class="text-end text-secondary" style="font-size:10px">
+                                <i class="bi bi-check2-all"></i>
+                              </div>
+                              {#if getE(mt,'action1Enabled','false') === 'true' || getE(mt,'action2Enabled','false') === 'true'}
+                                <div class="mt-2 d-grid gap-1">
+                                  {#if getE(mt,'action1Enabled','false') === 'true'}
+                                    <div class="border rounded text-center py-1" style="color:#0a84ff; border-color:#cfd8dc !important; font-size:12px">{getE(mt,'action1Label','') || 'Action 1'}</div>
+                                  {/if}
+                                  {#if getE(mt,'action2Enabled','false') === 'true'}
+                                    <div class="border rounded text-center py-1" style="color:#0a84ff; border-color:#cfd8dc !important; font-size:12px">{getE(mt,'action2Label','') || 'Action 2'}</div>
+                                  {/if}
+                                </div>
+                              {/if}
+                              </div><!-- /px-2 py-2 content wrapper -->
+                            </div>
+                            <div class="d-flex gap-2 mt-1 small text-secondary" style="font-size:10px">
+                              {#if getE(mt,'parseMode','HTML')}
+                                <span><i class="bi bi-code-slash me-1"></i>{getE(mt,'parseMode','HTML')}</span>
+                              {/if}
+                              {#if getE(mt,'disablePreview','true') === 'true'}
+                                <span><i class="bi bi-eye-slash me-1"></i>no preview</span>
+                              {/if}
+                              {#if getE(mt,'silent','false') === 'true'}
+                                <span><i class="bi bi-bell-slash me-1"></i>silent</span>
+                              {/if}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Right: form fields -->
+                        <div class="col-md-7">
+                          <!-- Parse mode + toggles -->
+                          <div class="mb-3">
+                            <div class="row g-2 align-items-end">
+                              <div class="col-md-5">
+                                <label class="form-label small mb-1" for="tg-parsemode-{i}">Parse mode</label>
+                                <select id="tg-parsemode-{i}" class="form-select form-select-sm"
+                                  value={getE(mt,'parseMode','HTML')}
+                                  onchange={(e) => updateMsgTemplate(i, m => setE(m,'parseMode',(e.target as HTMLSelectElement).value))}
+                                  disabled={formLoading}>
+                                  <option value="HTML">HTML</option>
+                                  <option value="MarkdownV2">MarkdownV2</option>
+                                  <option value="">None (plain text)</option>
+                                </select>
+                              </div>
+                              <div class="col-md-7">
+                                <div class="form-check form-switch small">
+                                  <input type="checkbox" class="form-check-input" id="tg-preview-{i}"
+                                    checked={getE(mt,'disablePreview','true') === 'true'}
+                                    onchange={(e) => updateMsgTemplate(i, m => setE(m,'disablePreview',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                    disabled={formLoading} />
+                                  <label class="form-check-label" for="tg-preview-{i}">Disable web-page preview</label>
+                                </div>
+                                <div class="form-check form-switch small">
+                                  <input type="checkbox" class="form-check-input" id="tg-silent-{i}"
+                                    checked={getE(mt,'silent','false') === 'true'}
+                                    onchange={(e) => updateMsgTemplate(i, m => setE(m,'silent',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                    disabled={formLoading} />
+                                  <label class="form-check-label" for="tg-silent-{i}">Silent notification</label>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Image (sendPhoto) -->
+                          <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="tg-img-{i}"
+                                checked={getE(mt,'imageEnabled','true') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'imageEnabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="tg-img-{i}">Attach image (sendPhoto)</label>
+                            </div>
+                            {#if getE(mt,'imageEnabled','true') === 'true'}
+                              <div class="mt-1 position-relative">
+                                <div class="input-group input-group-sm">
+                                  <input type="text" class="form-control font-monospace"
+                                    placeholder="{'{{.imageUrl}}'}"
+                                    value={getE(mt,'imageUrl','{{.imageUrl}}')}
+                                    onfocus={() => openPicker(`tg-img-${i}`, getE(mt,'imageUrl',''))}
+                                    oninput={(e) => onVarInput(i, 'imageUrl', `tg-img-${i}`, (e.target as HTMLInputElement).value)}
+                                    onblur={() => closePickerDeferred(`tg-img-${i}`)}
+                                    disabled={formLoading} />
+                                  <button type="button" class="btn btn-outline-secondary" aria-label="Suggest variables"
+                                    title="Suggest template variables"
+                                    onclick={() => toggleVarPicker(`tg-img-${i}`, getE(mt,'imageUrl',''))} disabled={formLoading}>
+                                    <i class="bi bi-stars"></i>
+                                  </button>
+                                </div>
+                                {#if openVarPicker === `tg-img-${i}` && filteredTemplateVars.length > 0}
+                                  <ul class="dropdown-menu show position-absolute mt-1" style="min-width:100%; max-height:280px; overflow:auto; z-index:10">
+                                    {#each filteredTemplateVars as tv}
+                                      <li>
+                                        <button type="button" class="dropdown-item py-1"
+                                          onmousedown={(e) => { e.preventDefault(); insertTemplateVar(i, 'imageUrl', tv.value) }}>
+                                          <code class="text-theme small">{tv.value}</code>
+                                          <div class="small text-inverse text-opacity-50">✨ {tv.hint}</div>
+                                        </button>
+                                      </li>
+                                    {/each}
+                                  </ul>
+                                {/if}
+                                <div class="form-text small">
+                                  URL or template variable. If empty at render time, the consumer falls back to <code>sendMessage</code>.
+                                </div>
+                              </div>
+                            {/if}
+                          </div>
+
+                          <!-- Title -->
+                          <div class="mb-3 position-relative">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <label class="form-label small fw-semibold mb-0" for="tg-title-{i}">Title</label>
+                              <button type="button" class="btn btn-xs btn-outline-theme" onclick={() => loadTelegramSample(i)} disabled={formLoading}>
+                                <i class="bi bi-stars me-1"></i>Load sample
+                              </button>
+                            </div>
+                            <div class="input-group input-group-sm">
+                              <input id="tg-title-{i}" type="text" class="form-control font-monospace"
+                                value={mt.title ?? ''}
+                                placeholder="{'🚨 {{.eventCategory}}'}"
+                                onfocus={() => openPicker(`tg-title-${i}`, mt.title ?? '')}
+                                oninput={(e) => onTitleInput(i, `tg-title-${i}`, (e.target as HTMLInputElement).value)}
+                                onblur={() => closePickerDeferred(`tg-title-${i}`)}
+                                disabled={formLoading} />
+                              <button type="button" class="btn btn-outline-secondary" aria-label="Suggest variables"
+                                title="Suggest template variables"
+                                onclick={() => toggleVarPicker(`tg-title-${i}`, mt.title ?? '')} disabled={formLoading}>
+                                <i class="bi bi-stars"></i>
+                              </button>
+                            </div>
+                            {#if openVarPicker === `tg-title-${i}` && filteredTemplateVars.length > 0}
+                              <ul class="dropdown-menu show position-absolute mt-1" style="min-width:100%; max-height:280px; overflow:auto; z-index:10">
+                                {#each filteredTemplateVars as tv}
+                                  <li>
+                                    <button type="button" class="dropdown-item py-1"
+                                      onmousedown={(e) => { e.preventDefault(); insertTitleVar(i, tv.value) }}>
+                                      <code class="text-theme small">{tv.value}</code>
+                                      <div class="small text-inverse text-opacity-50">✨ {tv.hint}</div>
+                                    </button>
+                                  </li>
+                                {/each}
+                              </ul>
+                            {/if}
+                          </div>
+
+                          <!-- Body -->
+                          <div class="mb-3 position-relative">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <label class="form-label small fw-semibold mb-0" for="tg-body-{i}">Body</label>
+                              <button type="button" class="btn btn-xs btn-outline-secondary"
+                                title="Append a template variable"
+                                onclick={() => toggleVarPicker(`tg-body-${i}`, '')} disabled={formLoading}>
+                                <i class="bi bi-stars me-1"></i>Insert variable
+                              </button>
+                            </div>
+                            <textarea id="tg-body-{i}" class="form-control form-control-sm font-monospace" rows="5"
+                              value={mt.body ?? ''}
+                              placeholder="{'<b>{{.eventType}}</b>\n📍 {{.location.zone}}\n🕐 {{.occurredAt}}'}"
+                              oninput={(e) => onBodyInput(i, (e.target as HTMLTextAreaElement).value)}
+                              disabled={formLoading}></textarea>
+                            {#if openVarPicker === `tg-body-${i}` && filteredTemplateVars.length > 0}
+                              <ul class="dropdown-menu show position-absolute mt-1" style="min-width:100%; max-height:280px; overflow:auto; z-index:10">
+                                {#each filteredTemplateVars as tv}
+                                  <li>
+                                    <button type="button" class="dropdown-item py-1"
+                                      onmousedown={(e) => { e.preventDefault(); appendBodyVar(i, tv.value) }}>
+                                      <code class="text-theme small">{tv.value}</code>
+                                      <div class="small text-inverse text-opacity-50">✨ {tv.hint}</div>
+                                    </button>
+                                  </li>
+                                {/each}
+                              </ul>
+                            {/if}
+                            <div class="form-text small">
+                              HTML: <code>&lt;b&gt;</code> <code>&lt;i&gt;</code> <code>&lt;code&gt;</code> <code>&lt;a href=""&gt;</code> · MarkdownV2: <code>*bold*</code> <code>_italic_</code>
+                            </div>
+                          </div>
+
+                          <!-- Action 1 (inline keyboard button) -->
+                          <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="tg-act1-{i}"
+                                checked={getE(mt,'action1Enabled','false') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'action1Enabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="tg-act1-{i}">Action 1 (inline button)</label>
+                            </div>
+                            {#if getE(mt,'action1Enabled','false') === 'true'}
+                              <div class="mt-2">
+                                <input type="text" class="form-control form-control-sm mb-1" placeholder="Button label"
+                                  value={getE(mt,'action1Label','')}
+                                  oninput={(e) => updateMsgTemplate(i, m => setE(m,'action1Label',(e.target as HTMLInputElement).value))}
+                                  disabled={formLoading} />
+                                <input type="url" class="form-control form-control-sm" placeholder="https://"
+                                  value={getE(mt,'action1Url','')}
+                                  oninput={(e) => updateMsgTemplate(i, m => setE(m,'action1Url',(e.target as HTMLInputElement).value))}
+                                  disabled={formLoading} />
+                              </div>
+                            {/if}
+                          </div>
+
+                          <!-- Action 2 (inline keyboard button) -->
+                          <div class="mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                              <input type="checkbox" class="form-check-input" id="tg-act2-{i}"
+                                checked={getE(mt,'action2Enabled','false') === 'true'}
+                                onchange={(e) => updateMsgTemplate(i, m => setE(m,'action2Enabled',(e.target as HTMLInputElement).checked ? 'true' : 'false'))}
+                                disabled={formLoading} />
+                              <label class="form-check-label small fw-semibold" for="tg-act2-{i}">Action 2 (inline button)</label>
+                            </div>
+                            {#if getE(mt,'action2Enabled','false') === 'true'}
+                              <div class="mt-2">
+                                <input type="text" class="form-control form-control-sm mb-1" placeholder="Button label"
+                                  value={getE(mt,'action2Label','')}
+                                  oninput={(e) => updateMsgTemplate(i, m => setE(m,'action2Label',(e.target as HTMLInputElement).value))}
+                                  disabled={formLoading} />
+                                <input type="url" class="form-control form-control-sm" placeholder="https://"
+                                  value={getE(mt,'action2Url','')}
+                                  oninput={(e) => updateMsgTemplate(i, m => setE(m,'action2Url',(e.target as HTMLInputElement).value))}
+                                  disabled={formLoading} />
+                              </div>
+                            {/if}
+                          </div>
+                        </div>
+                      </div>
+
                     {:else}
-                      <!-- Generic editor for Discord / Telegram -->
+                      <!-- Generic editor for Discord -->
                       <div class="mt-2">
                         <label class="form-label small mb-0" for="mt-title-{i}">{m.ingestTemplateMessageTitle()}</label>
                         <input id="mt-title-{i}" type="text" class="form-control form-control-sm" bind:value={mt.title} disabled={formLoading}

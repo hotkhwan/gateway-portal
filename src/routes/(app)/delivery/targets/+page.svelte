@@ -8,7 +8,9 @@
     listTargets,
     createTarget,
     updateTarget,
-    deleteTarget
+    deleteTarget,
+    isTargetInUseError,
+    type TargetInUseTemplateRef
   } from '$lib/api/target'
   import { getCurrentSubscription } from '$lib/api/subscription'
   import Card from '$lib/components/bootstrap/Card.svelte'
@@ -50,6 +52,10 @@
   let showDeleteModal = $state(false)
   let deleteTarget_id = $state<string | null>(null)
   let deleteLoading = $state(false)
+
+  // In-use conflict modal (shown when backend returns 409 TARGET_IN_USE)
+  let showInUseModal = $state(false)
+  let inUseTemplates = $state<TargetInUseTemplateRef[]>([])
 
   // Quota helpers
   let quotaByType = $derived.by(() => {
@@ -124,20 +130,51 @@
     fType = t.type
     fEnabled = t.enabled
     const cfg = t.config as unknown as Record<string, unknown>
+    // Canonical BE field names (models/authzmod.TargetConfig):
+    //   webhook + discord: url, signingSecret, timeoutMs
+    //   line:              channelAccessToken | channelAccessTokenRef, to
+    //   telegram:          botToken, chatId
+    // Fallbacks to legacy keys (botTokenRef / webhookUrl) are kept ONLY for
+    // reading existing rows that were persisted under the old FE field names.
     fWebhookUrl = (cfg.url as string) ?? ''
     fWebhookSigning = (cfg.signingEnabled as boolean) ?? false
     fWebhookSecret = (cfg.signingSecret as string) ?? ''
     fWebhookTimeout = (cfg.timeoutMs as number) ?? 5000
     fLineToken = (cfg.channelAccessToken as string) ?? (cfg.channelAccessTokenRef as string) ?? ''
     fLineTo = Array.isArray(cfg.to) ? (cfg.to as string[]).join(', ') : ((cfg.to as string) ?? '')
-    fTelegramToken = (cfg.botTokenRef as string) ?? ''
+    fTelegramToken = (cfg.botToken as string) ?? (cfg.botTokenRef as string) ?? ''
     fTelegramChatId = (cfg.chatId as string) ?? ''
-    fDiscordUrl = (cfg.webhookUrl as string) ?? ''
+    fDiscordUrl = (cfg.url as string) ?? (cfg.webhookUrl as string) ?? ''
     modalError = null
     showModal = true
   }
 
+  // Client-side validation that mirrors BE's validateConfigForType. The goal
+  // is to show inline errors before a 400 round-trip — BE remains the source
+  // of truth. On edit, the secret fields (botToken / channelAccessToken /
+  // signingSecret) are OPTIONAL because BE's mergeConfigPreservingSecrets
+  // keeps the existing value when the incoming field is blank.
+  function validateConfig(): string | null {
+    const isEdit = !!editTarget
+    if (fType === 'telegram') {
+      if (!fTelegramChatId.trim()) return m.deliveryConfigTelegramChatIdRequired()
+      if (!isEdit && !fTelegramToken.trim()) return m.deliveryConfigTelegramTokenRequired()
+    } else if (fType === 'line') {
+      const toArr = fLineTo.split(',').map(s => s.trim()).filter(Boolean)
+      if (toArr.length === 0) return m.deliveryConfigLineRecipientsRequired()
+      if (!isEdit && !fLineToken.trim()) return m.deliveryConfigLineTokenRequired()
+    } else if (fType === 'webhook') {
+      if (!fWebhookUrl.trim()) return m.deliveryConfigWebhookUrlRequired()
+    } else if (fType === 'discord') {
+      if (!fDiscordUrl.trim()) return m.deliveryConfigDiscordUrlRequired()
+    }
+    return null
+  }
+
   function buildConfig(): Record<string, unknown> {
+    // Field names MUST match models/authzmod.TargetConfig JSON tags on the
+    // backend (gateway-api). Mismatch here silently wipes secrets on save
+    // because BE's merge-preserve only keys off canonical field names.
     if (fType === 'webhook') {
       return {
         url: fWebhookUrl,
@@ -150,14 +187,16 @@
       const toArr = fLineTo.split(',').map(s => s.trim()).filter(Boolean)
       return { channelAccessToken: fLineToken, to: toArr }
     }
-    if (fType === 'telegram') return { botTokenRef: fTelegramToken, chatId: fTelegramChatId }
-    if (fType === 'discord') return { webhookUrl: fDiscordUrl }
+    if (fType === 'telegram') return { botToken: fTelegramToken, chatId: fTelegramChatId }
+    if (fType === 'discord') return { url: fDiscordUrl }
     return {}
   }
 
   async function handleSave() {
     const orgId = $activeWorkspaceId
     if (!orgId || !fName.trim()) return
+    const validationError = validateConfig()
+    if (validationError) { modalError = validationError; return }
     modalLoading = true
     modalError = null
     try {
@@ -176,6 +215,9 @@
       }
       showModal = false
     } catch (e: unknown) {
+      // BE returns plain CodeBadRequest for all MissingXxx errors — the only
+      // discriminator is the message text. Pass it through; the BE message
+      // is already user-actionable ("botToken is required for telegram…").
       modalError = (e as { message?: string })?.message ?? m.commonError()
     } finally {
       modalLoading = false
@@ -197,7 +239,16 @@
       showDeleteModal = false
       deleteTarget_id = null
     } catch (e: unknown) {
-      error = (e as { message?: string })?.message ?? m.commonError()
+      if (isTargetInUseError(e)) {
+        // Backend blocked the delete because the target is still assigned to
+        // one or more mapping templates. Show conflict modal with the list.
+        inUseTemplates = e.details?.templates ?? []
+        showDeleteModal = false
+        deleteTarget_id = null
+        showInUseModal = true
+      } else {
+        error = (e as { message?: string })?.message ?? m.commonError()
+      }
     } finally {
       deleteLoading = false
     }
@@ -228,7 +279,7 @@
     if (t.type === 'webhook') return (cfg.url as string) ?? ''
     if (t.type === 'line') return Array.isArray(cfg.to) && cfg.to.length === 0 ? m.deliveryConfigLineBroadcast() : `${(cfg.to as string[])?.length ?? 0} recipients`
     if (t.type === 'telegram') return `Chat: ${cfg.chatId ?? ''}`
-    if (t.type === 'discord') return (cfg.webhookUrl as string) ?? ''
+    if (t.type === 'discord') return (cfg.url as string) ?? (cfg.webhookUrl as string) ?? ''
     return ''
   }
 
@@ -419,7 +470,11 @@
               {#if fWebhookSigning}
                 <div class="mb-3">
                   <label class="form-label fw-semibold" for="wSecret">{m.deliveryConfigWebhookSigningSecret()}</label>
-                  <input id="wSecret" type="password" class="form-control font-monospace" bind:value={fWebhookSecret} disabled={modalLoading} autocomplete="off" />
+                  <input id="wSecret" type="password" class="form-control font-monospace" bind:value={fWebhookSecret} disabled={modalLoading} autocomplete="off"
+                    placeholder={editTarget ? '••••••••' : ''} />
+                  {#if editTarget}
+                    <div class="form-text">{m.deliveryConfigSecretKeepExisting()}</div>
+                  {/if}
                 </div>
               {/if}
               <div class="mb-3">
@@ -431,8 +486,15 @@
             <!-- LINE config -->
             {#if fType === 'line'}
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="lineToken">{m.deliveryConfigLineToken()} <span class="text-danger">*</span></label>
-                <input id="lineToken" type="password" class="form-control" bind:value={fLineToken} required disabled={modalLoading} autocomplete="off" />
+                <label class="form-label fw-semibold" for="lineToken">
+                  {m.deliveryConfigLineToken()}
+                  {#if !editTarget}<span class="text-danger">*</span>{/if}
+                </label>
+                <input id="lineToken" type="password" class="form-control" bind:value={fLineToken} required={!editTarget} disabled={modalLoading} autocomplete="off"
+                  placeholder={editTarget ? '••••••••' : ''} />
+                {#if editTarget}
+                  <div class="form-text">{m.deliveryConfigSecretKeepExisting()}</div>
+                {/if}
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold" for="lineTo">{m.deliveryConfigLineTo()}</label>
@@ -444,8 +506,15 @@
             <!-- Telegram config -->
             {#if fType === 'telegram'}
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="tgToken">{m.deliveryConfigTelegramToken()} <span class="text-danger">*</span></label>
-                <input id="tgToken" type="password" class="form-control" bind:value={fTelegramToken} required disabled={modalLoading} autocomplete="off" />
+                <label class="form-label fw-semibold" for="tgToken">
+                  {m.deliveryConfigTelegramToken()}
+                  {#if !editTarget}<span class="text-danger">*</span>{/if}
+                </label>
+                <input id="tgToken" type="password" class="form-control" bind:value={fTelegramToken} required={!editTarget} disabled={modalLoading} autocomplete="off"
+                  placeholder={editTarget ? '••••••••' : ''} />
+                {#if editTarget}
+                  <div class="form-text">{m.deliveryConfigSecretKeepExisting()}</div>
+                {/if}
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold" for="tgChat">{m.deliveryConfigTelegramChatId()} <span class="text-danger">*</span></label>
@@ -474,6 +543,45 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+{/if}
+
+<!-- Target In-Use conflict modal (409 TARGET_IN_USE) -->
+{#if showInUseModal}
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-inverse-subtle">
+        <div class="modal-header">
+          <h5 class="modal-title text-warning">
+            <i class="bi bi-shield-exclamation me-2"></i>
+            {m.deliveryTargetsInUseTitle()}
+          </h5>
+          <button type="button" class="btn-close" aria-label={m.actionClose()} onclick={() => (showInUseModal = false)}></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-inverse text-opacity-75">{m.deliveryTargetsInUseMessage()}</p>
+          <ul class="list-group list-group-flush">
+            {#each inUseTemplates as tmpl (tmpl.templateId)}
+              <li class="list-group-item bg-transparent px-0 d-flex align-items-center">
+                <i class="bi bi-diagram-3 me-2 text-inverse text-opacity-50"></i>
+                <div class="flex-grow-1">
+                  <div class="fw-semibold">{tmpl.name}</div>
+                  <small class="font-monospace text-inverse text-opacity-50">{tmpl.templateId}</small>
+                </div>
+              </li>
+            {/each}
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick={() => (showInUseModal = false)}>{m.actionClose()}</button>
+          <a class="btn btn-theme" href={resolve('/ingest/templates')}>
+            <i class="bi bi-box-arrow-up-right me-1"></i>
+            {m.deliveryTargetsInUseGoToTemplates()}
+          </a>
+        </div>
       </div>
     </div>
   </div>

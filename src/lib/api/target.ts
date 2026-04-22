@@ -66,3 +66,22 @@ export async function updateTarget(
 export async function deleteTarget(orgId: string, targetId: string): Promise<void> {
   await apiFetch<void>(`/targets/${targetId}`, orgId, { method: 'DELETE' })
 }
+
+// Backend returns 409 with this shape when the target is still assigned to
+// one or more mapping templates. The proxy layer throws the full response
+// body as-is, so the catch-handler checks `code === 'TARGET_IN_USE'`.
+export interface TargetInUseTemplateRef {
+  templateId: string
+  name: string
+}
+
+export interface TargetInUseError {
+  code: 'TARGET_IN_USE'
+  message?: string
+  status: false
+  details?: { templates?: TargetInUseTemplateRef[] }
+}
+
+export function isTargetInUseError(e: unknown): e is TargetInUseError {
+  return typeof e === 'object' && e !== null && (e as { code?: string }).code === 'TARGET_IN_USE'
+}

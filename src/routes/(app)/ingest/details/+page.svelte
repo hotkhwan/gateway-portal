@@ -20,8 +20,12 @@
 
   let selectedEvent = $state<ApprovedEvent | null>(null)
   let lightboxIndex = $state<number | null>(null)
+  let navigating = $state(false)
 
   let selectedIndex = $derived(selectedEvent ? events.findIndex(e => e.id === selectedEvent!.id) : -1)
+  let globalIndex = $derived(selectedIndex < 0 ? -1 : (pagination.page - 1) * pagination.perPage + selectedIndex)
+  let hasPrev = $derived(globalIndex > 0)
+  let hasNext = $derived(globalIndex >= 0 && globalIndex < pagination.total - 1)
 
   type PictureCoord = { x1: number; y1: number; x2: number; y2: number }
   let pictureCoords = $derived(
@@ -50,6 +54,29 @@
     }
   }
 
+  async function navigateEvent(direction: 'prev' | 'next') {
+    if (navigating) return
+    const delta = direction === 'next' ? 1 : -1
+    const newLocalIdx = selectedIndex + delta
+
+    if (newLocalIdx >= 0 && newLocalIdx < events.length) {
+      selectedEvent = events[newLocalIdx]
+      return
+    }
+
+    const newPage = direction === 'next' ? pagination.page + 1 : pagination.page - 1
+    if (newPage < 1 || newPage > pagination.totalPages) return
+
+    navigating = true
+    try {
+      await load(newPage)
+      const idx = direction === 'next' ? 0 : events.length - 1
+      if (events[idx]) selectedEvent = events[idx]
+    } finally {
+      navigating = false
+    }
+  }
+
   function formatDate(d: string): string {
     if (!d) return '-'
     try {
@@ -75,16 +102,24 @@
   })
 
   $effect(() => {
-    if (selectedEvent) {
-      document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = '' }
+    if (selectedEvent && typeof window !== 'undefined') {
+      const mq = window.matchMedia('(min-width: 1200px)')
+      const apply = () => {
+        document.body.style.overflow = mq.matches ? 'hidden' : ''
+      }
+      apply()
+      mq.addEventListener('change', apply)
+      return () => {
+        mq.removeEventListener('change', apply)
+        document.body.style.overflow = ''
+      }
     }
   })
 </script>
 
 {#if selectedEvent}
-  <!-- ── Detail View: flex column เต็ม viewport ไม่ scroll page ── -->
-  <div class="d-flex flex-column overflow-hidden" style="height:calc(100vh - 180px)">
+  <!-- ── Detail View: flex column เต็ม viewport, อนุญาต scroll บนจอเล็ก ── -->
+  <div class="d-flex flex-column event-detail-wrapper">
 
   <div class="d-flex align-items-center mb-2 flex-shrink-0">
     <button class="btn btn-sm btn-outline-secondary me-3" onclick={() => (selectedEvent = null)}>
@@ -94,18 +129,18 @@
       <h1 class="page-header mb-0">{m.ingestDetailsTitle()}</h1>
       <small class="text-inverse text-opacity-50 font-monospace">{selectedEvent.eventId}</small>
     </div>
-    <div class="d-flex gap-1">
+    <div class="d-flex gap-1 align-items-center">
       <button class="btn btn-sm btn-outline-secondary" title={m.ingestDetailsPrevEvent()}
-        disabled={selectedIndex <= 0}
-        onclick={() => { if (selectedIndex > 0) selectedEvent = events[selectedIndex - 1] }}>
+        disabled={!hasPrev || navigating}
+        onclick={() => navigateEvent('prev')}>
         <i class="bi bi-chevron-left"></i>
       </button>
-      <span class="btn btn-sm btn-outline-secondary disabled px-2" style="cursor:default">
-        {selectedIndex + 1} / {events.length}
+      <span class="btn btn-sm btn-outline-secondary disabled px-2 tabular-nums" style="cursor:default">
+        {globalIndex + 1} / {pagination.total}
       </span>
       <button class="btn btn-sm btn-outline-secondary" title={m.ingestDetailsNextEvent()}
-        disabled={selectedIndex >= events.length - 1}
-        onclick={() => { if (selectedIndex < events.length - 1) selectedEvent = events[selectedIndex + 1] }}>
+        disabled={!hasNext || navigating}
+        onclick={() => navigateEvent('next')}>
         <i class="bi bi-chevron-right"></i>
       </button>
     </div>
@@ -113,22 +148,22 @@
 
   <!-- Row 1: Event Info | Source Device | Location -->
   <div class="row g-3 mb-3">
-    <div class="col-lg-4 d-flex">
+    <div class="col-12 col-md-6 col-xl-4 d-flex">
       <Card class="w-100">
         <CardBody>
-          <div class="position-relative">
-            <!-- crop thumbnail overlay มุมขวาบน — absolute ไม่กระทบ height card -->
+          <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+            <h6 class="mb-0 text-inverse text-opacity-75 text-truncate"><i class="bi bi-info-circle me-1"></i>{m.ingestDetailsEventInfo()}</h6>
             {#if cropRefs.length > 0}
-              <button class="position-absolute rounded overflow-hidden bg-dark d-flex align-items-center justify-content-center border-0 p-0"
-                style="width:64px;height:64px;top:0;right:0;cursor:zoom-in;z-index:1"
+              <button class="rounded overflow-hidden bg-dark d-flex align-items-center justify-content-center border-0 p-0 flex-shrink-0"
+                style="width:56px;height:56px;cursor:zoom-in"
                 onclick={() => (lightboxIndex = 1)}>
                 <img src={getImageUrl(cropRefs[0].bucket, cropRefs[0].objectId)} alt="crop"
                   style="max-width:100%;max-height:100%;object-fit:contain"
                   onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display='none' }} />
               </button>
             {/if}
-            <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-info-circle me-1"></i>{m.ingestDetailsEventInfo()}</h6>
-            <table class="table table-sm mb-0">
+          </div>
+          <table class="table table-sm mb-0">
               <tbody>
                 <tr><th class="text-nowrap" style="width:40%">{m.ingestDetailsEventType()}</th>
                   <td><span class="badge {eventTypeBadgeClass(selectedEvent.eventType)}">{selectedEvent.eventType}</span></td></tr>
@@ -138,11 +173,10 @@
                 {/if}
               </tbody>
             </table>
-          </div>
         </CardBody>
       </Card>
     </div>
-    <div class="col-lg-4 d-flex">
+    <div class="col-12 col-md-6 col-xl-4 d-flex">
       <Card class="w-100">
         <CardBody>
           <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-camera-video me-1"></i>{m.ingestDetailsSourceDevice()}</h6>
@@ -156,7 +190,7 @@
         </CardBody>
       </Card>
     </div>
-    <div class="col-lg-4 d-flex">
+    <div class="col-12 col-md-6 col-xl-4 d-flex">
       <Card class="w-100">
         <CardBody>
           <h6 class="mb-3 text-inverse text-opacity-75"><i class="bi bi-geo-alt me-1"></i>{m.ingestDetailsLocation()}</h6>
@@ -180,11 +214,11 @@
     </div>
   </div>
 
-  <!-- Row 2: flex-grow-1 เต็มพื้นที่ที่เหลือ ใช้ d-flex แทน .row เพื่อหลีกเลี่ยง margin-top ของ gutter -->
-  <div style="display:flex;gap:1rem;flex:1;min-height:0;overflow:hidden">
+  <!-- Row 2: flex-grow-1 เต็มพื้นที่ที่เหลือบน desktop, stack บนจอเล็ก -->
+  <div class="event-detail-row2">
     <!-- Payload -->
     {#if selectedEvent.payload && Object.keys(selectedEvent.payload).length > 0}
-      <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="card event-detail-pane" style="display:flex;flex-direction:column;min-width:0;min-height:280px">
         <div class="card-body" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;padding:1rem">
           <h6 class="mb-2 text-inverse text-opacity-75 flex-shrink-0"><i class="bi bi-file-earmark-code me-1"></i>{m.ingestDetailsPayloadSection()}</h6>
           <pre class="bg-dark text-light p-3 rounded small mb-0 overflow-auto" style="flex:1;min-height:0">{JSON.stringify(selectedEvent.payload, null, 2)}</pre>
@@ -197,7 +231,7 @@
     {/if}
     <!-- Captures -->
     {#if mainRef}
-      <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="card event-detail-pane" style="display:flex;flex-direction:column;min-width:0;min-height:280px">
         <div class="card-body" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;padding:1rem">
           <h6 class="mb-2 text-inverse text-opacity-75 flex-shrink-0">
             <i class="bi bi-images me-1"></i>{m.ingestDetailsCaptures()}
@@ -445,3 +479,49 @@
     {/if}
   {/if}
 {/if}
+
+<style>
+  /* Detail view: desktop กว้าง ≥1200px ให้ fit ใน viewport, เล็กกว่านั้นให้ scroll ได้ */
+  .event-detail-wrapper {
+    min-height: calc(100vh - 180px);
+  }
+  @media (min-width: 1200px) {
+    .event-detail-wrapper {
+      height: calc(100vh - 180px);
+      min-height: 0;
+      overflow: hidden;
+    }
+  }
+
+  /* Row 2: มือถือ stack เต็มแถว, tablet 2 คอลัมน์, desktop (xl) เต็ม viewport */
+  .event-detail-row2 {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .event-detail-pane {
+    flex: 1 1 auto;
+  }
+  @media (min-width: 768px) {
+    .event-detail-row2 {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .event-detail-pane {
+      flex: 1 1 calc(50% - 0.5rem);
+      min-width: 0;
+    }
+  }
+  @media (min-width: 1200px) {
+    .event-detail-row2 {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      flex-wrap: nowrap;
+    }
+    .event-detail-pane {
+      flex: 1 1 0;
+      min-height: 0 !important;
+    }
+  }
+</style>
