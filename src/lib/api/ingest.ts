@@ -282,6 +282,8 @@ export async function createTemplate(
 		finalEventType?: string
 		matchAll?: MatchCondition[]
 		matchAny?: MatchCondition[]
+		deliveryMatchAll?: MatchCondition[]
+		deliveryMatchAny?: MatchCondition[]
 		priority?: number
 		mappings?: FieldMapping[]
 		defaultLocale?: string
@@ -315,6 +317,8 @@ export async function updateTemplate(
 		finalEventType?: string
 		matchAll?: MatchCondition[]
 		matchAny?: MatchCondition[]
+		deliveryMatchAll?: MatchCondition[]
+		deliveryMatchAny?: MatchCondition[]
 		priority?: number
 		mappings?: FieldMapping[]
 		defaultLocale?: string
