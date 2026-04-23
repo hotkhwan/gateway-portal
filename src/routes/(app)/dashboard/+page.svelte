@@ -13,6 +13,8 @@
   import CardExpandToggler from '$lib/components/bootstrap/CardExpandToggler.svelte'
   import ApexCharts from '$lib/components/plugins/ApexCharts.svelte'
   import EventMap from '$lib/components/leaflet/EventMap.svelte'
+  import DateRangeFilter from '$lib/components/filters/DateRangeFilter.svelte'
+  import EventTypeSelect from '$lib/components/filters/EventTypeSelect.svelte'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
@@ -289,30 +291,17 @@
   <!-- Filter Bar (compact inline) -->
   <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
     <i class="bi bi-funnel text-theme"></i>
-    <input
-      id="filterStartDate"
-      type="datetime-local"
-      class="form-control form-control-sm"
-      style="width:auto;font-size:0.75rem;"
-      title={m.dashboardFilterStartDate()}
-      bind:value={filterStartDate}
+    <DateRangeFilter
+      bind:startDate={filterStartDate}
+      bind:endDate={filterEndDate}
+      onApply={applyFilters}
     />
-    <span class="text-inverse text-opacity-50 small">–</span>
-    <input
-      id="filterEndDate"
-      type="datetime-local"
-      class="form-control form-control-sm"
-      style="width:auto;font-size:0.75rem;"
-      title={m.dashboardFilterEndDate()}
-      bind:value={filterEndDate}
-    />
-    <input
+    <EventTypeSelect
       id="filterEventType"
-      type="text"
-      class="form-control form-control-sm"
-      style="width:180px;font-size:0.75rem;"
-      placeholder={m.dashboardFilterEventType()}
       bind:value={filterEventType}
+      suggestions={Object.keys(byEventType)}
+      onCommit={applyFilters}
+      widthPx={200}
     />
     <button
       class="btn btn-sm btn-theme"

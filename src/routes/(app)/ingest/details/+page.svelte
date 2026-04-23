@@ -9,6 +9,8 @@
   import type { ApprovedEvent } from '$lib/types/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
+  import DateRangeFilter from '$lib/components/filters/DateRangeFilter.svelte'
+  import EventTypeSelect from '$lib/components/filters/EventTypeSelect.svelte'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
@@ -17,6 +19,11 @@
 
   let filterSearch = $state('')
   let filterEventType = $state('')
+  let filterStartDate = $state('')
+  let filterEndDate = $state('')
+
+  // Accumulate suggestions across pages so the datalist is richer than a single page
+  let eventTypeSuggestions = $derived(events.map(e => e.eventType))
 
   let selectedEvent = $state<ApprovedEvent | null>(null)
   let lightboxIndex = $state<number | null>(null)
@@ -44,6 +51,8 @@
       const r = await listApprovedEvents(orgId, page, perPage, {
         search: filterSearch || undefined,
         eventType: filterEventType || undefined,
+        startDate: filterStartDate || undefined,
+        endDate: filterEndDate || undefined
       })
       events = r.details
       pagination = { page: r.page, perPage: r.perPage, total: r.total, totalPages: r.totalPages }
@@ -336,33 +345,37 @@
     <!-- Filter bar -->
     <Card>
       <CardBody>
-        <div class="row g-2 align-items-end">
-          <div class="col-md-4">
-            <input type="search" class="form-control form-control-sm" placeholder={m.actionSearch()}
-              bind:value={filterSearch} onkeydown={(e) => e.key === 'Enter' && load(1)} />
-          </div>
-          <div class="col-md-3">
-            <input type="text" class="form-control form-control-sm" placeholder={m.ingestDetailsEventType()}
-              bind:value={filterEventType} onkeydown={(e) => e.key === 'Enter' && load(1)} />
-          </div>
-          <div class="col-md-2">
-            <select class="form-select form-select-sm"
-              value={pagination.perPage}
-              onchange={(e) => { pagination.perPage = Number((e.target as HTMLSelectElement).value); load(1) }}>
-              <option value={10}>10 / page</option>
-              <option value={25}>25 / page</option>
-              <option value={50}>50 / page</option>
-              <option value={100}>100 / page</option>
-            </select>
-          </div>
-          <div class="col-md-3 d-flex gap-1">
-            <button class="btn btn-sm btn-theme flex-fill" onclick={() => load(1)}>
-              <i class="bi bi-search me-1"></i>{m.actionSearch()}
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" aria-label={m.actionClear()} onclick={() => { filterSearch = ''; filterEventType = ''; load(1) }}>
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <input type="search" class="form-control form-control-sm" style="width:260px;font-size:0.75rem;"
+            placeholder={m.actionSearch()}
+            bind:value={filterSearch} onkeydown={(e) => e.key === 'Enter' && load(1)} />
+          <EventTypeSelect
+            id="filterEventType"
+            bind:value={filterEventType}
+            suggestions={eventTypeSuggestions}
+            onCommit={() => load(1)}
+            widthPx={200}
+          />
+          <DateRangeFilter
+            bind:startDate={filterStartDate}
+            bind:endDate={filterEndDate}
+            onApply={() => load(1)}
+          />
+          <select class="form-select form-select-sm" style="width:auto;font-size:0.75rem;"
+            value={pagination.perPage}
+            onchange={(e) => { pagination.perPage = Number((e.target as HTMLSelectElement).value); load(1) }}>
+            <option value={10}>10 / page</option>
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+          </select>
+          <button class="btn btn-sm btn-theme" onclick={() => load(1)}>
+            <i class="bi bi-search me-1"></i>{m.actionSearch()}
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" aria-label={m.actionClear()}
+            onclick={() => { filterSearch = ''; filterEventType = ''; filterStartDate = ''; filterEndDate = ''; load(1) }}>
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
       </CardBody>
     </Card>
