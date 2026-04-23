@@ -14,12 +14,21 @@
   import type { UnknownPayloadReview } from '$lib/types/ingest'
   import Card from '$lib/components/bootstrap/Card.svelte'
   import CardBody from '$lib/components/bootstrap/CardBody.svelte'
+  import DateRangeFilter from '$lib/components/filters/DateRangeFilter.svelte'
 
   let loading = $state(true)
   let error = $state<string | null>(null)
   let reviews = $state<UnknownPayloadReview[]>([])
   let pagination = $state({ page: 1, perPage: 20, total: 0, totalPages: 0 })
   let statusFilter = $state<string>('pending')
+  let filterSourceFamily = $state('')
+  let filterStartDate = $state('')
+  let filterEndDate = $state('')
+
+  // Collected source-family options from loaded reviews (union, sorted)
+  let sourceFamilyOptions = $derived(
+    Array.from(new Set(reviews.map(r => r.sourceFamily).filter(Boolean))).sort()
+  )
 
   // Selected item for right panel
   let selectedReview = $state<UnknownPayloadReview | null>(null)
@@ -46,7 +55,10 @@
     try {
       const perPage = untrack(() => pagination.perPage)
       const r = await listUnknownPayloadReviews(orgId, page, perPage, {
-        status: statusFilter || undefined
+        status: statusFilter || undefined,
+        sourceFamily: filterSourceFamily || undefined,
+        startDate: filterStartDate || undefined,
+        endDate: filterEndDate || undefined
       })
       reviews = r.details
       pagination = { page: r.page, perPage: r.perPage, total: r.total, totalPages: r.totalPages }
@@ -168,6 +180,28 @@
   <button class="btn btn-sm btn-outline-secondary ms-2" onclick={() => load(pagination.page)} title={m.actionRefresh()}>
     <i class="bi bi-arrow-clockwise"></i>
   </button>
+</div>
+
+<!-- Secondary filter bar: sourceFamily + date range -->
+<div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+  <i class="bi bi-funnel text-theme"></i>
+  <select
+    class="form-select form-select-sm"
+    style="width:auto;font-size:0.75rem;"
+    bind:value={filterSourceFamily}
+    onchange={() => load(1)}
+    aria-label="source family filter"
+  >
+    <option value="">{m.filterSourceFamilyAll()}</option>
+    {#each sourceFamilyOptions as sf}
+      <option value={sf}>{sf}</option>
+    {/each}
+  </select>
+  <DateRangeFilter
+    bind:startDate={filterStartDate}
+    bind:endDate={filterEndDate}
+    onApply={() => load(1)}
+  />
 </div>
 
 {#if !$activeWorkspaceId}

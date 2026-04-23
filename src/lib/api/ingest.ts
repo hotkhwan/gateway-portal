@@ -585,7 +585,7 @@ export async function listUnknownPayloadReviews(
 	orgId: string,
 	page = 1,
 	perPage = 20,
-	params?: { status?: string; sourceFamily?: string }
+	params?: { status?: string; sourceFamily?: string; startDate?: string; endDate?: string }
 ): Promise<{ details: UnknownPayloadReview[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
@@ -595,6 +595,9 @@ export async function listUnknownPayloadReviews(
 	})
 	if (params?.status) q.set('status', params.status)
 	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
+	if (params?.startDate && params?.endDate) {
+		q.set('dateTime', `${params.startDate},${params.endDate}`)
+	}
 
 	const res = await fetch(`${BASE}/ingest/unknownPayloadReviews?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
@@ -767,7 +770,13 @@ export async function listApprovedEvents(
 	orgId: string,
 	page = 1,
 	perPage = 20,
-	params?: { eventType?: string; sourceFamily?: string; search?: string }
+	params?: {
+		eventType?: string
+		sourceFamily?: string
+		search?: string
+		startDate?: string
+		endDate?: string
+	}
 ): Promise<{ details: ApprovedEvent[]; page: number; perPage: number; total: number; totalPages: number }> {
 	const q = new URLSearchParams({
 		page: String(page),
@@ -778,6 +787,9 @@ export async function listApprovedEvents(
 	if (params?.eventType) q.set('eventType', params.eventType)
 	if (params?.sourceFamily) q.set('sourceFamily', params.sourceFamily)
 	if (params?.search) q.set('search', params.search)
+	if (params?.startDate && params?.endDate) {
+		q.set('dateTime', `${params.startDate},${params.endDate}`)
+	}
 
 	const res = await fetch(`${BASE}/ingest/details?${q}`, {
 		headers: { 'content-type': 'application/json', 'x-active-workspace': orgId }
