@@ -174,3 +174,40 @@ Wrong pattern (do NOT do this):
 ### Workflow Gate
 
 For Codex review and the full plan-review-implement workflow, see [`AGENTS.md`](AGENTS.md).
+
+# Occam Skill
+
+You have access to the Occam skill at `skills/occam/SKILL.md`. Load it when the user says:
+- "occam", "simpler", "is this necessary"
+- "why is this so complex", "too much code"
+- "in my head it's just X", "feels over-engineered"
+
+Also fire proactively when you're about to finalize a plan that introduces a new table, service, module, worker, queue, or abstraction that didn't exist before.
+
+When triggered, read SKILL.md and run the four-question audit. Output the three-tier comparison and verdict. Keep it short — the audit shouldn't be more complex than the fix it's auditing.
+
+## Cross-Repo Paths
+
+Keep this path map even when compacting context. For cross-repo work, inspect these paths before concluding that a repo is unavailable.
+
+- BE1 (`klynx-api`): `/home/klynx/klynx-api`
+- BE2 (`gateway-api`): `/home/phibek/gateway-api`
+- FE1 (`KLynx-Platform`): `/home/klynx/klynx`
+- FE2 (`gateway-Platform`): `/home/phibek/gateway-portal`
+- FE3 (`phibek`): `/home/phibek/app`
+
+Discovery rule:
+- Start from this map, then verify with `test -d <path>` / `ls <path>` / `rg` in the mapped repo.
+- Do not search only under `/home/klynx` for `gateway-api` or gateway frontend code.
+- If a mapped path is unreadable or missing, say exactly which path failed.
+
+## Basic Cross-Repo Rules
+
+- Feature owner backend defaults to `klynx-api`; any override requires explicit plan justification.
+- Events canonical system of record is `gateway-api`; normalized events are produced by `gateway-api` on `gw.events.normalized.v1` and consumed by `klynx-api`.
+- `gateway-api/device_management` is the source of truth for device/camera identity plus sync state; `klynx/camera` is a projection for Klynx workflows.
+- Cross-repo / shared backend contracts live in `klynx-api/docs/contracts/<name>.md`; OpenAPI / Swagger is only the REST schema subset when linked from the contract.
+- `gateway-api/docs/contracts/<name>.md` is allowed for gateway-owned flows with no klynx-api hub contract, but FE and peer repos must cite the exact contract file and section they consume.
+- Frontend must not invent schema across REST, Kafka, MQTT, Redis-visible behavior, permission, auth, or sync surfaces. Network traces, screenshots, and backend source code are not contracts.
+- Cross-repo implementation order is hub contract first, owner backend next, peer backend spokes next, then frontend after the backend contract is stable.
+- No silent ownership changes, no undeclared dual-write model, and no Klynx-initiated camera/device sync change that bypasses `gateway-api/device_management`.
