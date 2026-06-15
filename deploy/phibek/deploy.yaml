@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-portal
+  namespace: phibek
+  labels:
+    app: gateway-portal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-portal
+  template:
+    metadata:
+      labels:
+        app: gateway-portal
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: host01
+      containers:
+        - name: gateway-portal
+          image: docker.io/oven/bun:1.2-debian
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command:
+            - /bin/bash
+            - -c
+            - |
+              apt-get update && apt-get install -y procps && sleep infinity
+          ports:
+            - name: http
+              containerPort: 3000
+          volumeMounts:
+            - name: src-code
+              mountPath: /app
+          securityContext:
+            privileged: true
+      volumes:
+        - name: src-code
+          hostPath:
+            path: /home/phibek/gateway-portal
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-portal
+  namespace: phibek
+spec:
+  selector:
+    app: gateway-portal
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
