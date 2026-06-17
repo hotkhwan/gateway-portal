@@ -135,3 +135,79 @@ Wrong pattern (do NOT do this):
 - Never expose `API_BASE` or `session_token` to the client
 - All backend calls go through the proxy route — never call backend directly from `+page.ts` or `.svelte` components
 - `x-active-org` header set from store value, not user input
+
+## Cross-Repo Planning & Contracts
+
+`gateway-portal` is a frontend spoke in a hub-and-spoke contract model. ก่อน implement งานที่กระทบ API / event / sync / permission ให้ทำ FE plan/checklist + ระบุ contract source ให้ชัด ห้าม invent schema
+
+### Contract Source of Truth (canonical order)
+
+| ใช้กับ flow | Contract source | Notes |
+|---|---|---|
+| `gateway-portal` → `gateway-api` ตรง ๆ (admin / operator REST) | `gateway-api/docs/swagger.yaml` (OpenAPI = REST subset) + `gateway-api/docs/contracts/<name>.md` ถ้ามี | Swagger ครอบคลุมเฉพาะ REST schema; ถ้า flow มี Kafka / MQTT / Redis-visible / sync behavior ต้องอ้าง `.md` |
+| Cross-repo flow ที่ `klynx-api` เป็น feature owner | `klynx-api/docs/contracts/<name>.md` (canonical hub) + `klynx-api/openapi/<name>.yaml` ถ้า contract `.md` link ไปถึง | hub authority — ครอบคลุม REST + Kafka + MQTT + Redis + sync + cache + rollout เป็น 1 contract ต่อ domain/flow |
+| Domains ที่ `gateway-api` เป็น SoR (events canonical detail, `device_management`) | `gateway-api/docs/contracts/<name>.md` ถ้ามี; ถ้าไม่มี — อ่านจาก hub contract ที่ `klynx-api/docs/contracts/<name>.md` ที่ชี้กลับมาที่ gateway-api SoR | `device_management` identity / sync state เขียนผ่าน gateway-api เสมอ — ไม่ใช่ projection |
+
+**สำคัญ — OpenAPI / Swagger ≠ contract เต็ม:** REST เป็นแค่หนึ่งใน surface; MQTT / Redis-visible / sync / cache / write authority อยู่ใน `.md` เท่านั้น
+
+### FE Plan/Checklist Requirement
+
+ก่อน implement task ที่กระทบ contract ต้องมี FE plan/checklist สั้น ๆ (ใส่ใน `docs/plan/<name>.md` หรือ PR description) ระบุ:
+
+- **backend contract file + section ที่อ้างอิง** (ระบุชัด เช่น `gateway-api/docs/swagger.yaml#/paths/~1ingest~1sources/post` หรือ `klynx-api/docs/contracts/gateway-klynx-realtime.md §7.1`, ไม่ใช่แค่ "ดู swagger")
+- impacted screens/files
+- expected FE behavior
+- fallback behavior / error UX (ถ้า contract ระบุ fallback path ให้อ้างถึง section ของ contract — ไม่ invent fallback ฝั่ง FE)
+- smoke checklist
+- version bump + CHANGELOG scope ถ้า ship behavior
+
+### ห้าม invent schema (ครอบคลุมทุก surface)
+
+- ห้ามเดา REST request/response/error shape จาก network trace, BE code, หรือ screenshot
+- ห้ามเดา Kafka event payload (ถ้า FE สังเกตผ่าน proxy/aggregator)
+- ห้ามเดา MQTT topic pattern, payload, QoS, retain, reconnect/resubscribe rule
+- ห้ามเดา Redis-visible behavior (TTL, invalidation timing, stale-read window) แม้สังเกตเห็นจาก devtools
+- ห้ามเดา permission rule, auth flow, device/camera sync behavior, write authority
+
+ถ้าเจอ behavior ที่ contract ไม่ระบุ → **หยุด implement** แล้วขอ BE update contract ก่อน อย่า "ลองยิงดู" หรือ "ใช้ค่า default ไปก่อน" — โดยเฉพาะ MQTT / Redis-visible / realtime / event / permission / auth / device-camera sync — guesswork ทำให้ state corrupt เงียบ ๆ
+
+### Workflow Gate
+
+For Codex review and the full plan-review-implement workflow, see [`AGENTS.md`](AGENTS.md).
+
+# Occam Skill
+
+You have access to the Occam skill at `skills/occam/SKILL.md`. Load it when the user says:
+- "occam", "simpler", "is this necessary"
+- "why is this so complex", "too much code"
+- "in my head it's just X", "feels over-engineered"
+
+Also fire proactively when you're about to finalize a plan that introduces a new table, service, module, worker, queue, or abstraction that didn't exist before.
+
+When triggered, read SKILL.md and run the four-question audit. Output the three-tier comparison and verdict. Keep it short — the audit shouldn't be more complex than the fix it's auditing.
+
+## Cross-Repo Paths
+
+Keep this path map even when compacting context. For cross-repo work, inspect these paths before concluding that a repo is unavailable.
+
+- BE1 (`klynx-api`): `/home/klynx/klynx-api`
+- BE2 (`gateway-api`): `/home/phibek/gateway-api`
+- FE1 (`KLynx-Platform`): `/home/klynx/klynx`
+- FE2 (`gateway-Platform`): `/home/phibek/gateway-portal`
+- FE3 (`phibek`): `/home/phibek/app`
+
+Discovery rule:
+- Start from this map, then verify with `test -d <path>` / `ls <path>` / `rg` in the mapped repo.
+- Do not search only under `/home/klynx` for `gateway-api` or gateway frontend code.
+- If a mapped path is unreadable or missing, say exactly which path failed.
+
+## Basic Cross-Repo Rules
+
+- Feature owner backend defaults to `klynx-api`; any override requires explicit plan justification.
+- Events canonical system of record is `gateway-api`; normalized events are produced by `gateway-api` on `gw.events.normalized.v1` and consumed by `klynx-api`.
+- `gateway-api/device_management` is the source of truth for device/camera identity plus sync state; `klynx/camera` is a projection for Klynx workflows.
+- Cross-repo / shared backend contracts live in `klynx-api/docs/contracts/<name>.md`; OpenAPI / Swagger is only the REST schema subset when linked from the contract.
+- `gateway-api/docs/contracts/<name>.md` is allowed for gateway-owned flows with no klynx-api hub contract, but FE and peer repos must cite the exact contract file and section they consume.
+- Frontend must not invent schema across REST, Kafka, MQTT, Redis-visible behavior, permission, auth, or sync surfaces. Network traces, screenshots, and backend source code are not contracts.
+- Cross-repo implementation order is hub contract first, owner backend next, peer backend spokes next, then frontend after the backend contract is stable.
+- No silent ownership changes, no undeclared dual-write model, and no Klynx-initiated camera/device sync change that bypasses `gateway-api/device_management`.
