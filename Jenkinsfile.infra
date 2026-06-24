@@ -1,0 +1,91 @@
+// Jenkinsfile.infra
+// CI ชุดใหม่: build main -> regis.pointit.co.th/infra/gw-portal:<version>
+// - แยกจาก Jenkinsfile เดิม (placeholder); tag = version จาก package.json
+// - bare image: ใส่ placeholder .env ให้ build ผ่าน (Dockerfile COPY .env) — ฉีด config จริงทาง runtime/k8s
+// - ไม่มี stage GitOps/update-manifest
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: buildah
+    image: quay.io/buildah/stable:v1.42.2
+    command: ['cat']
+    tty: true
+    securityContext:
+      privileged: true
+  - name: jnlp
+    image: jenkins/inbound-agent:3301.v4363ddcca_4e7-1
+'''
+        }
+    }
+
+    environment {
+        REGISTRY_URL     = 'regis.pointit.co.th'
+        IMAGE_NAME       = 'infra/gw-portal'
+        DOCKERFILE       = 'Dockerfile'                 // root Dockerfile (มีอยู่แล้ว)
+        REGISTRY_CRED_ID = 'pointit-registry-login'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }   // job config ล็อก branch = main
+        }
+
+        stage('Read Version') {
+            steps {
+                container('jnlp') {
+                    script {
+                        env.IMAGE_TAG = sh(
+                            script: $/grep -m1 '"version"' package.json | sed -E 's/.*"version" *: *"([^"]+)".*/\1/'/$,
+                            returnStdout: true
+                        ).trim()
+                        if (!env.IMAGE_TAG) { error('อ่าน version จาก package.json ไม่ได้') }
+                        echo "--> build & push: ${REGISTRY_URL}/${IMAGE_NAME}:${env.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                container('buildah') {
+                    // bare: placeholder ให้ `COPY .env` ใน Dockerfile ผ่าน
+                    // ถ้าต้องการ env จริง (ค่า public ของ FE ถูกต้อง): แทน touch ด้วยการดึง file credential
+                    //   withCredentials([file(credentialsId: 'gw-portal-env-prod', variable: 'ENVF')]) { sh 'cp $ENVF .env' }
+                    sh 'touch .env'
+                    sh """
+                        buildah bud --storage-driver=overlay \
+                            -t ${REGISTRY_URL}/${IMAGE_NAME}:${env.IMAGE_TAG} \
+                            -f ${DOCKERFILE} .
+                    """
+                }
+            }
+        }
+
+        stage('Login & Push') {
+            steps {
+                container('buildah') {
+                    withCredentials([usernamePassword(credentialsId: "${REGISTRY_CRED_ID}", usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASS')]) {
+                        sh """
+                            buildah login --storage-driver=overlay -u \$REGISTRY_USER -p \$REGISTRY_PASS ${REGISTRY_URL}
+                            buildah push --storage-driver=overlay --tls-verify=false ${REGISTRY_URL}/${IMAGE_NAME}:${env.IMAGE_TAG}
+                            buildah logout ${REGISTRY_URL}
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            container('buildah') {
+                sh "buildah rmi --storage-driver=overlay ${REGISTRY_URL}/${IMAGE_NAME}:${env.IMAGE_TAG} || true"
+            }
+        }
+    }
+}
